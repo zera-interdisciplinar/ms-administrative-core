@@ -19,6 +19,7 @@ spec:
       labels:
         app: ms-administrative-core
     spec:
+      terminationGracePeriodSeconds: 10
       containers:
       - name: ms-administrative-core
         image: us-central1-docker.pkg.dev/zera1405/repo/ms-administrative-core:IMAGE_TAG
