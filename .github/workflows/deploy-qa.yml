@@ -58,7 +58,7 @@ jobs:
           sed -i "s|IMAGE_TAG|qa-${{ github.sha }}|g" k8s/deployment-qa.yaml
           kubectl apply -f k8s/deployment-qa.yaml -n qa
           kubectl apply -f k8s/service-qa.yaml -n qa
-          kubectl rollout status deployment/ms-administrative-core -n qa --timeout=300s
+          kubectl rollout status deployment/ms-administrative-core -n qa --timeout=200s
 
       - name: Annotate Deployment
         run: |
