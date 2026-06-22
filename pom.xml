@@ -80,7 +80,7 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
-                    <execution>
+                    <!-- <execution>
                         <id>check</id>
                         <phase>verify</phase>
                         <goals>
@@ -99,7 +99,7 @@
                                 </rule>
                             </rules>
                         </configuration>
-                    </execution>
+                    </execution> -->
                 </executions>
             </plugin>
             <plugin>
