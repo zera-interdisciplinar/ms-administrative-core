@@ -27,11 +27,11 @@ spec:
         - containerPort: 8080
         resources:
           requests:
+            cpu: "100m"
             memory: "256Mi"
-            cpu: "250m"
           limits:
-            memory: "512Mi"
             cpu: "500m"
+            memory: "512Mi"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
