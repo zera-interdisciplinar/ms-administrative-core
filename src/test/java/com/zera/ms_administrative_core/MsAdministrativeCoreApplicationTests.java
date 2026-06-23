@@ -6,8 +6,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class MsAdministrativeCoreApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+        MsAdministrativeCoreApplication.main(new String[] {});
+    }
 
 }
