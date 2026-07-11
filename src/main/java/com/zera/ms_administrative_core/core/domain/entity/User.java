@@ -35,6 +35,20 @@ public abstract class User {
             this.updatedAt = LocalDateTime.now();
       }
 
+      // used when loading data from database
+      protected User(UUID userId, String name, Email email,
+                  HashedPassword password, Status status, UUID unitId,
+                  LocalDateTime createdAt, LocalDateTime updatedAt) {
+            this.userId = userId;
+            this.name = name;
+            this.email = email;
+            this.password = password;
+            this.status = status;
+            this.unitId = unitId;
+            this.createdAt = createdAt;
+            this.updatedAt = updatedAt;
+      }
+
       public abstract Role role();
 
       // GETTERS
