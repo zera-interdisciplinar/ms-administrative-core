@@ -1,4 +1,4 @@
-package com.zera.ms_administrative_core.core.usecase.rename;
+package com.zera.ms_administrative_core.core.usecase.renameUser;
 
 import java.util.UUID;
 
