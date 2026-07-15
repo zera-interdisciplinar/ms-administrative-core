@@ -123,6 +123,12 @@ public abstract class User {
       }
 
       public void suspend() {
+            if (this.status == Status.SUSPENDED) {
+                  return;
+            }
+            if (!this.status.canTransitionTo(Status.SUSPENDED)) {
+                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.SUSPENDED);
+            }
             this.status = Status.SUSPENDED;
             touch();
       }
