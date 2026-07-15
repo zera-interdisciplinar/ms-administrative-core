@@ -9,5 +9,5 @@ public record RegisterUserCommand(
     Role role,
     String rawPassword,
     String email,
-    UUID unityId
+    UUID unitId
 ) {}

@@ -12,6 +12,7 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 
 public class RegisterUserImpl implements RegisterUser {
+
     private final UserRepository userRepository;
     private final PasswordHasher hasher;
 
@@ -28,22 +29,21 @@ public class RegisterUserImpl implements RegisterUser {
             throw new IllegalArgumentException("User with this email already exists");
         }
 
-        
         HashedPassword hashedPassword = hasher.hash(new RawPassword(command.rawPassword()));
 
         User user = UserFactory.create(
-            command.role(),
-            UUID.randomUUID(),
-            command.name(),
-            email,
-            hashedPassword,
-            Status.ACTIVE,
-            command.unityId()
+                command.role(),
+                UUID.randomUUID(),
+                command.name(),
+                email,
+                hashedPassword,
+                Status.ACTIVE,
+                command.unitId()
         );
 
         userRepository.save(user);
         return new RegisterUserOutput(
-            user.getUserId(), user.getName(), user.getEmail(), user.role()
+                user.getUserId(), user.getName(), user.getEmail(), user.role()
         );
     }
 }
