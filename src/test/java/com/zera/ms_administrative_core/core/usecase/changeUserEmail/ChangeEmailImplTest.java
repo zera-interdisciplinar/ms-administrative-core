@@ -47,12 +47,22 @@ class ChangeEmailImplTest {
                 UUID.fromString("00000000-0000-0000-0000-000000000033"),
                 java.time.LocalDateTime.of(2024, 1, 1, 10, 0),
                 java.time.LocalDateTime.of(2024, 1, 1, 10, 0));
+        User target = new Manager(
+                UUID.fromString("00000000-0000-0000-0000-000000000035"),
+                "Target",
+                new Email("target@example.com"),
+                new HashedPassword("hash"),
+                Status.ACTIVE,
+                UUID.fromString("00000000-0000-0000-0000-000000000036"),
+                java.time.LocalDateTime.of(2024, 1, 1, 10, 0),
+                java.time.LocalDateTime.of(2024, 1, 1, 10, 0));
         repository.save(existing);
+        repository.save(target);
 
         ChangeEmailImpl useCase = new ChangeEmailImpl(repository);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> useCase.execute(existing.getUserId(), "existing@example.com"));
+                () -> useCase.execute(target.getUserId(), "existing@example.com"));
         assertEquals("Email already in use", exception.getMessage());
     }
 

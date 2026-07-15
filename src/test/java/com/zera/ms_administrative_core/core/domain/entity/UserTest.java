@@ -23,7 +23,7 @@ class UserTest {
                 "Alice",
                 new Email("alice@example.com"),
                 new HashedPassword("hash-1"),
-                Status.INACTIVE,
+                Status.ACTIVE,
                 UUID.fromString("00000000-0000-0000-0000-000000000011"),
                 createdAt,
                 updatedAt);
@@ -34,11 +34,11 @@ class UserTest {
         user.changeEmail(new Email("alicia@example.com"));
         LocalDateTime afterEmailChange = user.getUpdatedAt();
 
-        user.activate();
-        LocalDateTime afterActivate = user.getUpdatedAt();
-
         user.deactivate();
         LocalDateTime afterDeactivate = user.getUpdatedAt();
+
+        user.activate();
+        LocalDateTime afterActivate = user.getUpdatedAt();
 
         user.suspend();
         LocalDateTime afterSuspend = user.getUpdatedAt();
@@ -54,9 +54,9 @@ class UserTest {
 
         assertNotEquals(updatedAt, afterRename);
         assertNotEquals(afterRename, afterEmailChange);
-        assertNotEquals(afterEmailChange, afterActivate);
-        assertNotEquals(afterActivate, afterDeactivate);
-        assertNotEquals(afterDeactivate, afterSuspend);
+        assertNotEquals(afterEmailChange, afterDeactivate);
+        assertNotEquals(afterDeactivate, afterActivate);
+        assertNotEquals(afterActivate, afterSuspend);
     }
 
     @Test

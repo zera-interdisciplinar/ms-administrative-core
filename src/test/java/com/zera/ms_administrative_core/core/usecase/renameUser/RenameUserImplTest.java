@@ -42,6 +42,6 @@ class RenameUserImplTest {
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> useCase.execute(UUID.fromString("00000000-0000-0000-0000-000000000042"), "New Name"));
-        assertEquals("Usuário não encontrado", exception.getMessage());
+        assertEquals("User not found", exception.getMessage());
     }
 }
