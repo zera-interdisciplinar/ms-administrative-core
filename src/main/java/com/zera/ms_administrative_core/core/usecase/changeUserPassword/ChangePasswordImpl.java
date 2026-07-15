@@ -19,14 +19,17 @@ public class ChangePasswordImpl implements ChangePassword {
 
     @Override
     public void execute(ChangePasswordCommand command) {
-        if (!command.rawPassword().equals(command.confirmPassword())) {
+        RawPassword rawPassword = new RawPassword(command.rawPassword());
+        RawPassword confirmPassword = new RawPassword(command.confirmPassword());
+
+        if (!rawPassword.equals(confirmPassword)) {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
         User user = repository.findById(command.userId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        HashedPassword hashedPassword = passwordHasher.hash(new RawPassword(command.rawPassword()));
+        HashedPassword hashedPassword = passwordHasher.hash(rawPassword);
         user.changePassword(hashedPassword);
         repository.save(user);
     }

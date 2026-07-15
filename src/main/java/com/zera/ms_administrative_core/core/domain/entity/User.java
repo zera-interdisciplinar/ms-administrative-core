@@ -101,16 +101,34 @@ public abstract class User {
       }
 
       public void activate() {
+            if (this.status == Status.ACTIVE) {
+                  return;
+            }
+            if (!this.status.canTransitionTo(Status.ACTIVE)) {
+                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.ACTIVE);
+            }
             this.status = Status.ACTIVE;
             touch();
       }
 
       public void deactivate() {
+            if (this.status == Status.INACTIVE) {
+                  return;
+            }
+            if (!this.status.canTransitionTo(Status.INACTIVE)) {
+                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.INACTIVE);
+            }
             this.status = Status.INACTIVE;
             touch();
       }
 
       public void suspend() {
+            if (this.status == Status.SUSPENDED) {
+                  return;
+            }
+            if (!this.status.canTransitionTo(Status.SUSPENDED)) {
+                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.SUSPENDED);
+            }
             this.status = Status.SUSPENDED;
             touch();
       }

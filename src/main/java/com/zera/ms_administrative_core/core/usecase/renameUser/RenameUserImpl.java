@@ -16,8 +16,7 @@ import com.zera.ms_administrative_core.core.repository.UserRepository;
     @Override
     public void execute(UUID userId, String newName) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.rename(newName);
         userRepository.save(user);
     }
