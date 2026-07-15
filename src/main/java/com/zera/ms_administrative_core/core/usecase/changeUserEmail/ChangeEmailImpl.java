@@ -18,12 +18,16 @@ public class ChangeEmailImpl implements ChangeEmail {
     public void execute(UUID userId, String newEmail) {
         Email email = new Email(newEmail);
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (user.getEmail().equals(email)) {
+            return;
+        }
+
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already in use");
         }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         user.changeEmail(email);
         userRepository.save(user);
