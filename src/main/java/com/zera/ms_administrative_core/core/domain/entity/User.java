@@ -112,6 +112,12 @@ public abstract class User {
       }
 
       public void deactivate() {
+            if (this.status == Status.INACTIVE) {
+                  return;
+            }
+            if (!this.status.canTransitionTo(Status.INACTIVE)) {
+                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.INACTIVE);
+            }
             this.status = Status.INACTIVE;
             touch();
       }
