@@ -115,6 +115,9 @@ public abstract class User {
             touch();
       }
 
-      // TODO: create hasher and method to change password
+      public void changePassword(HashedPassword newPassword) {
+            this.password = newPassword;
+            touch();
+      }
       // TODO: think about if we should have a method to change the unit of the user
 }
