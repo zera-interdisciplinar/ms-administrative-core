@@ -20,8 +20,7 @@ public record Email(String email) {
             return email.substring(email.indexOf('@') + 1);
       }
 
-      @Override
-      public String toString() {
+      public String value() {
             return email;
       }
 }

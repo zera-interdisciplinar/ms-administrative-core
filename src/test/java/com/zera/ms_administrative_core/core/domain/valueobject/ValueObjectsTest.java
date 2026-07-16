@@ -12,7 +12,7 @@ class ValueObjectsTest {
 
         assertEquals("user@example.com", email.email());
         assertEquals("example.com", email.domain());
-        assertEquals("user@example.com", email.toString());
+        assertEquals("user@example.com", email.value());
     }
 
     @Test
