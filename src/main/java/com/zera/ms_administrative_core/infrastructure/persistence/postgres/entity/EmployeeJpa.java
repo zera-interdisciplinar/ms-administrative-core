@@ -18,6 +18,6 @@ public class EmployeeJpa extends UserJpa {
     public EmployeeJpa(UUID id, String name, String email, String password,
                        Status status, UUID unitId,
                        LocalDateTime createdAt, LocalDateTime updatedAt) {
-        super(id, name, email, password, Role.MANAGER, status, unitId, createdAt, updatedAt);
+        super(id, name, email, password, Role.EMPLOYEE, status, unitId, createdAt, updatedAt);
     }
 }
