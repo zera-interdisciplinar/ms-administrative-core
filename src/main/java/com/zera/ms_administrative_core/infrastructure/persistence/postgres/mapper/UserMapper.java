@@ -30,7 +30,7 @@ public class UserMapper {
             case MANAGER -> new ManagerJpa(
                     domain.getUserId(),
                     domain.getName(),
-                    domain.getEmail().toString(),
+                    domain.getEmail().value(),
                     domain.getPassword().hash(),
                     domain.getStatus(),
                     domain.getUnitId(),
@@ -40,7 +40,7 @@ public class UserMapper {
             case EMPLOYEE -> new EmployeeJpa(
                     domain.getUserId(),
                     domain.getName(),
-                    domain.getEmail().toString(),
+                    domain.getEmail().value(),
                     domain.getPassword().hash(),
                     domain.getStatus(),
                     domain.getUnitId(),
