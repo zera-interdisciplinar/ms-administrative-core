@@ -36,7 +36,7 @@ public abstract class UserJpa {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, columnDefinition = "char(60)")
+    @Column(nullable = false)
     private String password;
 
     @Enumerated(EnumType.STRING)
