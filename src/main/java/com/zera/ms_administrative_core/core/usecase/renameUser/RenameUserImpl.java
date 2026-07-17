@@ -4,8 +4,10 @@ import java.util.UUID;
 
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
-    public class RenameUserImpl implements RenameUser {
+@Service
+public class RenameUserImpl implements RenameUser {
 
     private final UserRepository userRepository;
 

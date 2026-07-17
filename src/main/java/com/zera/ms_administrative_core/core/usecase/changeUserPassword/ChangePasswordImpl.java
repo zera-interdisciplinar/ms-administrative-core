@@ -5,7 +5,9 @@ import com.zera.ms_administrative_core.core.domain.service.PasswordHasher;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.RawPassword;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ChangePasswordImpl implements ChangePassword {
 
     private final UserRepository repository;

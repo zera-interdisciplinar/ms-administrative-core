@@ -10,7 +10,9 @@ import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.RawPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class RegisterUserImpl implements RegisterUser {
 
     private final UserRepository userRepository;
