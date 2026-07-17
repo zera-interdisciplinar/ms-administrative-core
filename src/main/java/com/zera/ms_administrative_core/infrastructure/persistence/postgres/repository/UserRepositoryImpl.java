@@ -1,7 +1,9 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.repository;
 
+import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.UserJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.UserMapper;
@@ -48,14 +50,13 @@ public class UserRepositoryImpl implements UserRepository {
                 .map(mapper::toDomain);
     }
 
+    // UserRepositoryImpl
     @Override
-    public List<User> findAll(int page, int size) {
+    public List<User> findAll(Role role, Status status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return jpa.findAll(pageable)
-                .getContent()
-                .stream()
+        return jpa.findAllByRoleAndStatus(role, status, pageable).stream()
                 .map(mapper::toDomain)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
