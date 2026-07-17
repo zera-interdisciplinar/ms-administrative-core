@@ -6,8 +6,10 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
+import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
@@ -57,6 +59,26 @@ class UserTest {
         assertNotEquals(afterEmailChange, afterDeactivate);
         assertNotEquals(afterDeactivate, afterActivate);
         assertNotEquals(afterActivate, afterSuspend);
+    }
+
+    @Test
+    void suspendShouldUseCustomExceptionForInvalidTransitions() {
+        Employee user = new Employee(
+                UUID.fromString("00000000-0000-0000-0000-000000000014"),
+                "Carol",
+                new Email("carol@example.com"),
+                new HashedPassword("hash-3"),
+                Status.INACTIVE,
+                UUID.fromString("00000000-0000-0000-0000-000000000015"),
+                LocalDateTime.of(2024, 1, 4, 10, 0),
+                LocalDateTime.of(2024, 1, 4, 10, 15));
+
+        InvalidStatusTransitionException exception = assertThrows(
+                InvalidStatusTransitionException.class,
+                user::suspend);
+
+        assertEquals("Invalid transition: INACTIVE → SUSPENDED", exception.getMessage());
+        assertEquals(Status.INACTIVE, user.getStatus());
     }
 
     @Test
