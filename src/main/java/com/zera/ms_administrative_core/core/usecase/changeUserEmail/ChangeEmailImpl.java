@@ -5,7 +5,9 @@ import java.util.UUID;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ChangeEmailImpl implements ChangeEmail {
 
     private final UserRepository userRepository;
