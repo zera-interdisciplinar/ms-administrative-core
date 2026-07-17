@@ -3,139 +3,137 @@ package com.zera.ms_administrative_core.core.domain.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 
 public abstract class User {
-      private final UUID userId;
-      private String name;
 
-      // password must be encrypted in infra layer
-      private HashedPassword password;
+    private final UUID userId;
+    private String name;
 
-      private Email email;
-      private Status status;
+    // password must be encrypted in infra layer
+    private HashedPassword password;
 
-      // reference to unit that the user belongs to
-      private final UUID unitId;
+    private Email email;
+    private Status status;
 
-      private final LocalDateTime createdAt;
-      private LocalDateTime updatedAt;
+    // reference to unit that the user belongs to
+    private final UUID unitId;
 
-      protected User(UUID userId, String name, Email email,
-                  HashedPassword password, Status status, UUID unitId) {
-            this.userId = userId;
-            this.name = name;
-            this.email = email;
-            this.password = password;
-            this.status = status;
-            this.unitId = unitId;
-            this.createdAt = LocalDateTime.now();
-            this.updatedAt = LocalDateTime.now();
-      }
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-      // used when loading data from database
-      protected User(UUID userId, String name, Email email,
-                  HashedPassword password, Status status, UUID unitId,
-                  LocalDateTime createdAt, LocalDateTime updatedAt) {
-            this.userId = userId;
-            this.name = name;
-            this.email = email;
-            this.password = password;
-            this.status = status;
-            this.unitId = unitId;
-            this.createdAt = createdAt;
-            this.updatedAt = updatedAt;
-      }
+    protected User(UUID userId, String name, Email email,
+            HashedPassword password, Status status, UUID unitId) {
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.unitId = unitId;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
-      public abstract Role role();
+    // used when loading data from database
+    protected User(UUID userId, String name, Email email,
+            HashedPassword password, Status status, UUID unitId,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.status = status;
+        this.unitId = unitId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
-      // GETTERS
-      public UUID getUserId() {
-            return userId;
-      }
+    public abstract Role role();
 
-      public String getName() {
-            return name;
-      }
+    // GETTERS
+    public UUID getUserId() {
+        return userId;
+    }
 
-      public Email getEmail() {
-            return email;
-      }
+    public String getName() {
+        return name;
+    }
 
-      public HashedPassword getPassword() {
-            return password;
-      }
+    public Email getEmail() {
+        return email;
+    }
 
-      public Status getStatus() {
-            return status;
-      }
+    public HashedPassword getPassword() {
+        return password;
+    }
 
-      public UUID getUnitId() {
-            return unitId;
-      }
+    public Status getStatus() {
+        return status;
+    }
 
-      public LocalDateTime getCreatedAt() {
-            return createdAt;
-      }
+    public UUID getUnitId() {
+        return unitId;
+    }
 
-      public LocalDateTime getUpdatedAt() {
-            return updatedAt;
-      }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-      // ------------------------------------------
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
 
-      private void touch() {
-            this.updatedAt = LocalDateTime.now();
-      }
+    // ------------------------------------------
+    private void touch() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
-      public void rename(String newName) {
-            this.name = newName;
-            touch();
-      }
+    public void rename(String newName) {
+        this.name = newName;
+        touch();
+    }
 
-      public void changeEmail(Email newEmail) {
-            this.email = newEmail;
-            touch();
-      }
+    public void changeEmail(Email newEmail) {
+        this.email = newEmail;
+        touch();
+    }
 
-      public void activate() {
-            if (this.status == Status.ACTIVE) {
-                  return;
-            }
-            if (!this.status.canTransitionTo(Status.ACTIVE)) {
-                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.ACTIVE);
-            }
-            this.status = Status.ACTIVE;
-            touch();
-      }
+    public void activate() {
+        if (!this.status.canTransitionTo(Status.ACTIVE)) {
+            throw new InvalidStatusTransitionException(this.status, Status.ACTIVE);
+        }
+        this.status = Status.ACTIVE;
+        touch();
+    }
 
-      public void deactivate() {
-            if (this.status == Status.INACTIVE) {
-                  return;
-            }
-            if (!this.status.canTransitionTo(Status.INACTIVE)) {
-                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.INACTIVE);
-            }
-            this.status = Status.INACTIVE;
-            touch();
-      }
+    public void deactivate() {
+        if (this.status == Status.INACTIVE) {
+            return;
+        }
+        if (!this.status.canTransitionTo(Status.INACTIVE)) {
+            throw new InvalidStatusTransitionException(this.status, Status.INACTIVE);
+        }
+        this.status = Status.INACTIVE;
+        touch();
+    }
 
-      public void suspend() {
-            if (this.status == Status.SUSPENDED) {
-                  return;
-            }
-            if (!this.status.canTransitionTo(Status.SUSPENDED)) {
-                  throw new IllegalStateException("Cannot transition from " + this.status + " to " + Status.SUSPENDED);
-            }
-            this.status = Status.SUSPENDED;
-            touch();
-      }
+    public void suspend() {
+        if (this.status == Status.SUSPENDED) {
+            return;
+        }
+        if (!this.status.canTransitionTo(Status.SUSPENDED)) {
+            throw new InvalidStatusTransitionException(this.status, Status.SUSPENDED);
+        }
+        this.status = Status.SUSPENDED;
+        touch();
+    }
 
-      public void changePassword(HashedPassword newPassword) {
-            this.password = newPassword;
-            touch();
-      }
-      // TODO: think about if we should have a method to change the unit of the user
+    public void changePassword(HashedPassword newPassword) {
+        this.password = newPassword;
+        touch();
+    }
+    // TODO: think about if we should have a method to change the unit of the user
 }

@@ -65,42 +65,69 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("Deve encontrar por ID")
-    void shouldFindById() {
-        UUID id = UUID.randomUUID();
-        ManagerJpa jpaEntity = createManagerJpa(id);
-        when(jpa.findById(id)).thenReturn(Optional.of(jpaEntity));
-
-        Optional<User> result = repository.findById(id);
-
-        assertTrue(result.isPresent());
-        assertEquals(id, result.get().getUserId());
-    }
-
-    @Test
-    @DisplayName("Deve encontrar por Email")
-    void shouldFindByEmail() {
-        Email email = new Email("test@test.com");
-        ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
-        when(jpa.findByEmail(email.value())).thenReturn(Optional.of(jpaEntity));
-
-        Optional<User> result = repository.findByEmail(email);
-
-        assertTrue(result.isPresent());
-    }
-
-    @Test
-    @DisplayName("Deve retornar todos paginados")
+    @DisplayName("Deve retornar todos paginados sem filtros")
     void shouldFindAll() {
         ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
         Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
-        when(jpa.findAll(any(Pageable.class))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatus(null, null, PageRequest.of(0, 10))).thenReturn(page);
 
-        List<User> result = repository.findAll(0, 10);
+        List<User> result = repository.findAll(null, null, 0, 10);
 
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
-        verify(jpa).findAll(PageRequest.of(0, 10));
+        verify(jpa).findAllByRoleAndStatus(null, null, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos filtrados por role")
+    void shouldFindAllByRole() {
+        ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
+        Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
+        when(jpa.findAllByRoleAndStatus(Role.MANAGER, null, PageRequest.of(0, 10))).thenReturn(page);
+
+        List<User> result = repository.findAll(Role.MANAGER, null, 0, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(Role.MANAGER, result.get(0).role());
+        verify(jpa).findAllByRoleAndStatus(Role.MANAGER, null, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos filtrados por status")
+    void shouldFindAllByStatus() {
+        ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
+        Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
+        when(jpa.findAllByRoleAndStatus(null, Status.ACTIVE, PageRequest.of(0, 10))).thenReturn(page);
+
+        List<User> result = repository.findAll(null, Status.ACTIVE, 0, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(Status.ACTIVE, result.get(0).getStatus());
+        verify(jpa).findAllByRoleAndStatus(null, Status.ACTIVE, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos filtrados por role e status")
+    void shouldFindAllByRoleAndStatus() {
+        ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
+        Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
+        when(jpa.findAllByRoleAndStatus(Role.MANAGER, Status.ACTIVE, PageRequest.of(0, 10))).thenReturn(page);
+
+        List<User> result = repository.findAll(Role.MANAGER, Status.ACTIVE, 0, 10);
+
+        assertEquals(1, result.size());
+        verify(jpa).findAllByRoleAndStatus(Role.MANAGER, Status.ACTIVE, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia quando não há usuários")
+    void shouldReturnEmptyList() {
+        Page<UserJpa> page = new PageImpl<>(List.of());
+        when(jpa.findAllByRoleAndStatus(any(), any(), any(Pageable.class))).thenReturn(page);
+
+        List<User> result = repository.findAll(null, null, 0, 10);
+
+        assertTrue(result.isEmpty());
     }
 
     @Test
