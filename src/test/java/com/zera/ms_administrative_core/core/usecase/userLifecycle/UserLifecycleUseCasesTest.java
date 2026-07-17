@@ -64,9 +64,9 @@ class UserLifecycleUseCasesTest {
         UserNotFoundException suspendException = assertThrows(UserNotFoundException.class,
                 () -> new SuspendUserImpl(repository).execute(UUID.fromString("00000000-0000-0000-0000-000000000065")));
 
-        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000063", activateException.getMessage());
-        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000064", deactivateException.getMessage());
-        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000065", suspendException.getMessage());
+        assertEquals("User not found: 00000000-0000-0000-0000-000000000063", activateException.getMessage());
+        assertEquals("User not found: 00000000-0000-0000-0000-000000000064", deactivateException.getMessage());
+        assertEquals("User not found: 00000000-0000-0000-0000-000000000065", suspendException.getMessage());
     }
 
     private static User user(Status status, String email, String userId) {

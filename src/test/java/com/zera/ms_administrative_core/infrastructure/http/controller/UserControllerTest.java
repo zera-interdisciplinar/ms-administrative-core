@@ -42,14 +42,11 @@ class UserControllerTest {
 
     private static final String BASE_URL = "/api/v1/users";
 
+    @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
     private ObjectMapper objectMapper;
-
-    public UserControllerTest(MockMvc mockMvc, ObjectMapper objectMapper){
-        this.mockMvc = mockMvc;
-        this.objectMapper = objectMapper;
-    }
 
     @MockitoBean private FindUserById findUserById;
     @MockitoBean private FindUserByEmail findUserByEmail;

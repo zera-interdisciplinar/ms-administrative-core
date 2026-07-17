@@ -1,5 +1,7 @@
 package com.zera.ms_administrative_core.core.domain.valueobject;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -20,6 +22,7 @@ public record Email(String email) {
             return email.substring(email.indexOf('@') + 1);
       }
 
+      @JsonValue
       public String value() {
             return email;
       }
