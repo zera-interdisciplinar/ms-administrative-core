@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import com.zera.ms_administrative_core.core.domain.entity.Employee;
@@ -55,16 +57,16 @@ class UserLifecycleUseCasesTest {
     void useCasesShouldRejectMissingUsers() {
         InMemoryUserRepository repository = new InMemoryUserRepository();
 
-        IllegalArgumentException activateException = assertThrows(IllegalArgumentException.class,
+        UserNotFoundException activateException = assertThrows(UserNotFoundException.class,
                 () -> new ActivateUserImpl(repository).execute(UUID.fromString("00000000-0000-0000-0000-000000000063")));
-        IllegalArgumentException deactivateException = assertThrows(IllegalArgumentException.class,
+        UserNotFoundException deactivateException = assertThrows(UserNotFoundException.class,
                 () -> new DeactivateUserImpl(repository).execute(UUID.fromString("00000000-0000-0000-0000-000000000064")));
-        IllegalArgumentException suspendException = assertThrows(IllegalArgumentException.class,
+        UserNotFoundException suspendException = assertThrows(UserNotFoundException.class,
                 () -> new SuspendUserImpl(repository).execute(UUID.fromString("00000000-0000-0000-0000-000000000065")));
 
-        assertEquals("User not found", activateException.getMessage());
-        assertEquals("User not found", deactivateException.getMessage());
-        assertEquals("User not found", suspendException.getMessage());
+        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000063", activateException.getMessage());
+        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000064", deactivateException.getMessage());
+        assertEquals("Usuário não encontrado: 00000000-0000-0000-0000-000000000065", suspendException.getMessage());
     }
 
     private static User user(Status status, String email, String userId) {

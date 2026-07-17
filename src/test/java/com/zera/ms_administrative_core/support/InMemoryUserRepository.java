@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 
 public class InMemoryUserRepository implements UserRepository {
@@ -38,15 +40,20 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> findAll(int page, int size) {
-        int start = Math.max(page, 0) * Math.max(size, 0);
-        int end = Math.min(start + Math.max(size, 0), users.size());
+    public List<User> findAll(Role role, Status status, int page, int size) {
+        List<User> filtered = users.values().stream()
+                .filter(user -> role == null || user.role().equals(role))
+                .filter(user -> status == null || user.getStatus().equals(status))
+                .toList();
+
+        int start = Math.max(page, 0) * Math.max(size, 1);
+        int end = Math.min(start + Math.max(size, 1), filtered.size());
 
         if (start >= end) {
             return List.of();
         }
 
-        return new ArrayList<>(users.values()).subList(start, end);
+        return new ArrayList<>(filtered).subList(start, end);
     }
 
     @Override

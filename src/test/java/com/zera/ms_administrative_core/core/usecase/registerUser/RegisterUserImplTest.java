@@ -5,6 +5,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import org.junit.jupiter.api.Test;
 
 import com.zera.ms_administrative_core.core.domain.entity.Role;
@@ -44,17 +46,21 @@ class RegisterUserImplTest {
     void executeShouldRejectDuplicateEmail() {
         InMemoryUserRepository repository = new InMemoryUserRepository();
         RegisterUserImpl useCase = new RegisterUserImpl(repository, new FixedPasswordHasher());
+
+        String email = "ana@example.com";
+
         RegisterUserCommand command = new RegisterUserCommand(
                 "Ana",
                 Role.EMPLOYEE,
                 "plain-password",
-                "ana@example.com",
+                email,
                 UUID.fromString("00000000-0000-0000-0000-000000000021"));
 
         useCase.execute(command);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        EmailAlreadyInUseException exception = assertThrows(EmailAlreadyInUseException.class,
                 () -> useCase.execute(command));
-        assertEquals("User with this email already exists", exception.getMessage());
+
+        assertEquals("Email already in use: " + email, exception.getMessage());
     }
 }
