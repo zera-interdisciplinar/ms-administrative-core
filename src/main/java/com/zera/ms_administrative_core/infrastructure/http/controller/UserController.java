@@ -102,3 +102,5 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 }
+
+// TODO: criar endpoints de GET (buscar um usuário e listar todos)
