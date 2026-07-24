@@ -3,6 +3,8 @@ package com.zera.ms_administrative_core.core.usecase.findUser;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmailImpl;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
 import com.zera.ms_administrative_core.util.UserTestFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

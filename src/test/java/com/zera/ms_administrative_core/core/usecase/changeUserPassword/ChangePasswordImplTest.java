@@ -11,6 +11,8 @@ import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
+import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePasswordCommand;
+import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePasswordImpl;
 import com.zera.ms_administrative_core.support.FixedPasswordHasher;
 import com.zera.ms_administrative_core.support.InMemoryUserRepository;
 

@@ -14,6 +14,9 @@ import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserCommand;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserImpl;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
 import com.zera.ms_administrative_core.support.FixedPasswordHasher;
 import com.zera.ms_administrative_core.support.InMemoryUserRepository;
 
