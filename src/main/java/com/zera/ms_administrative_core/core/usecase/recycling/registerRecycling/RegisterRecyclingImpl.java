@@ -7,6 +7,9 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 
+import org.springframework.stereotype.Service;
+
+@Service("registerRecycling")
 public class RegisterRecyclingImpl implements RegisterRecycling {
     private final RecyclingBusinessRepository recyclingBusinessRepository;
 

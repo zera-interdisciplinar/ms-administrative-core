@@ -6,6 +6,9 @@ import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 
+import org.springframework.stereotype.Service;
+
+@Service("renameRecycling")
 public class RenameRecyclingImpl implements RenameRecycling {
     private final RecyclingBusinessRepository recyclingBusinessRepository;
 

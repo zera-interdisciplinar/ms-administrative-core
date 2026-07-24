@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public class RecyclingJpaRepositoryImpl implements RecyclingBusinessRepository {
+@Repository("recyclingBusinessRepositoryImpl")
+public class RecyclingBusinessRepositoryImpl implements RecyclingBusinessRepository {
 
     private final RecyclingJpaRepository jpa;
     private final RecyclingMapper mapper;
 
-    public RecyclingJpaRepositoryImpl(RecyclingJpaRepository jpa, RecyclingMapper mapper) {
+    public RecyclingBusinessRepositoryImpl(RecyclingJpaRepository jpa, RecyclingMapper mapper) {
         this.jpa = jpa;
         this.mapper = mapper;
     }

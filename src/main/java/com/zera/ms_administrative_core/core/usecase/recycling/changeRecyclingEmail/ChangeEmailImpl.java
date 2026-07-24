@@ -7,6 +7,9 @@ import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundEx
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 
+import org.springframework.stereotype.Service;
+
+@Service("changeRecyclingEmail")
 public class ChangeEmailImpl implements ChangeEmail{
     private final RecyclingBusinessRepository recyclingBusinessRepository;
 

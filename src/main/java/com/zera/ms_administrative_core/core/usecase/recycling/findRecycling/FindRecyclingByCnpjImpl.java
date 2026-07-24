@@ -5,6 +5,9 @@ import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundEx
 import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 
+import org.springframework.stereotype.Service;
+
+@Service("findRecyclingByCnpj")
 public class FindRecyclingByCnpjImpl implements FindRecyclingByCnpj{
     private final RecyclingBusinessRepository repo;
 
