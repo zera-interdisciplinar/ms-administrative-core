@@ -2,6 +2,8 @@ package com.zera.ms_administrative_core.core.domain.valueobject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
 import org.junit.jupiter.api.Test;
 
 class ValueObjectsTest {
@@ -55,9 +57,9 @@ class ValueObjectsTest {
 
     @Test
     void cnpjShouldRejectInvalidInput() {
-        IllegalArgumentException invalidCnpj = assertThrows(IllegalArgumentException.class,
+        InvalidCnpjException invalidCnpj = assertThrows(InvalidCnpjException.class,
                 () -> new Cnpj("11.222.333/0001-00"));
-        IllegalArgumentException repeatedDigits = assertThrows(IllegalArgumentException.class,
+        InvalidCnpjException repeatedDigits = assertThrows(InvalidCnpjException.class,
                 () -> new Cnpj("11111111111111"));
         NullPointerException nullCnpj = assertThrows(NullPointerException.class,
                 () -> new Cnpj(null));
