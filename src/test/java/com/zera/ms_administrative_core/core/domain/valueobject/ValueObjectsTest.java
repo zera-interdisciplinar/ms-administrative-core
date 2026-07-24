@@ -45,4 +45,25 @@ class ValueObjectsTest {
         NullPointerException exception = assertThrows(NullPointerException.class, () -> new HashedPassword(null));
         assertEquals("Hash cannot be null", exception.getMessage());
     }
+
+    @Test
+    void cnpjShouldNormalizeAndValidate() {
+        Cnpj cnpj = new Cnpj("11.222.333/0001-81");
+
+        assertEquals("11222333000181", cnpj.value());
+    }
+
+    @Test
+    void cnpjShouldRejectInvalidInput() {
+        IllegalArgumentException invalidCnpj = assertThrows(IllegalArgumentException.class,
+                () -> new Cnpj("11.222.333/0001-00"));
+        IllegalArgumentException repeatedDigits = assertThrows(IllegalArgumentException.class,
+                () -> new Cnpj("11111111111111"));
+        NullPointerException nullCnpj = assertThrows(NullPointerException.class,
+                () -> new Cnpj(null));
+
+        assertEquals("Invalid CNPJ: 11.222.333/0001-00", invalidCnpj.getMessage());
+        assertEquals("Invalid CNPJ: 11111111111111", repeatedDigits.getMessage());
+        assertEquals("CNPJ cannot be null", nullCnpj.getMessage());
+    }
 }
