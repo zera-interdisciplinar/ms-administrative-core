@@ -17,7 +17,7 @@ import com.zera.ms_administrative_core.core.usecase.recycling.renameRecycling.Re
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingRequest;
 
 @RestController
-@RequestMapping("/recyclings")
+@RequestMapping("/api/v1/recyclings")
 public class RecyclingController {
 
     private final RegisterRecycling registerRecycling;

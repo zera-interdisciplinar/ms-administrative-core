@@ -56,12 +56,12 @@ class RecyclingControllerTest {
     }
 
     @Test
-    @DisplayName("POST /recyclings - should register recycling business")
+    @DisplayName("POST /api/v1/recyclings - should register recycling business")
     void shouldRegister() throws Exception {
         RegisterRecyclingRequest request = new RegisterRecyclingRequest("Test", "11.222.333/0001-81", "test@test.com");
         when(registerRecycling.execute(anyString(), anyString(), anyString())).thenReturn(business);
 
-        mockMvc.perform(post("/recyclings")
+        mockMvc.perform(post("/api/v1/recyclings")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -70,40 +70,40 @@ class RecyclingControllerTest {
     }
 
     @Test
-    @DisplayName("GET /recyclings - should find all")
+    @DisplayName("GET /api/v1/recyclings - should find all")
     void shouldFindAll() throws Exception {
         when(findAllRecyclers.execute()).thenReturn(List.of(business));
 
-        mockMvc.perform(get("/recyclings"))
+        mockMvc.perform(get("/api/v1/recyclings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(id.toString()));
     }
 
     @Test
-    @DisplayName("GET /recyclings/{id} - should find by ID")
+    @DisplayName("GET /api/v1/recyclings/{id} - should find by ID")
     void shouldFindById() throws Exception {
         when(findRecyclingById.execute(id)).thenReturn(business);
 
-        mockMvc.perform(get("/recyclings/{id}", id))
+        mockMvc.perform(get("/api/v1/recyclings/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id.toString()));
     }
 
     @Test
-    @DisplayName("GET /recyclings/cnpj/{cnpj} - should find by CNPJ")
+    @DisplayName("GET /api/v1/recyclings/cnpj/{cnpj} - should find by CNPJ")
     void shouldFindByCnpj() throws Exception {
         String cnpj = "11222333000181";
         when(findRecyclingByCnpj.execute(cnpj)).thenReturn(business);
 
-        mockMvc.perform(get("/recyclings/cnpj/{cnpj}", cnpj))
+        mockMvc.perform(get("/api/v1/recyclings/cnpj/{cnpj}", cnpj))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cnpj").value("11222333000181"));
     }
 
     @Test
-    @DisplayName("PATCH /recyclings/{id}/name - should rename")
+    @DisplayName("PATCH /api/v1/recyclings/{id}/name - should rename")
     void shouldRename() throws Exception {
-        mockMvc.perform(patch("/recyclings/{id}/name", id)
+        mockMvc.perform(patch("/api/v1/recyclings/{id}/name", id)
                 .param("name", "New Name"))
                 .andExpect(status().isNoContent());
 
@@ -111,9 +111,9 @@ class RecyclingControllerTest {
     }
 
     @Test
-    @DisplayName("PATCH /recyclings/{id}/email - should change email")
+    @DisplayName("PATCH /api/v1/recyclings/{id}/email - should change email")
     void shouldChangeEmail() throws Exception {
-        mockMvc.perform(patch("/recyclings/{id}/email", id)
+        mockMvc.perform(patch("/api/v1/recyclings/{id}/email", id)
                 .param("email", "new@test.com"))
                 .andExpect(status().isNoContent());
 
