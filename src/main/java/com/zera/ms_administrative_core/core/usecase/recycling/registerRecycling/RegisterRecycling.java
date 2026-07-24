@@ -1,8 +1,7 @@
 package com.zera.ms_administrative_core.core.usecase.recycling.registerRecycling;
 
-import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
-import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
 
 public interface RegisterRecycling {
-    void execute(String name, Cnpj cnpj, Email email);
+    RecyclingBusiness execute(String name, String cnpj, String email);
 }

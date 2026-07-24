@@ -2,9 +2,11 @@ package com.zera.ms_administrative_core.infrastructure.http.handler;
 
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
+import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -38,5 +40,11 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(java.util.stream.Collectors.joining(", "));
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+    }
+
+    @ExceptionHandler(RecyclingNotFoundException.class)
+    public ResponseEntity<String> handleRecyclingNotFound(RecyclingNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
     }
 }

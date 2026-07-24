@@ -15,8 +15,11 @@ public class RegisterRecyclingImpl implements RegisterRecycling {
     }
 
     @Override
-    public void execute(String name, Cnpj cnpj, Email email) {
-        RecyclingBusiness recyclingBusiness = new RecyclingBusiness(UUID.randomUUID(), name, cnpj, email);
-        recyclingBusinessRepository.save(recyclingBusiness);
+    public RecyclingBusiness execute(String name, String cnpj, String email) {
+        Cnpj voCnpj = new Cnpj(cnpj);
+        Email voEmail = new Email(email);
+
+        RecyclingBusiness recyclingBusiness = new RecyclingBusiness(UUID.randomUUID(), name, voCnpj, voEmail);
+        return recyclingBusinessRepository.save(recyclingBusiness);
     }
 }

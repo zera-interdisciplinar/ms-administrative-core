@@ -1,8 +1,7 @@
 package com.zera.ms_administrative_core.core.usecase.recycling.findRecycling;
 
-import java.util.Optional;
-
 import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
+import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 
@@ -14,8 +13,8 @@ public class FindRecyclingByCnpjImpl implements FindRecyclingByCnpj{
     }
 
     @Override
-    public Optional<RecyclingBusiness> execute(String cnpj){
-        Optional<RecyclingBusiness> recycling = repo.findByCnpj(new Cnpj(cnpj));
+    public RecyclingBusiness execute(String cnpj){
+        RecyclingBusiness recycling = repo.findByCnpj(new Cnpj(cnpj)).orElseThrow(() -> new RecyclingNotFoundException(cnpj));
         return recycling;
     }
 }
