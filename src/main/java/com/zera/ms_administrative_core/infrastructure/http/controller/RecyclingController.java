@@ -8,8 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
-import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
-import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.usecase.recycling.changeRecyclingEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindAllRecyclers;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingByCnpj;
