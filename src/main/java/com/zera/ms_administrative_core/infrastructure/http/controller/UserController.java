@@ -2,19 +2,19 @@ package com.zera.ms_administrative_core.infrastructure.http.controller;
 
 import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
-import com.zera.ms_administrative_core.core.usecase.activateUser.ActivateUser;
-import com.zera.ms_administrative_core.core.usecase.changeUserEmail.ChangeEmail;
-import com.zera.ms_administrative_core.core.usecase.changeUserPassword.ChangePassword;
-import com.zera.ms_administrative_core.core.usecase.changeUserPassword.ChangePasswordCommand;
-import com.zera.ms_administrative_core.core.usecase.deactivateUser.DeactivateUser;
-import com.zera.ms_administrative_core.core.usecase.findUser.FindAllUsers;
-import com.zera.ms_administrative_core.core.usecase.findUser.FindUserByEmail;
-import com.zera.ms_administrative_core.core.usecase.findUser.FindUserById;
-import com.zera.ms_administrative_core.core.usecase.findUser.UserOutput;
-import com.zera.ms_administrative_core.core.usecase.registerUser.RegisterUser;
-import com.zera.ms_administrative_core.core.usecase.registerUser.RegisterUserOutput;
-import com.zera.ms_administrative_core.core.usecase.renameUser.RenameUser;
-import com.zera.ms_administrative_core.core.usecase.suspendUser.SuspendUser;
+import com.zera.ms_administrative_core.core.usecase.user.activateUser.ActivateUser;
+import com.zera.ms_administrative_core.core.usecase.user.changeUserEmail.ChangeEmail;
+import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
+import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePasswordCommand;
+import com.zera.ms_administrative_core.core.usecase.user.deactivateUser.DeactivateUser;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmail;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUser;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
+import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
+import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeEmailRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangePasswordRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserRequest;
@@ -138,5 +138,3 @@ public class UserController {
         return ResponseEntity.ok(output);
     }
 }
-
-// TODO: criar endpoints de GET (buscar um usuário e listar todos)
