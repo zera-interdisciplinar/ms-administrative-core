@@ -1,7 +1,8 @@
 package com.zera.ms_administrative_core.infrastructure.http.request;
 
 import com.zera.ms_administrative_core.core.domain.entity.Role;
-import com.zera.ms_administrative_core.core.usecase.registerUser.RegisterUserCommand;
+import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserCommand;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

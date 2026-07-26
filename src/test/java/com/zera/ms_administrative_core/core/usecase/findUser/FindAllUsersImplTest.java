@@ -3,6 +3,8 @@ package com.zera.ms_administrative_core.core.usecase.findUser;
 import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsersImpl;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.util.UserTestFactory;
 import org.junit.jupiter.api.BeforeEach;
