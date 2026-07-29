@@ -7,54 +7,65 @@ import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 
 public class Alert {
     private final UUID id;
+    private AlertStatus status;
+    private final UUID unitId;
+    private LocalDateTime occurredAt;
+    private LocalDateTime updatedAt;
     private final UUID eventId;
     private final UUID ruleId;
     private final UUID userId;
-    private final UUID unitId;
-    private AlertStatus status;
-    private final UUID priorityId;
-    private final UUID kindId;
-    private String source;
-    private String reason;
-    private String notes;
-    private LocalDateTime occurredAt;
-    private LocalDateTime updatedAt;
+    private String description;
+    private Severity severity;
+    private AlertKind kind;
 
-    public Alert(UUID id, UUID eventId, UUID ruleId, UUID userId, UUID unitId, UUID priorityId, UUID kindId,
-            AlertStatus status, String source, String reason, String notes) {
-        this.id = id;
-        this.eventId = eventId;
-        this.ruleId = ruleId;
+    public Alert(AlertKind kind, Severity severity, String description, UUID userId, UUID ruleId, UUID eventId,
+            LocalDateTime updatedAt, LocalDateTime occurredAt, UUID unitId, AlertStatus status, UUID id) {
+        this.kind = kind;
+        this.severity = severity;
+        this.description = description;
         this.userId = userId;
+        this.ruleId = ruleId;
+        this.eventId = eventId;
+        this.updatedAt = updatedAt;
+        this.occurredAt = occurredAt;
         this.unitId = unitId;
-        this.priorityId = priorityId;
-        this.kindId = kindId;
         this.status = status;
-        this.source = source;
-        this.reason = reason;
-        this.notes = notes;
+        this.id = id;
     }
 
-    public Alert(UUID id, UUID eventId, UUID ruleId, UUID userId, UUID unitId, UUID priorityId, UUID kindId,
-            AlertStatus status, String source, String reason, String notes, LocalDateTime occurredAt,
-            LocalDateTime updatedAt) {
-        this.id = id;
-        this.eventId = eventId;
-        this.ruleId = ruleId;
+    public Alert(AlertKind kind, Severity severity, String description, UUID userId, UUID ruleId, UUID eventId,
+            UUID unitId, AlertStatus status, UUID id) {
+        this.kind = kind;
+        this.severity = severity;
+        this.description = description;
         this.userId = userId;
+        this.ruleId = ruleId;
+        this.eventId = eventId;
+        this.updatedAt = LocalDateTime.now();
+        this.occurredAt = LocalDateTime.now();
         this.unitId = unitId;
-        this.priorityId = priorityId;
-        this.kindId = kindId;
         this.status = status;
-        this.source = source;
-        this.reason = reason;
-        this.notes = notes;
-        this.occurredAt = occurredAt;
-        this.updatedAt = updatedAt;
+        this.id = id;
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public AlertStatus getStatus() {
+        return status;
+    }
+
+    public UUID getUnitId() {
+        return unitId;
+    }
+
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public UUID getEventId() {
@@ -69,45 +80,31 @@ public class Alert {
         return userId;
     }
 
-    public UUID getUnitId() {
-        return unitId;
+    public String getDescription() {
+        return description;
     }
 
-    public AlertStatus getStatus() {
-        return status;
+    public Severity getSeverity() {
+        return severity;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public AlertKind getKind() {
+        return kind;
     }
 
-    public UUID getPriorityId() {
-        return priorityId;
+    // --------------------------------------
+
+    public void touch(){
+        this.updatedAt = LocalDateTime.now();
     }
-
-    public UUID getKindId() {
-        return kindId;
-    }
-
-    public String getSource() {
-        return source;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public LocalDateTime getOccurredAt() {
-        return occurredAt;
-    }
-
-    // ----------------------------------------------------
-
-    public void updateStatus(AlertStatus newStatus){
+    
+    public void updateStatus(AlertStatus newStatus) {
+        touch();
         this.status = newStatus;
+    }
+
+    public void escalateSeverity(Severity newSeverity){
+        touch();
+        this.severity = newSeverity;
     }
 }
