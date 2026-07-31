@@ -9,14 +9,14 @@ public class Alert {
     private final UUID id;
     private AlertStatus status;
     private final UUID unitId;
-    private LocalDateTime occurredAt;
+    private final LocalDateTime occurredAt;
     private LocalDateTime updatedAt;
     private final UUID eventId;
     private final UUID ruleId;
     private final UUID userId;
     private String description;
     private Severity severity;
-    private AlertKind kind;
+    private final AlertKind kind;
 
     public Alert(AlertKind kind, Severity severity, String description, UUID userId, UUID ruleId, UUID eventId,
             LocalDateTime updatedAt, LocalDateTime occurredAt, UUID unitId, AlertStatus status, UUID id) {
