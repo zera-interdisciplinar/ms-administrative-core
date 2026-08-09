@@ -9,5 +9,6 @@ public record RegisterUserOutput(
     UUID userId,
     String name,
     Email email,
-    Role role
+    Role role,
+    UUID managerId
 ) {}

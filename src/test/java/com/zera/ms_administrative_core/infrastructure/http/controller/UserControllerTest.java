@@ -72,7 +72,8 @@ class UserControllerTest {
                 Status.ACTIVE,
                 UUID.randomUUID(),
                 LocalDateTime.now(),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                null
         );
     }
 
@@ -161,7 +162,7 @@ class UserControllerTest {
     void shouldReturn201WhenUserCreated() throws Exception {
         RegisterUserOutput output = new RegisterUserOutput(
                 userOutput.userId(), "João Silva",
-                new Email("joao@empresa.com"), Role.MANAGER
+                new Email("joao@empresa.com"), Role.MANAGER, null
         );
         when(registerUser.execute(any())).thenReturn(output);
 

@@ -31,7 +31,8 @@ class RegisterUserImplTest {
                 Role.MANAGER,
                 "plain-password",
                 "ana@example.com",
-                UUID.fromString("00000000-0000-0000-0000-000000000020"));
+                UUID.fromString("00000000-0000-0000-0000-000000000020"),
+                null);
 
         RegisterUserOutput output = useCase.execute(command);
 
@@ -57,7 +58,8 @@ class RegisterUserImplTest {
                 Role.EMPLOYEE,
                 "plain-password",
                 email,
-                UUID.fromString("00000000-0000-0000-0000-000000000021"));
+                UUID.fromString("00000000-0000-0000-0000-000000000021"),
+                null);
 
         useCase.execute(command);
 

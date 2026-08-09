@@ -42,7 +42,7 @@ class UserJpaEntitiesTest {
         LocalDateTime now = LocalDateTime.now();
         
         EmployeeJpa employee = new EmployeeJpa(id, "Name", "email@test.com", "pass",
-                Status.ACTIVE, unitId, now, now);
+                Status.ACTIVE, unitId, now, now, null);
 
         assertEquals(id, employee.getId());
         assertEquals(Role.EMPLOYEE, employee.getRole()); 

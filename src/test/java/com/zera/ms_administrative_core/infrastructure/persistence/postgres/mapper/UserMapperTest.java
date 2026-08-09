@@ -50,7 +50,7 @@ class UserMapperTest {
         UUID unitId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
         EmployeeJpa employeeJpa = new EmployeeJpa(id, "Employee Name", "employee@test.com", "hashed_password",
-                Status.ACTIVE, unitId, now, now);
+                Status.ACTIVE, unitId, now, now, null);
 
         User domain = mapper.toDomain(employeeJpa);
 
