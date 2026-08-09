@@ -7,6 +7,7 @@ import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundExcepti
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.usecase.user.activateUser.ActivateUser;
+import com.zera.ms_administrative_core.core.usecase.user.assignManager.AssignManager;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
 import com.zera.ms_administrative_core.core.usecase.user.deactivateUser.DeactivateUser;
@@ -59,6 +60,7 @@ class UserControllerTest {
     @MockitoBean private ActivateUser activateUser;
     @MockitoBean private DeactivateUser deactivateUser;
     @MockitoBean private SuspendUser suspendUser;
+    @MockitoBean private AssignManager assignManager;
 
     private UserOutput userOutput;
 
@@ -252,5 +254,57 @@ class UserControllerTest {
         mockMvc.perform(patch(BASE_URL + "/{id}/deactivate", UUID.randomUUID()))
                 .andExpect(status().isNoContent());
         verify(deactivateUser).execute(any());
+    }
+
+    // --- PATCH /api/v1/users/{id}/manager ---
+
+    @Test
+    @DisplayName("PATCH /users/{id}/manager - deve retornar 204 ao atribuir gestor")
+    void shouldReturn204WhenManagerAssigned() throws Exception {
+        UUID id = UUID.randomUUID();
+        UUID managerId = UUID.randomUUID();
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/manager", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"managerId\": \"%s\"}".formatted(managerId)))
+                .andExpect(status().isNoContent());
+        verify(assignManager).execute(id, managerId);
+    }
+
+    @Test
+    @DisplayName("PATCH /users/{id}/manager - deve retornar 204 ao remover gestor")
+    void shouldReturn204WhenManagerUnassigned() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/manager", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNoContent());
+        verify(assignManager).execute(id, null);
+    }
+
+    @Test
+    @DisplayName("PATCH /users/{id}/manager - deve retornar 404 quando usuário não encontrado")
+    void shouldReturn404WhenUserNotFoundOnAssignManager() throws Exception {
+        UUID id = UUID.randomUUID();
+        doThrow(new UserNotFoundException(id)).when(assignManager).execute(eq(id), any());
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/manager", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"managerId\": \"%s\"}".formatted(UUID.randomUUID())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PATCH /users/{id}/manager - deve retornar 400 quando alvo não é funcionário")
+    void shouldReturn400WhenTargetIsNotEmployeeOnAssignManager() throws Exception {
+        UUID id = UUID.randomUUID();
+        doThrow(new IllegalArgumentException("Only employees can have a manager assigned"))
+                .when(assignManager).execute(eq(id), any());
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/manager", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"managerId\": \"%s\"}".formatted(UUID.randomUUID())))
+                .andExpect(status().isBadRequest());
     }
 }
