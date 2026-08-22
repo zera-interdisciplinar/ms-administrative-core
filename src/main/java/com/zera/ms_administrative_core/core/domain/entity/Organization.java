@@ -14,28 +14,28 @@ public class Organization {
     private final Cnpj cnpj;
     private Status status;
     private Email email;
-    private UUID planId;
+    private Plan plan;
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // ------------------------------------------
-    public Organization(UUID organizationId, String name, Cnpj cnpj, Status status, Email email, UUID planId) {
+    public Organization(UUID organizationId, String name, Cnpj cnpj, Status status, Email email, Plan plan) {
         this.organizationId = organizationId;
         this.name = name;
         this.cnpj = cnpj;
         this.status = status;
         this.email = email;
-        this.planId = planId;
+        this.plan = plan;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-    public Organization(UUID organizationId, String name, Cnpj cnpj, Status status, Email email, UUID planId, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Organization(UUID organizationId, String name, Cnpj cnpj, Status status, Email email, Plan plan, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.organizationId = organizationId;
         this.name = name;
         this.cnpj = cnpj;
         this.status = status;
         this.email = email;
-        this.planId = planId;
+        this.plan = plan;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -52,7 +52,7 @@ public class Organization {
 
     public Email getEmail() { return email; }
 
-    public UUID getPlanId() { return planId; }
+    public Plan getPlan() { return plan; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
@@ -74,8 +74,8 @@ public class Organization {
         touch();
     }
 
-    public void changePlan(UUID newPlanId) {
-        this.planId = newPlanId;
+    public void changePlan(Plan newPlanId) {
+        this.plan = newPlanId;
         touch();
     }
 
