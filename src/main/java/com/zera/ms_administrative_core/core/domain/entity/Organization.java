@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Organization {
-    private UUID organizationId;
+    private final UUID organizationId;
     private String name;
-    private Cnpj cnpj;
+    private final Cnpj cnpj;
     private Status status;
     private Email email;
     private UUID planId;
-    private LocalDateTime createdAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // ------------------------------------------
