@@ -1,6 +1,7 @@
 package com.zera.ms_administrative_core.core.usecase.organization.changeOrganizationEmail;
 
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
+import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
@@ -19,6 +20,14 @@ public class ChangeOrganizationEmailImpl implements ChangeOrganizationEmail {
     public void execute(UUID organizationId, Email email) {
         Organization org = repository.findById(organizationId)
                 .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
+
+        if (org.getEmail() == email) {
+            return;
+        }
+
+        if (repository.existsByEmail(email)){
+            throw new EmailAlreadyInUseException(email);
+        }
 
         org.changeEmail(email);
         repository.save(org);
