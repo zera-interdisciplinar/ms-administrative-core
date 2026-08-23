@@ -1,8 +1,10 @@
 package com.zera.ms_administrative_core.core.repository;
 
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
+import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +16,6 @@ public interface OrganizationRepository {
     Optional<Organization> findByCnpj(Cnpj cnpj);
     boolean existsByCnpj(Cnpj cnpj);
     boolean existsByEmail(Email email);
-    List<Organization> findAll();
+    List<Organization> findAll(Plan plan, Status status, int size, int page);
     void delete(UUID id);
 }
