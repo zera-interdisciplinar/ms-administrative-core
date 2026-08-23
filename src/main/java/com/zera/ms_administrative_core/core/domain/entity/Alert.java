@@ -10,6 +10,7 @@ public class Alert {
     private AlertStatus status;
     private final UUID unitId;
     private final LocalDateTime occurredAt;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private final UUID eventId;
     private final UUID ruleId;
@@ -19,13 +20,15 @@ public class Alert {
     private final AlertKind kind;
 
     public Alert(AlertKind kind, Severity severity, String description, UUID userId, UUID ruleId, UUID eventId,
-            LocalDateTime updatedAt, LocalDateTime occurredAt, UUID unitId, AlertStatus status, UUID id) {
+            LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime occurredAt, UUID unitId,
+            AlertStatus status, UUID id) {
         this.kind = kind;
         this.severity = severity;
         this.description = description;
         this.userId = userId;
         this.ruleId = ruleId;
         this.eventId = eventId;
+        this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.occurredAt = occurredAt;
         this.unitId = unitId;
@@ -41,6 +44,7 @@ public class Alert {
         this.userId = userId;
         this.ruleId = ruleId;
         this.eventId = eventId;
+        this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
         this.occurredAt = LocalDateTime.now();
         this.unitId = unitId;
@@ -62,6 +66,10 @@ public class Alert {
 
     public LocalDateTime getOccurredAt() {
         return occurredAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
