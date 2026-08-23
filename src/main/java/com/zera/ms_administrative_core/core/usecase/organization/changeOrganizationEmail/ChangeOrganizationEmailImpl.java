@@ -17,11 +17,13 @@ public class ChangeOrganizationEmailImpl implements ChangeOrganizationEmail {
     }
 
     @Override
-    public void execute(UUID organizationId, Email email) {
+    public void execute(UUID organizationId, String newEmail) {
+        Email email = new Email(newEmail);
+
         Organization org = repository.findById(organizationId)
                 .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
 
-        if (org.getEmail() == email) {
+        if (org.getEmail().equals(email) ) {
             return;
         }
 
