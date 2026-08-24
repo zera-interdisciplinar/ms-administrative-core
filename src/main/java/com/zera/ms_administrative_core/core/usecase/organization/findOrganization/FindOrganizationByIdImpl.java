@@ -2,22 +2,22 @@ package com.zera.ms_administrative_core.core.usecase.organization.findOrganizati
 
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
-import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 
-public class findOrganizationByCnpjImpl implements findOrganizationByCnpj {
+import java.util.UUID;
+
+public class FindOrganizationByIdImpl implements FindOrganizationById {
 
     OrganizationRepository repository;
 
-    public findOrganizationByCnpjImpl(OrganizationRepository repository) {
+    public FindOrganizationByIdImpl(OrganizationRepository repository) {
         this.repository = repository;
     }
 
     @Override
-    public OrganizationOutput execute(String cnpj) {
-        Organization org = repository.findByCnpj(new Cnpj(cnpj))
-                .orElseThrow(() -> new OrganizationNotFoundException(new Cnpj(cnpj)));
-
+    public OrganizationOutput execute(UUID organizationId) {
+        Organization org = repository.findById(organizationId)
+                .orElseThrow(() -> new OrganizationNotFoundException(organizationId));
         return OrganizationOutput.from(org);
     }
 }

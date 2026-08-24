@@ -2,6 +2,6 @@ package com.zera.ms_administrative_core.core.usecase.organization.findOrganizati
 
 import java.util.UUID;
 
-public interface findOrganizationById {
+public interface FindOrganizationById {
     OrganizationOutput execute(UUID organizationId);
 }

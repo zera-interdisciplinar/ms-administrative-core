@@ -5,10 +5,10 @@ import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoun
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 
-public class findOrganizationByEmailImpl implements  findOrganizationByEmail {
+public class FindOrganizationByEmailImpl implements FindOrganizationByEmail {
     OrganizationRepository repository;
 
-    public findOrganizationByEmailImpl(OrganizationRepository repository) {
+    public FindOrganizationByEmailImpl(OrganizationRepository repository) {
         this.repository = repository;
     }
 

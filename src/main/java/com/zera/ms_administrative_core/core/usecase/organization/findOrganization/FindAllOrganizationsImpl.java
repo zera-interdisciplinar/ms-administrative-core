@@ -6,11 +6,11 @@ import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 
 import java.util.List;
 
-public class findAllOrganizationsImpl implements findAllOrganizations {
+public class FindAllOrganizationsImpl implements FindAllOrganizations {
 
     OrganizationRepository repository;
 
-    public findAllOrganizationsImpl(OrganizationRepository repository) {
+    public FindAllOrganizationsImpl(OrganizationRepository repository) {
         this.repository = repository;
     }
 
