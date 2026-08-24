@@ -3,9 +3,11 @@ package com.zera.ms_administrative_core.core.usecase.organization.findOrganizati
 import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class FindAllOrganizationsImpl implements FindAllOrganizations {
 
     OrganizationRepository repository;

@@ -4,7 +4,9 @@ import com.zera.ms_administrative_core.core.domain.entity.Organization;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FindOrganizationByCnpjImpl implements FindOrganizationByCnpj {
 
     OrganizationRepository repository;

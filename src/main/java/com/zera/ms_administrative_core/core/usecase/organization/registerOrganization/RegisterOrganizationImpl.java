@@ -8,9 +8,11 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class RegisterOrganizationImpl implements RegisterOrganization {
     private final OrganizationRepository organizationRepository;
 

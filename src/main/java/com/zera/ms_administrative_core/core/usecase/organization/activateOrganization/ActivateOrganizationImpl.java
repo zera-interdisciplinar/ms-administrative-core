@@ -3,9 +3,11 @@ package com.zera.ms_administrative_core.core.usecase.organization.activateOrgani
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class ActivateOrganizationImpl implements ActivateOrganization{
     private final OrganizationRepository repository;
 
