@@ -99,4 +99,8 @@ public class Telephone {
         this.number = newNumber;
         touch();
     }
+
+    public boolean isRecycling() {
+        return recyclingBusinessId != null;
+    }
 }
