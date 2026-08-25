@@ -1,7 +1,6 @@
 package com.zera.ms_administrative_core.core.usecase.organization.registerOrganization;
 
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
-import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.exception.CnpjAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
@@ -40,7 +39,7 @@ public class RegisterOrganizationImpl implements RegisterOrganization {
                 command.cnpj(),
                 Status.ACTIVE,
                 command.email(),
-                Plan.FREE
+                command.plan()
         );
 
         organizationRepository.save(org);
