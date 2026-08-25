@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.infrastructure.http.controller;
 
+import com.zera.ms_administrative_core.core.domain.entity.Organization;
 import com.zera.ms_administrative_core.core.usecase.organization.activateOrganization.ActivateOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.changeOrganizationEmail.ChangeOrganizationEmail;
 import com.zera.ms_administrative_core.core.usecase.organization.deactivateOrganization.DeactivateOrganization;
@@ -8,11 +9,16 @@ import com.zera.ms_administrative_core.core.usecase.organization.findOrganizatio
 import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindOrganizationByEmail;
 import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindOrganizationById;
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganization;
+import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganizationOutput;
 import com.zera.ms_administrative_core.core.usecase.organization.renameOrganization.RenameOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.suspendOrganization.SuspendOrganization;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterOrganizationRequest;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/organization")
@@ -50,5 +56,22 @@ public class OrganizationController {
         this.activateOrganization = activateOrganization;
         this.deactivateUser = deactivateUser;
         this.suspendOrganization = suspendOrganization;
+    }
+    
+    @GetMapping
+    public Organization getAllOrganizations() {
+        return null;
+    }
+
+    @PostMapping
+    public ResponseEntity<RegisterOrganizationOutput> createOrganization(
+            @RequestBody @Valid RegisterOrganizationRequest request) {
+        RegisterOrganizationOutput output = registerOrganization.execute(request.toCommand());
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(output.id())
+                .toUri();
+        return ResponseEntity.created(location).body(output);
     }
 }
