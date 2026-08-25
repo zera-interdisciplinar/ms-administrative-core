@@ -32,7 +32,7 @@ public class OrganizationController {
     private final RenameOrganization renameOrganization;
     private final ChangeOrganizationEmail changeOrganizationEmail;
     private final ActivateOrganization activateOrganization;
-    private final DeactivateOrganization deactivateUser;
+    private final DeactivateOrganization deactivateOrganization;
     private final SuspendOrganization suspendOrganization;
 
     public OrganizationController(
@@ -44,7 +44,7 @@ public class OrganizationController {
             RenameOrganization renameOrganization,
             ChangeOrganizationEmail changeOrganizationEmail,
             ActivateOrganization activateOrganization,
-            DeactivateOrganization deactivateUser,
+            DeactivateOrganization deactivateOrganization,
             SuspendOrganization suspendOrganization) {
 
         this.findAllOrganizations = findAllOrganizations;
@@ -55,7 +55,7 @@ public class OrganizationController {
         this.renameOrganization = renameOrganization;
         this.changeOrganizationEmail = changeOrganizationEmail;
         this.activateOrganization = activateOrganization;
-        this.deactivateUser = deactivateUser;
+        this.deactivateOrganization = deactivateOrganization;
         this.suspendOrganization = suspendOrganization;
     }
     
@@ -111,6 +111,30 @@ public class OrganizationController {
             @RequestParam String newEmail
     ) {
         changeOrganizationEmail.execute(id, newEmail);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<Void> activate(
+            @PathVariable UUID id
+    ) {
+        activateOrganization.execute(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivate(
+            @PathVariable UUID id
+    ) {
+        deactivateOrganization.execute(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/suspend")
+    public ResponseEntity<Void> suspend(
+            @PathVariable UUID id
+    ) {
+        suspendOrganization.execute(id);
         return ResponseEntity.noContent().build();
     }
 
