@@ -10,5 +10,6 @@ public interface UnitRepository {
     void save(Unit unit);
     List<Unit> findAll();
     Optional<Unit> findById(UUID id);
+    void delete(UUID id);
     List<Unit> findByOrganization(UUID organizationId);
 }
