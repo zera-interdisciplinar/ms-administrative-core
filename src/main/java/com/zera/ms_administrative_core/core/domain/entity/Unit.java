@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Unit {
-    private UUID unitId;
+    private final UUID unitId;
     private String name;
-    private UUID organizationId;
-    private LocalDateTime createdAt;
+    private final UUID organizationId;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public Unit(UUID unitId, String name, UUID organizationId, LocalDateTime createdAt, LocalDateTime updatedAt) {
