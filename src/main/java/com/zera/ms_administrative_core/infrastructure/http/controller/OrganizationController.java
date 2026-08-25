@@ -1,13 +1,12 @@
 package com.zera.ms_administrative_core.infrastructure.http.controller;
 
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
+import com.zera.ms_administrative_core.core.domain.entity.Plan;
+import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.usecase.organization.activateOrganization.ActivateOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.changeOrganizationEmail.ChangeOrganizationEmail;
 import com.zera.ms_administrative_core.core.usecase.organization.deactivateOrganization.DeactivateOrganization;
-import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindAllOrganizations;
-import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindOrganizationByCnpj;
-import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindOrganizationByEmail;
-import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.FindOrganizationById;
+import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.*;
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganizationOutput;
 import com.zera.ms_administrative_core.core.usecase.organization.renameOrganization.RenameOrganization;
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/organization")
@@ -59,13 +60,33 @@ public class OrganizationController {
     }
     
     @GetMapping
-    public Organization getAllOrganizations() {
-        return null;
+    public ResponseEntity<List<OrganizationOutput>> findAll(
+            @RequestParam(required = false) Plan plan,
+            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String cnpj,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+            ) {
+        if (cnpj != null && email == null) {
+            return ResponseEntity.ok(List.of(findOrganizationByCnpj.execute(cnpj)));
+        }
+        else if (email != null && cnpj == null) {
+            return ResponseEntity.ok(List.of(findOrganizationByEmail.execute(email)));
+        }
+        return ResponseEntity.ok(findAllOrganizations.execute(plan, status, page, size));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrganizationOutput> findById( @PathVariable UUID id ){
+        OrganizationOutput output = findOrganizationById.execute(id);
+        return ResponseEntity.ok(output);
     }
 
     @PostMapping
-    public ResponseEntity<RegisterOrganizationOutput> createOrganization(
-            @RequestBody @Valid RegisterOrganizationRequest request) {
+    public ResponseEntity<RegisterOrganizationOutput> register(
+            @RequestBody @Valid RegisterOrganizationRequest request
+    ) {
         RegisterOrganizationOutput output = registerOrganization.execute(request.toCommand());
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -74,4 +95,24 @@ public class OrganizationController {
                 .toUri();
         return ResponseEntity.created(location).body(output);
     }
+
+    @PatchMapping("/{id}/rename")
+    public ResponseEntity<Void> rename(
+            @PathVariable UUID id,
+            @RequestParam String newName
+    ) {
+        renameOrganization.execute(id, newName);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/email")
+    public ResponseEntity<Void> changeEmail(
+            @PathVariable UUID id,
+            @RequestParam String newEmail
+    ) {
+        changeOrganizationEmail.execute(id, newEmail);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }
