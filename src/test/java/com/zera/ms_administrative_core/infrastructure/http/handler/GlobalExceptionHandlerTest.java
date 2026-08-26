@@ -131,6 +131,32 @@ class GlobalExceptionHandlerTest {
         assertTrue(result.getDetail().contains(", "));
     }
 
+    // --- InvitationNotFoundException ---
+
+    @Test
+    @DisplayName("Should return 404 when InvitationNotFoundException is thrown")
+    void shouldReturn404OnInvitationNotFound() {
+        InvitationNotFoundException ex = new InvitationNotFoundException("123456");
+
+        ProblemDetail result = handler.handleInvitationNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- InvitationExpiredException ---
+
+    @Test
+    @DisplayName("Should return 422 when InvitationExpiredException is thrown")
+    void shouldReturn422OnInvitationExpired() {
+        InvitationExpiredException ex = new InvitationExpiredException("123456");
+
+        ProblemDetail result = handler.handleInvitationExpired(ex);
+
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
     // --- RecyclingNotFoundException ---
 
     @Test

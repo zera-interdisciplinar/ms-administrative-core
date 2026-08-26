@@ -3,6 +3,8 @@ package com.zera.ms_administrative_core.infrastructure.http.handler;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
+import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredException;
+import com.zera.ms_administrative_core.core.domain.exception.InvitationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 
@@ -51,6 +53,16 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(java.util.stream.Collectors.joining(", "));
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+    }
+
+    @ExceptionHandler(InvitationNotFoundException.class)
+    public ProblemDetail handleInvitationNotFound(InvitationNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvitationExpiredException.class)
+    public ProblemDetail handleInvitationExpired(InvitationExpiredException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     @ExceptionHandler(RecyclingNotFoundException.class)
