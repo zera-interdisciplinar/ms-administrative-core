@@ -4,15 +4,18 @@ import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 import com.zera.ms_administrative_core.core.repository.UnitRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class RegisterUnitImpl implements RegisterUnit {
     UnitRepository unitRepository;
     OrganizationRepository organizationRepository;
 
-    public RegisterUnitImpl(UnitRepository unitRepository) {
+    public RegisterUnitImpl(UnitRepository unitRepository, OrganizationRepository organizationRepository) {
         this.unitRepository = unitRepository;
+        this.organizationRepository = organizationRepository;
     }
 
 

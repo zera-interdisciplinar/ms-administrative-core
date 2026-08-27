@@ -3,9 +3,11 @@ package com.zera.ms_administrative_core.core.usecase.unit.renameUnit;
 import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.repository.UnitRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class RenameUnitImpl implements RenameUnit {
     UnitRepository repository;
 
