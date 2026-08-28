@@ -16,8 +16,8 @@ public class FindAllUnitsByOrganizationImpl implements FindAllUnitsByOrganizatio
     }
 
     @Override
-    public List<UnitOutput> execute(UUID organizationId) {
-        return repository.findByOrganization(organizationId).stream()
+    public List<UnitOutput> execute(UUID organizationId, int page, int size) {
+        return repository.findAll(organizationId, page, size).stream()
                 .map(UnitOutput::from)
                 .toList();
     }

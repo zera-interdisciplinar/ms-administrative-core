@@ -4,5 +4,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface FindAllUnitsByOrganization {
-    List<UnitOutput> execute(UUID organizationId);
+    List<UnitOutput> execute(UUID organizationId, int page, int size);
 }
