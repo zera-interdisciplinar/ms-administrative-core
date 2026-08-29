@@ -17,6 +17,6 @@ public interface OrganizationRepository {
     Optional<Organization> findByEmail(Email email);
     boolean existsByCnpj(Cnpj cnpj);
     boolean existsByEmail(Email email);
-    List<Organization> findAll(Plan plan, Status status, int size, int page);
+    List<Organization> findAll(Plan plan, Status status, int page, int size);
     void delete(UUID id);
 }

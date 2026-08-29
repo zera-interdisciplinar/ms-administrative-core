@@ -1,6 +1,5 @@
 package com.zera.ms_administrative_core.infrastructure.http.controller;
 
-import com.zera.ms_administrative_core.core.domain.entity.Organization;
 import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.usecase.organization.activateOrganization.ActivateOrganization;

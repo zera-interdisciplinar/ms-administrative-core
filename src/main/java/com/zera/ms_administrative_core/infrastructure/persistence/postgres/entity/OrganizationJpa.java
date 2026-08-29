@@ -3,8 +3,6 @@ package com.zera.ms_administrative_core.infrastructure.persistence.postgres.enti
 import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

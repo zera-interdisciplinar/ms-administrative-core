@@ -4,7 +4,6 @@ import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 import com.zera.ms_administrative_core.core.repository.UnitRepository;
-import com.zera.ms_administrative_core.core.usecase.unit.findUnit.UnitOutput;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

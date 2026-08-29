@@ -63,7 +63,7 @@ public class OrganizationRepositoryImpl implements OrganizationRepository {
     }
 
     @Override
-    public List<Organization> findAll(Plan plan, Status status, int size, int page) {
+    public List<Organization> findAll(Plan plan, Status status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return jpa.findAllByPlanAndStatus(plan, status, pageable).stream()
                 .map(mapper::toDomain)

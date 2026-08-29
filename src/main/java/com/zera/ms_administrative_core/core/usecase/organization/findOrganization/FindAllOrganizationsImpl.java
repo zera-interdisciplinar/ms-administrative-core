@@ -17,8 +17,8 @@ public class FindAllOrganizationsImpl implements FindAllOrganizations {
     }
 
     @Override
-    public List<OrganizationOutput> execute(Plan plan, Status status, int size, int page) {
-        return repository.findAll(plan, status, size, page).stream()
+    public List<OrganizationOutput> execute(Plan plan, Status status, int page, int size) {
+        return repository.findAll(plan, status, page, size).stream()
                 .map(OrganizationOutput::from)
                 .toList();
     }
