@@ -6,6 +6,7 @@ import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.*;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterRecyclingTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterTelephoneOutput;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUserTelephone;
+import com.zera.ms_administrative_core.infrastructure.http.request.ChangeTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserTelephoneRequest;
 import jakarta.validation.Valid;
@@ -98,5 +99,21 @@ public class TelephoneController {
         return ResponseEntity.ok(output);
     }
 
+    @PatchMapping("/{id}/change")
+    public ResponseEntity<Void> change(
+            @PathVariable UUID id,
+            @RequestBody @Valid ChangeTelephoneRequest request
+    ){
+        changeTelephone.execute(id, request.number());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> change(
+            @PathVariable UUID id
+    ){
+        deleteTelephone.execute(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }
