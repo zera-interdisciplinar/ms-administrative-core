@@ -2,6 +2,7 @@ package com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone
 
 import com.zera.ms_administrative_core.core.domain.entity.Telephone;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.valueobject.TelephoneNumber;
 import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 import com.zera.ms_administrative_core.core.repository.TelephoneRepository;
@@ -28,9 +29,9 @@ public class RegisterRecyclingTelephoneImpl implements RegisterRecyclingTelephon
             throw new RecyclingNotFoundException(command.recyclingBusinessId());
         }
 
-        // TODO: garantir unicidade do telefone por recycling business (relação 1:1).
-        //  Envolve checar telephoneRepository.findByRecyclingBusinessId(...) e lançar
-        //  exceção de domínio, além de constraint UNIQUE (recycling_business_id) na migration.
+        if (telephoneRepository.findByRecyclingBusinessId(command.recyclingBusinessId()).isPresent()) {
+            throw TelephoneAlreadyRegisteredException.forRecyclingBusiness(command.recyclingBusinessId());
+        }
 
         TelephoneNumber number = new TelephoneNumber(command.number());
 

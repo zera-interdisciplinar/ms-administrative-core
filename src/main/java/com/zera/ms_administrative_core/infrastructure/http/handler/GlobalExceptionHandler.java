@@ -5,6 +5,7 @@ import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjExceptio
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
@@ -50,6 +51,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EmailAlreadyInUseException.class)
     public ProblemDetail handleEmailInUse(EmailAlreadyInUseException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(TelephoneAlreadyRegisteredException.class)
+    public ProblemDetail handleTelephoneAlreadyRegistered(TelephoneAlreadyRegisteredException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 

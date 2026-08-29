@@ -3,6 +3,7 @@ package com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone
 import com.zera.ms_administrative_core.core.domain.entity.Telephone;
 import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.entity.User;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.TelephoneNumber;
@@ -32,6 +33,10 @@ public class RegisterUserTelephoneImpl implements RegisterUserTelephone {
     public RegisterTelephoneOutput execute(RegisterUserTelephoneCommand command) {
         User user = userRepository.findById(command.userId()).orElseThrow( () -> new UserNotFoundException(command.userId()));
         Unit unit = unitRepository.findById(user.getUnitId()).orElseThrow( () -> new UnitNotFoundException(user.getUnitId()));
+
+        if (telephoneRepository.findByUserId(user.getUserId()).isPresent()) {
+            throw TelephoneAlreadyRegisteredException.forUser(user.getUserId());
+        }
 
         TelephoneNumber telephoneNumber = new TelephoneNumber(command.number());
         Telephone telephone = new Telephone(

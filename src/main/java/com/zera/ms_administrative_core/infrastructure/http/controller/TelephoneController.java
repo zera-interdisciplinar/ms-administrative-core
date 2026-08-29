@@ -70,6 +70,18 @@ public class TelephoneController {
         return ResponseEntity.ok(findTelephoneById.execute(id));
     }
 
+    //TODO: Ver sobre a necessidade de mais de um telefone por usuario/registradora, ou manter unicidade
+
+    @GetMapping("/user")
+    public ResponseEntity<TelephoneOutput> findByUser(@RequestParam UUID userId) {
+        return ResponseEntity.ok(findTelephoneByUserId.execute(userId));
+    }
+
+    @GetMapping("/recyclings")
+    public ResponseEntity<TelephoneOutput> findByRecycling(@RequestParam UUID recyclingBusinessId) {
+        return ResponseEntity.ok(findTelephoneByRecyclingBusinessId.execute(recyclingBusinessId));
+    }
+
     @PostMapping("/user")
     public ResponseEntity<RegisterTelephoneOutput> registerForUser(
             @RequestBody @Valid RegisterUserTelephoneRequest request
