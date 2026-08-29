@@ -5,6 +5,7 @@ import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjExceptio
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnitNotFoundException.class)
     public ProblemDetail handleUnitNotFound(UnitNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(TelephoneNotFoundException.class)
+    public ProblemDetail handleTelephoneNotFound(TelephoneNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
