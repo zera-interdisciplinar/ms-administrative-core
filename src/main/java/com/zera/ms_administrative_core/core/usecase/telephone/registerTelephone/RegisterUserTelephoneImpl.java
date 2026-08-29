@@ -38,14 +38,14 @@ public class RegisterUserTelephoneImpl implements RegisterUserTelephone {
                 UUID.randomUUID(),
                 telephoneNumber,
                 user.getUserId(),
-                user.getUnitId(),
-                unit.getOrganizationId()
+                unit.getOrganizationId(),
+                user.getUnitId()
         );
         telephoneRepository.save(telephone);
 
         return new RegisterTelephoneOutput(
                 telephone.getTelephoneId(),
-                telephone.getNumber().toString()
+                telephone.getNumber().value()
         );
     }
 }
