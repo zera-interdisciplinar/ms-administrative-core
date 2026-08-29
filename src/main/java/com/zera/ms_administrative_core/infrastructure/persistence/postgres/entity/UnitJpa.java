@@ -12,8 +12,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "unit")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 public class UnitJpa {
 
     @Id
@@ -31,4 +30,12 @@ public class UnitJpa {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public UnitJpa(UUID id, String name, UUID organizationId, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.name = name;
+        this.organizationId = organizationId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

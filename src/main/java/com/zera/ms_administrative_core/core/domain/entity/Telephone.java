@@ -16,6 +16,18 @@ public class Telephone {
     private LocalDateTime updatedAt;
 
     // Constructors
+
+    public Telephone(UUID telephoneId, TelephoneNumber number, UUID userId, UUID organizationId, UUID unitId, UUID recyclingBusinessId, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.telephoneId = telephoneId;
+        this.number = number;
+        this.userId = userId;
+        this.organizationId = organizationId;
+        this.unitId = unitId;
+        this.recyclingBusinessId = recyclingBusinessId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     // Users
     public Telephone(UUID telephoneId, TelephoneNumber number, UUID userId, UUID organizationId, UUID unitId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.telephoneId = telephoneId;
