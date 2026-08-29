@@ -3,7 +3,9 @@ package com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapp
 import com.zera.ms_administrative_core.core.domain.entity.Telephone;
 import com.zera.ms_administrative_core.core.domain.valueobject.TelephoneNumber;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.TelephoneJpa;
+import org.springframework.stereotype.Component;
 
+@Component
 public class TelephoneMapper {
     public Telephone toDomain(TelephoneJpa jpa){
         return new Telephone(
@@ -21,7 +23,7 @@ public class TelephoneMapper {
     public TelephoneJpa toJpa(Telephone domain) {
         return new TelephoneJpa(
                 domain.getTelephoneId(),
-                domain.getNumber().toString(),
+                domain.getNumber().value(),
                 domain.getUserId(),
                 domain.getOrganizationId(),
                 domain.getUnitId(),

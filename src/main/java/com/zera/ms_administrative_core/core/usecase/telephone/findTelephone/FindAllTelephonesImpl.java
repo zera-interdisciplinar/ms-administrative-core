@@ -15,8 +15,8 @@ public class FindAllTelephonesImpl implements FindAllTelephones {
     }
 
     @Override
-    public List<TelephoneOutput> execute() {
-        return repository.findAll().stream()
+    public List<TelephoneOutput> execute(int page, int size) {
+        return repository.findAll(page, size).stream()
                 .map(TelephoneOutput::from)
                 .toList();
     }

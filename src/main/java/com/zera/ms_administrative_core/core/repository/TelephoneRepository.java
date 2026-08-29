@@ -13,6 +13,6 @@ public interface TelephoneRepository {
     Optional<Telephone> findByRecyclingBusinessId(UUID id);
 
     void delete(Telephone telephone);
-    List<Telephone> findAll();
-    List<Telephone> findAllByOrganizationId(UUID id);
+    List<Telephone> findAll(int page, int size);
+    List<Telephone> findAllByOrganizationId(UUID id, int page, int size);
 }

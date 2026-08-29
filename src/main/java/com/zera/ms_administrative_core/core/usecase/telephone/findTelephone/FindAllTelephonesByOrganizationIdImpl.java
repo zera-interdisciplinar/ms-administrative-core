@@ -16,8 +16,8 @@ public class FindAllTelephonesByOrganizationIdImpl implements FindAllTelephonesB
     }
 
     @Override
-    public List<TelephoneOutput> execute(UUID organizationId) {
-        return repository.findAllByOrganizationId(organizationId).stream()
+    public List<TelephoneOutput> execute(UUID organizationId, int page, int size) {
+        return repository.findAllByOrganizationId(organizationId, page, size).stream()
                 .map(TelephoneOutput::from)
                 .toList();
     }
