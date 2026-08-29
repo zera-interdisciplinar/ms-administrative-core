@@ -5,6 +5,4 @@ import java.util.UUID;
 public record RegisterUnitCommand(
         UUID organizationId,
         String name
-) {
-
-}
+) {}

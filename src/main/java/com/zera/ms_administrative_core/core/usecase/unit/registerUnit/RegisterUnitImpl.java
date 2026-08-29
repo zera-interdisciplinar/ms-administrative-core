@@ -4,6 +4,7 @@ import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
 import com.zera.ms_administrative_core.core.repository.UnitRepository;
+import com.zera.ms_administrative_core.core.usecase.unit.findUnit.UnitOutput;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -20,7 +21,7 @@ public class RegisterUnitImpl implements RegisterUnit {
 
 
     @Override
-    public void execute(RegisterUnitCommand command) {
+    public RegisterUnitOutput execute(RegisterUnitCommand command) {
         if (organizationRepository.findById(command.organizationId()).isEmpty()){
             throw new OrganizationNotFoundException(command.organizationId());
         }
@@ -31,5 +32,7 @@ public class RegisterUnitImpl implements RegisterUnit {
                 command.organizationId()
         );
         unitRepository.save(u);
+
+        return new RegisterUnitOutput(u.getUnitId(), u.getName(), u.getOrganizationId());
     }
 }
