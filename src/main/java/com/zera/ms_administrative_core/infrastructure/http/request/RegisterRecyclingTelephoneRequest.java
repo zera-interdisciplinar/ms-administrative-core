@@ -7,10 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record RegisterRecyclingTelephoneRequest(
-        @NotNull UUID id,
+        @NotNull UUID recyclingBusinessId,
         @NotBlank String number
         ) {
     public RegisterRecyclingTelephoneCommand toCommand() {
-        return new RegisterRecyclingTelephoneCommand(id, number);
+        return new RegisterRecyclingTelephoneCommand(recyclingBusinessId, number);
     }
 }

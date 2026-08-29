@@ -12,7 +12,9 @@ import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserT
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -88,7 +90,7 @@ public class TelephoneController {
             @RequestBody @Valid RegisterUserTelephoneRequest request
             ){
         RegisterTelephoneOutput output = registerUserTelephone.execute(request.toCommand());
-        return ResponseEntity.ok(output);
+        return created(output);
     }
 
     @PostMapping("/recyclings")
@@ -96,11 +98,11 @@ public class TelephoneController {
         @RequestBody @Valid RegisterRecyclingTelephoneRequest request
     ){
         RegisterTelephoneOutput output = registerRecyclingTelephone.execute(request.toCommand());
-        return ResponseEntity.ok(output);
+        return created(output);
     }
 
-    @PatchMapping("/{id}/change")
-    public ResponseEntity<Void> change(
+    @PatchMapping("/{id}/number")
+    public ResponseEntity<Void> changeNumber(
             @PathVariable UUID id,
             @RequestBody @Valid ChangeTelephoneRequest request
     ){
@@ -109,11 +111,20 @@ public class TelephoneController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> change(
+    public ResponseEntity<Void> delete(
             @PathVariable UUID id
     ){
         deleteTelephone.execute(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private ResponseEntity<RegisterTelephoneOutput> created(RegisterTelephoneOutput output) {
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/api/v1/telephone/{id}")
+                .buildAndExpand(output.telephoneId())
+                .toUri();
+        return ResponseEntity.created(location).body(output);
     }
 
 }

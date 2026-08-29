@@ -16,9 +16,9 @@ import java.util.UUID;
 
 @Service
 public class RegisterUserTelephoneImpl implements RegisterUserTelephone {
-    TelephoneRepository telephoneRepository;
-    UserRepository userRepository;
-    UnitRepository unitRepository;
+    private final TelephoneRepository telephoneRepository;
+    private final UserRepository userRepository;
+    private final UnitRepository unitRepository;
 
     public RegisterUserTelephoneImpl(
             TelephoneRepository telephoneRepository,
