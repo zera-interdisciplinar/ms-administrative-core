@@ -4,12 +4,14 @@ import com.zera.ms_administrative_core.core.usecase.telephone.changeTelephone.Ch
 import com.zera.ms_administrative_core.core.usecase.telephone.deleteTelephone.DeleteTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.*;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterRecyclingTelephone;
+import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterTelephoneOutput;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUserTelephone;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingTelephoneRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserTelephoneRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -52,5 +54,21 @@ public class TelephoneController {
             @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(findAllTelephones.execute(page, size));
+    }
+
+    @PostMapping("/user")
+    public ResponseEntity<RegisterTelephoneOutput> registerForUser(
+            @RequestBody @Valid RegisterUserTelephoneRequest request
+            ){
+        RegisterTelephoneOutput output = registerUserTelephone.execute(request.toCommand());
+        return ResponseEntity.ok(output);
+    }
+
+    @PostMapping("/recyclings")
+    public ResponseEntity<RegisterTelephoneOutput> registerForRecycling(
+        @RequestBody @Valid RegisterRecyclingTelephoneRequest request
+    ){
+        RegisterTelephoneOutput output = registerRecyclingTelephone.execute(request.toCommand());
+        return ResponseEntity.ok(output);
     }
 }
