@@ -4,12 +4,14 @@ import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.usecase.organization.activateOrganization.ActivateOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.changeOrganizationEmail.ChangeOrganizationEmail;
+import com.zera.ms_administrative_core.core.usecase.organization.changeOrganizationPlan.ChangeOrganizationPlan;
 import com.zera.ms_administrative_core.core.usecase.organization.deactivateOrganization.DeactivateOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.findOrganization.*;
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganizationOutput;
 import com.zera.ms_administrative_core.core.usecase.organization.renameOrganization.RenameOrganization;
 import com.zera.ms_administrative_core.core.usecase.organization.suspendOrganization.SuspendOrganization;
+import com.zera.ms_administrative_core.infrastructure.http.request.ChangeOrganizationPlanRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterOrganizationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -30,22 +32,22 @@ public class OrganizationController {
     private final FindOrganizationByEmail findOrganizationByEmail;
     private final RenameOrganization renameOrganization;
     private final ChangeOrganizationEmail changeOrganizationEmail;
+    private final ChangeOrganizationPlan changeOrganizationPlan;
     private final ActivateOrganization activateOrganization;
     private final DeactivateOrganization deactivateOrganization;
     private final SuspendOrganization suspendOrganization;
 
-    public OrganizationController(
-            FindAllOrganizations findAllOrganizations,
-            RegisterOrganization registerOrganization,
-            FindOrganizationById findOrganizationById,
-            FindOrganizationByCnpj findOrganizationByCnpj,
-            FindOrganizationByEmail findOrganizationByEmail,
-            RenameOrganization renameOrganization,
-            ChangeOrganizationEmail changeOrganizationEmail,
-            ActivateOrganization activateOrganization,
-            DeactivateOrganization deactivateOrganization,
-            SuspendOrganization suspendOrganization) {
-
+    public OrganizationController(FindAllOrganizations findAllOrganizations,
+                                  RegisterOrganization registerOrganization,
+                                  FindOrganizationById findOrganizationById,
+                                  FindOrganizationByCnpj findOrganizationByCnpj,
+                                  FindOrganizationByEmail findOrganizationByEmail,
+                                  RenameOrganization renameOrganization,
+                                  ChangeOrganizationEmail changeOrganizationEmail,
+                                  ActivateOrganization activateOrganization,
+                                  DeactivateOrganization deactivateOrganization,
+                                  SuspendOrganization suspendOrganization,
+                                  ChangeOrganizationPlan changeOrganizationPlan) {
         this.findAllOrganizations = findAllOrganizations;
         this.registerOrganization = registerOrganization;
         this.findOrganizationById = findOrganizationById;
@@ -56,8 +58,9 @@ public class OrganizationController {
         this.activateOrganization = activateOrganization;
         this.deactivateOrganization = deactivateOrganization;
         this.suspendOrganization = suspendOrganization;
+        this.changeOrganizationPlan = changeOrganizationPlan;
     }
-    
+
     @GetMapping
     public ResponseEntity<List<OrganizationOutput>> findAll(
             @RequestParam(required = false) Plan plan,
@@ -113,6 +116,15 @@ public class OrganizationController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/plan")
+    public ResponseEntity<Void> changePlan(
+            @PathVariable UUID id,
+            @RequestBody @Valid ChangeOrganizationPlanRequest request
+    ) {
+        changeOrganizationPlan.execute(id, request.plan());
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/activate")
     public ResponseEntity<Void> activate(
             @PathVariable UUID id
@@ -136,6 +148,5 @@ public class OrganizationController {
         suspendOrganization.execute(id);
         return ResponseEntity.noContent().build();
     }
-
 
 }
