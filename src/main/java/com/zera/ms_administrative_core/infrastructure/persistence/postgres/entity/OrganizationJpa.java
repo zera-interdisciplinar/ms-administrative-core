@@ -4,6 +4,7 @@ import com.zera.ms_administrative_core.core.domain.entity.Plan;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,8 @@ import java.util.UUID;
 
 @Entity
 @Getter
+@Table(name = "organization")
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrganizationJpa {
     @Id
@@ -40,15 +43,4 @@ public class OrganizationJpa {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    public OrganizationJpa(UUID id, String name, String cnpj, Status status, String email, Plan plan, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.name = name;
-        this.cnpj = cnpj;
-        this.status = status;
-        this.email = email;
-        this.plan = plan;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
 }

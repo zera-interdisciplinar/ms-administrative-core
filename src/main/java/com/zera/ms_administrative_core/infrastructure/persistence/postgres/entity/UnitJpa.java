@@ -2,6 +2,7 @@ package com.zera.ms_administrative_core.infrastructure.persistence.postgres.enti
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 @Table(name = "unit")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class UnitJpa {
 
     @Id
@@ -29,12 +31,4 @@ public class UnitJpa {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    public UnitJpa(UUID id, String name, UUID organizationId, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.name = name;
-        this.organizationId = organizationId;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
 }
