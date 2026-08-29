@@ -3,7 +3,9 @@ package com.zera.ms_administrative_core.infrastructure.http.handler;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
+import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 
 import java.util.Map;
@@ -28,6 +30,16 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleInvalidCnpj(InvalidCnpjException ex) {
         return Map.of("error", ex.getMessage());
+    }
+
+    @ExceptionHandler(OrganizationNotFoundException.class)
+    public ProblemDetail handleOrganizationNotFound(OrganizationNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnitNotFoundException.class)
+    public ProblemDetail handleUnitNotFound(UnitNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(EmailAlreadyInUseException.class)
