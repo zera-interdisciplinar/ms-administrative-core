@@ -1,6 +1,7 @@
 package com.zera.ms_administrative_core.infrastructure.http.handler;
 
 import com.zera.ms_administrative_core.core.domain.exception.*;
+import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import org.junit.jupiter.api.BeforeEach;
@@ -142,5 +143,84 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
         assertEquals(ex.getMessage(), result.getBody());
+    }
+
+    // --- InvalidTelephoneNumberException ---
+
+    @Test
+    @DisplayName("Should return 400 when InvalidTelephoneNumberException is thrown")
+    void shouldReturn400OnInvalidTelephoneNumber() {
+        InvalidTelephoneNumberException ex = new InvalidTelephoneNumberException("123");
+
+        ProblemDetail result = handler.handleInvalidTelephoneNumber(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- OrganizationNotFoundException ---
+
+    @Test
+    @DisplayName("Should return 404 when OrganizationNotFoundException is thrown")
+    void shouldReturn404OnOrganizationNotFound() {
+        OrganizationNotFoundException ex = new OrganizationNotFoundException(UUID.randomUUID());
+
+        ProblemDetail result = handler.handleOrganizationNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- UnitNotFoundException ---
+
+    @Test
+    @DisplayName("Should return 404 when UnitNotFoundException is thrown")
+    void shouldReturn404OnUnitNotFound() {
+        UnitNotFoundException ex = new UnitNotFoundException(UUID.randomUUID());
+
+        ProblemDetail result = handler.handleUnitNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- TelephoneNotFoundException ---
+
+    @Test
+    @DisplayName("Should return 404 when TelephoneNotFoundException is thrown")
+    void shouldReturn404OnTelephoneNotFound() {
+        TelephoneNotFoundException ex = new TelephoneNotFoundException(UUID.randomUUID());
+
+        ProblemDetail result = handler.handleTelephoneNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- CnpjAlreadyInUseException ---
+
+    @Test
+    @DisplayName("Should return 409 when CnpjAlreadyInUseException is thrown")
+    void shouldReturn409OnCnpjAlreadyInUse() {
+        CnpjAlreadyInUseException ex = new CnpjAlreadyInUseException(new Cnpj("11.222.333/0001-81"));
+
+        ProblemDetail result = handler.handleCnpjInUse(ex);
+
+        assertEquals(HttpStatus.CONFLICT.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- TelephoneAlreadyRegisteredException ---
+
+    @Test
+    @DisplayName("Should return 409 when TelephoneAlreadyRegisteredException is thrown")
+    void shouldReturn409OnTelephoneAlreadyRegistered() {
+        TelephoneAlreadyRegisteredException ex =
+                TelephoneAlreadyRegisteredException.forUser(UUID.randomUUID());
+
+        ProblemDetail result = handler.handleTelephoneAlreadyRegistered(ex);
+
+        assertEquals(HttpStatus.CONFLICT.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
     }
 }
