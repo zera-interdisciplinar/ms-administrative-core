@@ -49,13 +49,16 @@ public class AlertJpa {
     @Column(name = "occurred_at", nullable = false)
     private LocalDateTime occurredAt;
 
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     public AlertJpa(UUID id, AlertStatus status, UUID unitId, UUID eventId,
                     UUID ruleId, UUID userId, String description,
                     Severity severity, String kind, LocalDateTime occurredAt,
-                    LocalDateTime updatedAt) {
+                    LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.status = status;
         this.unitId = unitId;
@@ -66,6 +69,7 @@ public class AlertJpa {
         this.severity = severity;
         this.kind = kind;
         this.occurredAt = occurredAt;
+        this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 }

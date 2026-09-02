@@ -27,10 +27,11 @@ class AlertMapperTest {
         UUID ruleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         LocalDateTime occurredAt = LocalDateTime.of(2024, 1, 1, 8, 0);
+        LocalDateTime createdAt = LocalDateTime.of(2024, 1, 1, 8, 30);
         LocalDateTime updatedAt = LocalDateTime.of(2024, 1, 1, 9, 0);
 
         AlertJpa jpa = new AlertJpa(id, AlertStatus.OPEN, unitId, eventId, ruleId, userId, "desc", Severity.HIGH,
-                AlertKind.STORAGE.name(), occurredAt, updatedAt);
+                AlertKind.STORAGE.name(), occurredAt, createdAt, updatedAt);
 
         Alert domain = mapper.toDomain(jpa);
 
@@ -44,6 +45,7 @@ class AlertMapperTest {
         assertEquals(Severity.HIGH, domain.getSeverity());
         assertEquals(AlertKind.STORAGE, domain.getKind());
         assertEquals(occurredAt, domain.getOccurredAt());
+        assertEquals(createdAt, domain.getCreatedAt());
         assertEquals(updatedAt, domain.getUpdatedAt());
     }
 
@@ -56,10 +58,11 @@ class AlertMapperTest {
         UUID ruleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         LocalDateTime occurredAt = LocalDateTime.of(2024, 1, 1, 8, 0);
+        LocalDateTime createdAt = LocalDateTime.of(2024, 1, 1, 8, 30);
         LocalDateTime updatedAt = LocalDateTime.of(2024, 1, 1, 9, 0);
 
-        Alert domain = new Alert(AlertKind.TIME, Severity.MEDIUM, "desc", userId, ruleId, eventId, updatedAt,
-                occurredAt, unitId, AlertStatus.CLOSED, id);
+        Alert domain = new Alert(AlertKind.TIME, Severity.MEDIUM, "desc", userId, ruleId, eventId, createdAt,
+                updatedAt, occurredAt, unitId, AlertStatus.CLOSED, id);
 
         AlertJpa jpa = mapper.toJpa(domain);
 
@@ -73,6 +76,7 @@ class AlertMapperTest {
         assertEquals(Severity.MEDIUM, jpa.getSeverity());
         assertEquals(AlertKind.TIME.name(), jpa.getKind());
         assertEquals(occurredAt, jpa.getOccurredAt());
+        assertEquals(createdAt, jpa.getCreatedAt());
         assertEquals(updatedAt, jpa.getUpdatedAt());
     }
 }

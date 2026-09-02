@@ -3,6 +3,7 @@ package com.zera.ms_administrative_core.core.usecase.user.registerUser;
 import java.util.UUID;
 
 import com.zera.ms_administrative_core.core.domain.UserFactory;
+import com.zera.ms_administrative_core.core.domain.entity.Employee;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.service.PasswordHasher;
@@ -41,12 +42,14 @@ public class RegisterUserImpl implements RegisterUser {
                 email,
                 hashedPassword,
                 Status.ACTIVE,
-                command.unitId()
+                command.unitId(),
+                command.managerId()
         );
 
         userRepository.save(user);
+        UUID managerId = user instanceof Employee employee ? employee.getManagerId() : null;
         return new RegisterUserOutput(
-                user.getUserId(), user.getName(), user.getEmail(), user.role()
+                user.getUserId(), user.getName(), user.getEmail(), user.role(), managerId
         );
     }
 }

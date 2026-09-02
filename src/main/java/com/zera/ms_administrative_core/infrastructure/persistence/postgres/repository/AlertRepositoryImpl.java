@@ -1,6 +1,10 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.repository;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import com.zera.ms_administrative_core.core.domain.entity.Alert;
+import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 import com.zera.ms_administrative_core.core.repository.AlertRepository;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.AlertJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.AlertMapper;
@@ -21,5 +25,10 @@ public class AlertRepositoryImpl implements AlertRepository {
     public Alert save(Alert alert) {
         AlertJpa saved = jpa.save(mapper.toJpa(alert));
         return mapper.toDomain(saved);
+    }
+
+    @Override
+    public Optional<Alert> findOpenByRuleIdAndEventId(UUID ruleId, UUID eventId) {
+        return jpa.findByRuleIdAndEventIdAndStatus(ruleId, eventId, AlertStatus.OPEN).map(mapper::toDomain);
     }
 }

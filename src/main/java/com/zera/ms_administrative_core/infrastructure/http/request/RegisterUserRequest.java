@@ -14,9 +14,10 @@ public record RegisterUserRequest(
         @NotBlank @Email String email,
         @NotBlank String rawPassword,
         @NotNull Role role,
-        @NotNull UUID unitId
+        @NotNull UUID unitId,
+        UUID managerId
 ) {
     public RegisterUserCommand toCommand() {
-        return new RegisterUserCommand(name, role, rawPassword, email, unitId);
+        return new RegisterUserCommand(name, role, rawPassword, email, unitId, managerId);
     }
 }

@@ -3,6 +3,7 @@ package com.zera.ms_administrative_core.infrastructure.http.controller;
 import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.usecase.user.activateUser.ActivateUser;
+import com.zera.ms_administrative_core.core.usecase.user.assignManager.AssignManager;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePasswordCommand;
@@ -15,6 +16,7 @@ import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUs
 import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
+import com.zera.ms_administrative_core.infrastructure.http.request.AssignManagerRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeEmailRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangePasswordRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserRequest;
@@ -41,6 +43,7 @@ public class UserController {
     private final FindUserByEmail findUserByEmail;
     private final FindAllUsers findAllUsers;
     private final FindUserById findUserById;
+    private final AssignManager assignManager;
 
     public UserController(RegisterUser registerUser,
                           RenameUser renameUser,
@@ -51,7 +54,8 @@ public class UserController {
                           SuspendUser suspendUser,
                           FindUserByEmail findUserByEmail,
                           FindUserById findUserById,
-                          FindAllUsers findAllUsers) {
+                          FindAllUsers findAllUsers,
+                          AssignManager assignManager) {
         this.registerUser = registerUser;
         this.renameUser = renameUser;
         this.changeEmail = changeEmail;
@@ -62,6 +66,7 @@ public class UserController {
         this.findUserByEmail = findUserByEmail;
         this.findAllUsers = findAllUsers;
         this.findUserById = findUserById;
+        this.assignManager = assignManager;
     }
 
     @PostMapping
@@ -79,6 +84,13 @@ public class UserController {
     public ResponseEntity<Void> rename(@PathVariable UUID id,
                                        @RequestBody @Valid RenameUserRequest request) {
         renameUser.execute(id, request.name());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/manager")
+    public ResponseEntity<Void> assignManager(@PathVariable UUID id,
+                                              @RequestBody @Valid AssignManagerRequest request) {
+        assignManager.execute(id, request.managerId());
         return ResponseEntity.noContent().build();
     }
 

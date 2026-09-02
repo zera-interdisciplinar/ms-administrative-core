@@ -16,20 +16,32 @@ public final class UserFactory {
 
     public static User create(Role role, UUID id, String name, Email email,
                                HashedPassword password, Status status, UUID unitId) {
+        return create(role, id, name, email, password, status, unitId, null);
+    }
+
+    public static User create(Role role, UUID id, String name, Email email,
+                               HashedPassword password, Status status, UUID unitId, UUID managerId) {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
         return switch (role) {
             case MANAGER  -> new Manager(id, name, email, password, status, unitId, now, now);
-            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, now, now);
+            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, now, now, managerId);
         };
     }
-    
+
     public static User load(Role role, UUID id, String name, Email email,
                                      HashedPassword password, Status status, UUID unitId,
                                      java.time.LocalDateTime createdAt,
                                      java.time.LocalDateTime updatedAt) {
+        return load(role, id, name, email, password, status, unitId, createdAt, updatedAt, null);
+    }
+
+    public static User load(Role role, UUID id, String name, Email email,
+                                     HashedPassword password, Status status, UUID unitId,
+                                     java.time.LocalDateTime createdAt,
+                                     java.time.LocalDateTime updatedAt, UUID managerId) {
         return switch (role) {
             case MANAGER  -> new Manager(id, name, email, password, status, unitId, createdAt, updatedAt);
-            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, createdAt, updatedAt);
+            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, createdAt, updatedAt, managerId);
         };
     }
 }

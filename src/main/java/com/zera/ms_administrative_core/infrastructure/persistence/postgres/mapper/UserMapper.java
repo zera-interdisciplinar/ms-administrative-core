@@ -1,6 +1,9 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper;
 
+import java.util.UUID;
+
 import com.zera.ms_administrative_core.core.domain.UserFactory;
+import com.zera.ms_administrative_core.core.domain.entity.Employee;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserMapper {
     public User toDomain(UserJpa user) {
+        UUID managerId = user instanceof EmployeeJpa employeeJpa ? employeeJpa.getManagerId() : null;
         return UserFactory.load(
                 user.getRole(),
                 user.getId(),
@@ -21,7 +25,8 @@ public class UserMapper {
                 user.getStatus(),
                 user.getUnitId(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                managerId
         );
     }
 
@@ -45,7 +50,8 @@ public class UserMapper {
                     domain.getStatus(),
                     domain.getUnitId(),
                     domain.getCreatedAt(),
-                    domain.getUpdatedAt()
+                    domain.getUpdatedAt(),
+                    ((Employee) domain).getManagerId()
             );
         };
     }
