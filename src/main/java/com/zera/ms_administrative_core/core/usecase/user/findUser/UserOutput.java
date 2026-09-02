@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.core.usecase.user.findUser;
 
+import com.zera.ms_administrative_core.core.domain.entity.Employee;
 import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
@@ -16,7 +17,8 @@ public record UserOutput(
         Status status,
         UUID unitId,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        UUID managerId
 ) {
     public static UserOutput from(User user) {
         return new UserOutput(
@@ -27,7 +29,8 @@ public record UserOutput(
                 user.getStatus(),
                 user.getUnitId(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                user instanceof Employee employee ? employee.getManagerId() : null
         );
     }
 }

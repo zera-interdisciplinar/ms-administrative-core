@@ -17,8 +17,12 @@ import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.AlertJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.AlertMapper;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +50,7 @@ class AlertRepositoryImplTest {
         LocalDateTime now = LocalDateTime.of(2024, 1, 1, 8, 0);
 
         Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", userId, UUID.randomUUID(),
-                UUID.randomUUID(), now, now, unitId, AlertStatus.OPEN, id);
+                UUID.randomUUID(), now, now, now, unitId, AlertStatus.OPEN, id);
 
         AlertJpa savedJpa = mapper.toJpa(alert);
         when(jpa.save(any(AlertJpa.class))).thenReturn(savedJpa);
@@ -56,5 +60,26 @@ class AlertRepositoryImplTest {
         assertEquals(id, result.getId());
         assertEquals(AlertStatus.OPEN, result.getStatus());
         verify(jpa).save(any(AlertJpa.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar o alerta OPEN existente para o par ruleId/eventId informado")
+    void shouldFindOpenAlertByRuleIdAndEventId() {
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.of(2024, 1, 1, 8, 0);
+
+        Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", UUID.randomUUID(), ruleId, eventId,
+                now, now, now, UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        AlertJpa jpaAlert = mapper.toJpa(alert);
+
+        when(jpa.findByRuleIdAndEventIdAndStatus(eq(ruleId), eq(eventId), eq(AlertStatus.OPEN)))
+                .thenReturn(Optional.of(jpaAlert));
+
+        Optional<Alert> result = repository.findOpenByRuleIdAndEventId(ruleId, eventId);
+
+        assertTrue(result.isPresent());
+        assertEquals(ruleId, result.get().getRuleId());
+        assertEquals(eventId, result.get().getEventId());
     }
 }

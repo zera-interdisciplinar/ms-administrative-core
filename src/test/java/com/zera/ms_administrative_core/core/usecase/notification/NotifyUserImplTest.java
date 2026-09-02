@@ -89,4 +89,57 @@ class NotifyUserImplTest {
 
         verify(alertRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Deve atualizar o alerta OPEN existente em vez de criar um duplicado quando ruleId/eventId já foram alertados")
+    void shouldRefreshExistingAlertInsteadOfDuplicating() {
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        Alert existing = new Alert(AlertKind.STORAGE, Severity.LOW, "storage almost full", userId, ruleId, eventId,
+                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        when(alertRepository.findOpenByRuleIdAndEventId(ruleId, eventId)).thenReturn(Optional.of(existing));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                eventId, ruleId, userId, UUID.randomUUID(),
+                "storage almost full", Severity.LOW, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        ArgumentCaptor<Alert> captor = ArgumentCaptor.forClass(Alert.class);
+        verify(alertRepository).save(captor.capture());
+        assertEquals(existing.getId(), captor.getValue().getId());
+        assertEquals(Severity.LOW, captor.getValue().getSeverity());
+    }
+
+    @Test
+    @DisplayName("Deve escalar a severidade do alerta existente quando a nova é maior")
+    void shouldEscalateSeverityWhenNewSeverityIsHigher() {
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        Alert existing = new Alert(AlertKind.STORAGE, Severity.LOW, "storage almost full", userId, ruleId, eventId,
+                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        when(alertRepository.findOpenByRuleIdAndEventId(ruleId, eventId)).thenReturn(Optional.of(existing));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                eventId, ruleId, userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        ArgumentCaptor<Alert> captor = ArgumentCaptor.forClass(Alert.class);
+        verify(alertRepository).save(captor.capture());
+        assertEquals(Severity.HIGH, captor.getValue().getSeverity());
+    }
 }

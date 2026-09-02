@@ -23,15 +23,17 @@ class AlertTest {
         UUID ruleId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         LocalDateTime occurredAt = LocalDateTime.of(2024, 1, 1, 10, 0);
+        LocalDateTime createdAt = LocalDateTime.of(2024, 1, 1, 10, 30);
         LocalDateTime updatedAt = LocalDateTime.of(2024, 1, 1, 11, 0);
 
         Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "disk almost full", userId, ruleId, eventId,
-                updatedAt, occurredAt, unitId, AlertStatus.OPEN, id);
+                createdAt, updatedAt, occurredAt, unitId, AlertStatus.OPEN, id);
 
         assertEquals(id, alert.getId());
         assertEquals(AlertStatus.OPEN, alert.getStatus());
         assertEquals(unitId, alert.getUnitId());
         assertEquals(occurredAt, alert.getOccurredAt());
+        assertEquals(createdAt, alert.getCreatedAt());
         assertEquals(updatedAt, alert.getUpdatedAt());
         assertEquals(eventId, alert.getEventId());
         assertEquals(ruleId, alert.getRuleId());
@@ -54,6 +56,7 @@ class AlertTest {
                 AlertStatus.OPEN, id);
 
         assertNotNull(alert.getOccurredAt());
+        assertNotNull(alert.getCreatedAt());
         assertNotNull(alert.getUpdatedAt());
         assertEquals(AlertKind.TIME, alert.getKind());
         assertEquals(Severity.LOW, alert.getSeverity());
@@ -97,6 +100,6 @@ class AlertTest {
     private Alert newOpenAlert() {
         return new Alert(AlertKind.STORAGE, Severity.LOW, "desc", UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), LocalDateTime.of(2024, 1, 1, 8, 0), LocalDateTime.of(2024, 1, 1, 8, 0),
-                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+                LocalDateTime.of(2024, 1, 1, 8, 0), UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
     }
 }
