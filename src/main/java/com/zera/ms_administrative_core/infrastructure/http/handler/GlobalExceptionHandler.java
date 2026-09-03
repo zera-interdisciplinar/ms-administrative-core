@@ -1,11 +1,18 @@
 package com.zera.ms_administrative_core.infrastructure.http.handler;
 
+import com.zera.ms_administrative_core.core.domain.exception.CnpjAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidCepException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidTelephoneNumberException;
 import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredException;
 import com.zera.ms_administrative_core.core.domain.exception.InvitationNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
+import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 
 import java.util.Map;
@@ -32,8 +39,38 @@ public class GlobalExceptionHandler {
         return Map.of("error", ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidTelephoneNumberException.class)
+    public ProblemDetail handleInvalidTelephoneNumber(InvalidTelephoneNumberException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrganizationNotFoundException.class)
+    public ProblemDetail handleOrganizationNotFound(OrganizationNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnitNotFoundException.class)
+    public ProblemDetail handleUnitNotFound(UnitNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(TelephoneNotFoundException.class)
+    public ProblemDetail handleTelephoneNotFound(TelephoneNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(EmailAlreadyInUseException.class)
     public ProblemDetail handleEmailInUse(EmailAlreadyInUseException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CnpjAlreadyInUseException.class)
+    public ProblemDetail handleCnpjInUse(CnpjAlreadyInUseException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(TelephoneAlreadyRegisteredException.class)
+    public ProblemDetail handleTelephoneAlreadyRegistered(TelephoneAlreadyRegisteredException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
