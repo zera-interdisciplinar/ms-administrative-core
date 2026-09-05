@@ -249,4 +249,30 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.CONFLICT.value(), result.getStatus());
         assertEquals(ex.getMessage(), result.getDetail());
     }
+
+    // --- InvalidCredentialsException ---
+
+    @Test
+    @DisplayName("Should return 401 when InvalidCredentialsException is thrown")
+    void shouldReturn401OnInvalidCredentials() {
+        InvalidCredentialsException ex = new InvalidCredentialsException();
+
+        ProblemDetail result = handler.handleInvalidCredentials(ex);
+
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- InvalidRefreshTokenException ---
+
+    @Test
+    @DisplayName("Should return 401 when InvalidRefreshTokenException is thrown")
+    void shouldReturn401OnInvalidRefreshToken() {
+        InvalidRefreshTokenException ex = new InvalidRefreshTokenException();
+
+        ProblemDetail result = handler.handleInvalidRefreshToken(ex);
+
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
 }
