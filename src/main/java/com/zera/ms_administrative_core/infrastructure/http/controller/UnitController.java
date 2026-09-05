@@ -9,8 +9,10 @@ import com.zera.ms_administrative_core.core.usecase.unit.registerUnit.RegisterUn
 import com.zera.ms_administrative_core.core.usecase.unit.renameUnit.RenameUnit;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUnitRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RenameUnitRequest;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -43,6 +45,7 @@ public class UnitController {
     }
 
     @PostMapping
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RegisterUnitOutput> register(
             @RequestBody @Valid RegisterUnitRequest request
         ){
@@ -73,6 +76,7 @@ public class UnitController {
     }
 
     @PatchMapping("/{id}/rename")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> rename(
             @PathVariable UUID id,
             @RequestBody @Valid RenameUnitRequest request
@@ -82,6 +86,7 @@ public class UnitController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         deleteUnit.execute(id);
         return ResponseEntity.noContent().build();

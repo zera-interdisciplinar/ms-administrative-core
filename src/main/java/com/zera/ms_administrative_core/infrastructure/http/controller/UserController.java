@@ -12,28 +12,24 @@ import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmail;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
-import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUser;
-import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
 import com.zera.ms_administrative_core.infrastructure.http.request.AssignManagerRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeEmailRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangePasswordRequest;
-import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RenameUserRequest;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
-    private final RegisterUser registerUser;
     private final RenameUser renameUser;
     private final ChangeEmail changeEmail;
     private final ChangePassword changePassword;
@@ -45,8 +41,7 @@ public class UserController {
     private final FindUserById findUserById;
     private final AssignManager assignManager;
 
-    public UserController(RegisterUser registerUser,
-                          RenameUser renameUser,
+    public UserController(RenameUser renameUser,
                           ChangeEmail changeEmail,
                           ChangePassword changePassword,
                           ActivateUser activateUser,
@@ -56,7 +51,6 @@ public class UserController {
                           FindUserById findUserById,
                           FindAllUsers findAllUsers,
                           AssignManager assignManager) {
-        this.registerUser = registerUser;
         this.renameUser = renameUser;
         this.changeEmail = changeEmail;
         this.changePassword = changePassword;
@@ -69,18 +63,8 @@ public class UserController {
         this.assignManager = assignManager;
     }
 
-    @PostMapping
-    public ResponseEntity<RegisterUserOutput> register(@RequestBody @Valid RegisterUserRequest request) {
-        RegisterUserOutput output = registerUser.execute(request.toCommand());
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(output.userId())
-                .toUri();
-        return ResponseEntity.created(location).body(output);
-    }
-
     @PatchMapping("/{id}/rename")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> rename(@PathVariable UUID id,
                                        @RequestBody @Valid RenameUserRequest request) {
         renameUser.execute(id, request.name());
@@ -88,6 +72,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/manager")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> assignManager(@PathVariable UUID id,
                                               @RequestBody @Valid AssignManagerRequest request) {
         assignManager.execute(id, request.managerId());
@@ -95,6 +80,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/email")
+    @PreAuthorize(Authz.SELF_OR_MANAGER)
     public ResponseEntity<Void> changeEmail(@PathVariable UUID id,
                                             @RequestBody @Valid ChangeEmailRequest request) {
         changeEmail.execute(id, request.email());
@@ -102,6 +88,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/password")
+    @PreAuthorize(Authz.SELF_OR_MANAGER)
     public ResponseEntity<Void> changePassword(@PathVariable UUID id,
                                                @RequestBody @Valid ChangePasswordRequest request) {
         changePassword.execute(new ChangePasswordCommand(
@@ -113,18 +100,21 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> activate(@PathVariable UUID id) {
         activateUser.execute(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
         deactivateUser.execute(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/suspend")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> suspend(@PathVariable UUID id) {
         suspendUser.execute(id);
         return ResponseEntity.noContent().build();

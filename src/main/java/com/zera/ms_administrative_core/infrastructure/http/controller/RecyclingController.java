@@ -5,9 +5,11 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import com.zera.ms_administrative_core.core.usecase.recycling.changeRecyclingEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindAllRecyclers;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingByCnpj;
@@ -44,6 +46,7 @@ public class RecyclingController {
     }
 
     @PostMapping
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RecyclingBusiness> register(
             @RequestBody RegisterRecyclingRequest request) {
 
@@ -71,6 +74,7 @@ public class RecyclingController {
     }
 
     @PatchMapping("/{id}/name")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> rename(
             @PathVariable UUID id,
             @RequestParam String name) {
@@ -80,6 +84,7 @@ public class RecyclingController {
     }
 
     @PatchMapping("/{id}/email")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> changeEmail(
             @PathVariable UUID id,
             @RequestParam String email) {

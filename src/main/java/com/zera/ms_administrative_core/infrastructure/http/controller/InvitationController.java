@@ -4,6 +4,7 @@ import java.net.URI;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUs
 import com.zera.ms_administrative_core.core.usecase.user.registerWithInvitationCode.RegisterWithInvitationCode;
 import com.zera.ms_administrative_core.infrastructure.http.request.GenerateInvitationCodeRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterWithInvitationCodeRequest;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 
 import jakarta.validation.Valid;
 
@@ -33,6 +35,7 @@ public class InvitationController {
     }
 
     @PostMapping
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<GenerateInvitationCodeOutput> generate(
             @RequestBody @Valid GenerateInvitationCodeRequest request) {
         GenerateInvitationCodeOutput output = generateInvitationCode.execute(request.managerId());

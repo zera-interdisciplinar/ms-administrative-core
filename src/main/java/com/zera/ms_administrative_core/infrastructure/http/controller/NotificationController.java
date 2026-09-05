@@ -20,6 +20,9 @@ public class NotificationController {
         this.notifyUser = notifyUser;
     }
 
+    // Chamada de servico-para-servico (ex.: ms-inventory / IA core). Exige apenas autenticacao —
+    // ainda nao ha identidade de servico/escopo. TODO: restringir a um consumer/escopo dedicado
+    // quando a autenticacao service-to-service for definida.
     @PostMapping("/alerts")
     public ResponseEntity<Void> receiveAlert(@RequestBody @Valid AlertNotificationRequest request) {
         notifyUser.execute(request.toCommand());
