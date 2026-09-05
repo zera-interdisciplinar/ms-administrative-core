@@ -30,9 +30,10 @@ Tokens emitidos com a chave antiga deixam de valer (o `kid` muda).
 
 ## 2. `ms-administrative-core-bootstrap` (opcional)
 
-Consumido **apenas** pela migration `V8`, que cria a árvore
-`organization → unit → MANAGER` inicial. Sem este Secret a migration é no-op.
-É idempotente pelo email: rodar de novo com um email já existente não faz nada.
+Consumido **apenas** pelo `InitialManagerSeeder` no startup, que cria a árvore
+`organization → unit → MANAGER` inicial. Sem este Secret o seeder é no-op.
+Roda em todo boot, idempotente pelo email: rodar de novo com um email já
+existente não faz nada.
 
 Chaves (todas como variáveis de ambiente `BOOTSTRAP_ADMIN_*`):
 
