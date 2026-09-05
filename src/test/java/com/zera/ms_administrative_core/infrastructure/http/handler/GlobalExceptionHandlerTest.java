@@ -10,9 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 import java.util.Map;
@@ -50,9 +53,10 @@ class GlobalExceptionHandlerTest {
     void shouldReturn400OnInvalidCnpj() {
         InvalidCnpjException ex = new InvalidCnpjException("00.000.000/0000-00");
 
-        Map<String, String> result = handler.handleInvalidCnpj(ex);
+        ProblemDetail result = handler.handleInvalidCnpj(ex);
 
-        assertEquals(ex.getMessage(), result.get("error"));
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
     }
 
     // --- EmailAlreadyInUseException ---
@@ -165,10 +169,10 @@ class GlobalExceptionHandlerTest {
     void shouldReturn404OnRecyclingNotFound() {
         RecyclingNotFoundException ex = new RecyclingNotFoundException(UUID.randomUUID());
 
-        ResponseEntity<String> result = handler.handleRecyclingNotFound(ex);
+        ProblemDetail result = handler.handleRecyclingNotFound(ex);
 
-        assertEquals(HttpStatus.NOT_FOUND, result.getStatusCode());
-        assertEquals(ex.getMessage(), result.getBody());
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
     }
 
     // --- InvalidTelephoneNumberException ---
@@ -274,5 +278,80 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED.value(), result.getStatus());
         assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- InvalidCepException ---
+
+    @Test
+    @DisplayName("Should return 400 when InvalidCepException is thrown")
+    void shouldReturn400OnInvalidCep() {
+        InvalidCepException ex = new InvalidCepException("00000");
+
+        ProblemDetail result = handler.handleInvalidCep(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- MethodArgumentTypeMismatchException (ex.: UUID invalido no path) ---
+
+    @Test
+    @DisplayName("Should return 400 when a path/query param has the wrong type")
+    void shouldReturn400OnTypeMismatch() {
+        MethodArgumentTypeMismatchException ex =
+                new MethodArgumentTypeMismatchException("abc", UUID.class, "id", null, null);
+
+        ProblemDetail result = handler.handleTypeMismatch(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertTrue(result.getDetail().contains("id"));
+    }
+
+    // --- HttpMessageNotReadableException (corpo JSON malformado) ---
+
+    @Test
+    @DisplayName("Should return 400 when the request body is unreadable")
+    void shouldReturn400OnUnreadableBody() {
+        HttpMessageNotReadableException ex =
+                new HttpMessageNotReadableException("bad", (org.springframework.http.HttpInputMessage) null);
+
+        ProblemDetail result = handler.handleUnreadableBody(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+    }
+
+    // --- AuthorizationDeniedException (@PreAuthorize) ---
+
+    @Test
+    @DisplayName("Should return 403 when authorization is denied")
+    void shouldReturn403OnAccessDenied() {
+        AuthorizationDeniedException ex = new AuthorizationDeniedException("nope",
+                new org.springframework.security.authorization.AuthorizationDecision(false));
+
+        ProblemDetail result = handler.handleAccessDenied(ex);
+
+        assertEquals(HttpStatus.FORBIDDEN.value(), result.getStatus());
+    }
+
+    // --- fallback ---
+
+    @Test
+    @DisplayName("Unmapped exception -> 500 with a generic body")
+    void shouldReturn500OnUnexpected() {
+        ResponseEntity<Object> result = handler.handleUnexpected(new IllegalStateException("boom"));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatusCode());
+        assertInstanceOf(ProblemDetail.class, result.getBody());
+    }
+
+    @Test
+    @DisplayName("Spring MVC ErrorResponse keeps its own status through the fallback")
+    void fallbackPreservesErrorResponseStatus() {
+        org.springframework.web.HttpRequestMethodNotSupportedException ex =
+                new org.springframework.web.HttpRequestMethodNotSupportedException("DELETE");
+
+        ResponseEntity<Object> result = handler.handleUnexpected(ex);
+
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED.value(), result.getStatusCode().value());
     }
 }

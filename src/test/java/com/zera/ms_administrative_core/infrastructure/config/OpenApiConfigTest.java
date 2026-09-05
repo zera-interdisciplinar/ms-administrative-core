@@ -33,7 +33,7 @@ class OpenApiConfigTest {
     @DisplayName("Should set correct version")
     void shouldSetCorrectVersion() {
         OpenAPI openAPI = config.openAPI();
-        assertEquals("v0", openAPI.getInfo().getVersion());
+        assertEquals("1.0.0", openAPI.getInfo().getVersion());
     }
 
     @Test
