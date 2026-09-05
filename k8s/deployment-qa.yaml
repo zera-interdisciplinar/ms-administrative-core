@@ -46,6 +46,11 @@ spec:
           initialDelaySeconds: 90
           periodSeconds: 10
           failureThreshold: 3
+        envFrom:
+        # Bootstrap opcional do primeiro MANAGER (BOOTSTRAP_ADMIN_*). Ver k8s/README.md.
+        - secretRef:
+            name: ms-administrative-core-bootstrap
+            optional: true
         env:
         - name: DB_HOST
           value: "postgres"
@@ -64,3 +69,13 @@ spec:
             secretKeyRef:
               name: postgres-secrets
               key: POSTGRES_PASSWORD
+        - name: JWT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ms-administrative-core-jwt
+              key: private.pem
+        - name: JWT_PUBLIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ms-administrative-core-jwt
+              key: public.pem
