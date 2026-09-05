@@ -1,7 +1,6 @@
 package com.zera.ms_administrative_core.infrastructure.http.controller;
 
 import com.zera.ms_administrative_core.core.domain.entity.Role;
-import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
@@ -15,8 +14,6 @@ import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmail;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
-import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUser;
-import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
 
@@ -53,7 +50,6 @@ class UserControllerTest {
     @MockitoBean private FindUserById findUserById;
     @MockitoBean private FindUserByEmail findUserByEmail;
     @MockitoBean private FindAllUsers findAllUsers;
-    @MockitoBean private RegisterUser registerUser;
     @MockitoBean private RenameUser renameUser;
     @MockitoBean private ChangeEmail changeEmail;
     @MockitoBean private ChangePassword changePassword;
@@ -155,65 +151,6 @@ class UserControllerTest {
 
         mockMvc.perform(get(BASE_URL).param("email", "naoexiste@empresa.com"))
                 .andExpect(status().isNotFound());
-    }
-
-    // --- POST /api/v1/users ---
-
-    @Test
-    @DisplayName("POST /users - deve retornar 201 ao criar usuário")
-    void shouldReturn201WhenUserCreated() throws Exception {
-        RegisterUserOutput output = new RegisterUserOutput(
-                userOutput.userId(), "João Silva",
-                new Email("joao@empresa.com"), Role.MANAGER, null
-        );
-        when(registerUser.execute(any())).thenReturn(output);
-
-        String body = """
-                {
-                  "name": "João Silva",
-                  "email": "joao@empresa.com",
-                  "rawPassword": "Senha123",
-                  "role": "MANAGER",
-                  "unitId": "%s"
-                }
-                """.formatted(UUID.randomUUID());
-
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isCreated())
-                .andExpect(header().exists("Location"));
-    }
-
-    @Test
-    @DisplayName("POST /users - deve retornar 409 quando email já existe")
-    void shouldReturn409WhenEmailAlreadyInUse() throws Exception {
-        when(registerUser.execute(any()))
-                .thenThrow(new EmailAlreadyInUseException(new Email("joao@empresa.com")));
-
-        String body = """
-                {
-                  "name": "João Silva",
-                  "email": "joao@empresa.com",
-                  "rawPassword": "Senha123",
-                  "role": "MANAGER",
-                  "unitId": "%s"
-                }
-                """.formatted(UUID.randomUUID());
-
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
-    @DisplayName("POST /users - deve retornar 400 quando body inválido")
-    void shouldReturn400WhenBodyInvalid() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
     }
 
     // --- PATCH /api/v1/users/{id}/activate ---

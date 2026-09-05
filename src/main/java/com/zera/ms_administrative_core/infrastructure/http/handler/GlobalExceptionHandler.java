@@ -4,6 +4,8 @@ import com.zera.ms_administrative_core.core.domain.exception.CnpjAlreadyInUseExc
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCepException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidTelephoneNumberException;
 import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredException;
@@ -77,6 +79,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidStatusTransitionException.class)
     public ProblemDetail handleInvalidTransition(InvalidStatusTransitionException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ProblemDetail handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
