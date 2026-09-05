@@ -1,4 +1,4 @@
-package com.zera.ms_administrative_core.infrastructure.persistence.postgres.bootstrap;
+package com.zera.ms_administrative_core.infrastructure.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

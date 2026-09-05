@@ -1,4 +1,4 @@
-package com.zera.ms_administrative_core.infrastructure.persistence.postgres.bootstrap;
+package com.zera.ms_administrative_core.infrastructure.bootstrap;
 
 import java.util.Optional;
 import java.util.function.UnaryOperator;
@@ -7,9 +7,9 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 
 /**
- * Parametros do MANAGER inicial semeado pela migration {@code V8}. Vem de variaveis de ambiente
- * {@code BOOTSTRAP_ADMIN_*}. O seed so acontece quando email, senha e CNPJ da organizacao estao
- * presentes.
+ * Parametros do MANAGER inicial semeado por {@link InitialManagerSeeder}. Vem de variaveis de
+ * ambiente {@code BOOTSTRAP_ADMIN_*}. O seed so acontece quando email, senha e CNPJ da organizacao
+ * estao presentes.
  */
 public record BootstrapAdminSettings(
         String adminName,
