@@ -13,8 +13,10 @@ import com.zera.ms_administrative_core.core.usecase.organization.renameOrganizat
 import com.zera.ms_administrative_core.core.usecase.organization.suspendOrganization.SuspendOrganization;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeOrganizationPlanRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterOrganizationRequest;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -86,6 +88,7 @@ public class OrganizationController {
     }
 
     @PostMapping
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RegisterOrganizationOutput> register(
             @RequestBody @Valid RegisterOrganizationRequest request
     ) {
@@ -99,6 +102,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/rename")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> rename(
             @PathVariable UUID id,
             @RequestParam String newName
@@ -108,6 +112,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/email")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> changeEmail(
             @PathVariable UUID id,
             @RequestParam String newEmail
@@ -117,6 +122,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/plan")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> changePlan(
             @PathVariable UUID id,
             @RequestBody @Valid ChangeOrganizationPlanRequest request
@@ -126,6 +132,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/activate")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> activate(
             @PathVariable UUID id
     ) {
@@ -134,6 +141,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> deactivate(
             @PathVariable UUID id
     ) {
@@ -142,6 +150,7 @@ public class OrganizationController {
     }
 
     @PatchMapping("/{id}/suspend")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> suspend(
             @PathVariable UUID id
     ) {

@@ -9,8 +9,10 @@ import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserTelephoneRequest;
+import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -86,6 +88,7 @@ public class TelephoneController {
     }
 
     @PostMapping("/user")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RegisterTelephoneOutput> registerForUser(
             @RequestBody @Valid RegisterUserTelephoneRequest request
             ){
@@ -94,6 +97,7 @@ public class TelephoneController {
     }
 
     @PostMapping("/recyclings")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RegisterTelephoneOutput> registerForRecycling(
         @RequestBody @Valid RegisterRecyclingTelephoneRequest request
     ){
@@ -102,6 +106,7 @@ public class TelephoneController {
     }
 
     @PatchMapping("/{id}/number")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> changeNumber(
             @PathVariable UUID id,
             @RequestBody @Valid ChangeTelephoneRequest request
@@ -111,6 +116,7 @@ public class TelephoneController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<Void> delete(
             @PathVariable UUID id
     ){
