@@ -11,21 +11,29 @@
     </parent>
     <groupId>com.zera</groupId>
     <artifactId>ms-administrative-core</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name/>
-    <description/>
-    <url/>
+    <version>1.0.0</version>
+    <name>ms-administrative-core</name>
+    <description>Microsservico do nucleo administrativo: usuarios, organizacoes, unidades,
+        telefones, recicladoras, convites e alertas.</description>
+    <url>https://github.com/zera-interdisciplinar/ms-administrative-core</url>
     <licenses>
-        <license/>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
     </licenses>
     <developers>
-        <developer/>
+        <developer>
+            <name>zera-interdisciplinar</name>
+            <organization>zera-interdisciplinar</organization>
+            <organizationUrl>https://github.com/zera-interdisciplinar</organizationUrl>
+        </developer>
     </developers>
     <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
+        <connection>scm:git:https://github.com/zera-interdisciplinar/ms-administrative-core.git</connection>
+        <developerConnection>scm:git:git@github.com:zera-interdisciplinar/ms-administrative-core.git</developerConnection>
+        <url>https://github.com/zera-interdisciplinar/ms-administrative-core</url>
+        <tag>HEAD</tag>
     </scm>
     <properties>
         <java.version>25</java.version>
@@ -108,6 +116,21 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
