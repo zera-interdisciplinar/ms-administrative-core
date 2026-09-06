@@ -1,0 +1,555 @@
+{
+  "info": {
+    "name": "ms-administrative-core",
+    "description": "Endpoints do ms-administrative-core (QA)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "x-api-key", "type": "string" },
+      { "key": "value", "value": "{{ADMIN_CORE_API_KEY}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "{{ADMIN_CORE_URL}}", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"changeme\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invitations",
+      "item": [
+        {
+          "name": "Generate invitation code (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"managerId\": \"00000000-0000-0000-0000-000000000000\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/invitations", "host": ["{{baseUrl}}"], "path": ["api", "v1", "invitations"] }
+          }
+        },
+        {
+          "name": "Redeem invitation code",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"123456\",\n  \"name\": \"Nome Sobrenome\",\n  \"email\": \"novo@example.com\",\n  \"rawPassword\": \"changeme\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/invitations/redeem", "host": ["{{baseUrl}}"], "path": ["api", "v1", "invitations", "redeem"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Find all users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users?page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "users"],
+              "query": [
+                { "key": "role", "value": "", "disabled": true },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "email", "value": "", "disabled": true },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Find user by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Rename user (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Novo Nome\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/rename", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "rename"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Assign manager (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"managerId\": \"00000000-0000-0000-0000-000000000000\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/manager", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "manager"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Change email (SELF_OR_MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"novo@example.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/email", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "email"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Change password (SELF_OR_MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"rawPassword\": \"newpassword\",\n  \"confirmPassword\": \"newpassword\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/password", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "password"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Activate user (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/activate", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "activate"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Deactivate user (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/deactivate", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "deactivate"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Suspend user (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/:id/suspend", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", ":id", "suspend"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Find all organizations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/organization?page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization"],
+              "query": [
+                { "key": "plan", "value": "", "disabled": true },
+                { "key": "status", "value": "", "disabled": true },
+                { "key": "email", "value": "", "disabled": true },
+                { "key": "cnpj", "value": "", "disabled": true },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Find organization by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/organization/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Register organization (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Organizacao Exemplo\",\n  \"cnpj\": \"00000000000000\",\n  \"email\": \"org@example.com\",\n  \"plan\": \"BASIC\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/organization", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization"] }
+          }
+        },
+        {
+          "name": "Rename organization (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/organization/:id/rename?newName=Novo Nome",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "rename"],
+              "query": [{ "key": "newName", "value": "Novo Nome" }],
+              "variable": [{ "key": "id", "value": "" }]
+            }
+          }
+        },
+        {
+          "name": "Change organization email (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/organization/:id/email?newEmail=novo@example.com",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "email"],
+              "query": [{ "key": "newEmail", "value": "novo@example.com" }],
+              "variable": [{ "key": "id", "value": "" }]
+            }
+          }
+        },
+        {
+          "name": "Change organization plan (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"plan\": \"PREMIUM\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/organization/:id/plan", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "plan"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Activate organization (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/organization/:id/activate", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "activate"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Deactivate organization (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/organization/:id/deactivate", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "deactivate"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Suspend organization (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/organization/:id/suspend", "host": ["{{baseUrl}}"], "path": ["api", "v1", "organization", ":id", "suspend"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Units",
+      "item": [
+        {
+          "name": "Register unit (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"organizationId\": \"00000000-0000-0000-0000-000000000000\",\n  \"name\": \"Unidade Exemplo\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/unit", "host": ["{{baseUrl}}"], "path": ["api", "v1", "unit"] }
+          }
+        },
+        {
+          "name": "Find unit by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/unit/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "unit", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Find all units by organization",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/unit?organizationId=00000000-0000-0000-0000-000000000000&page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "unit"],
+              "query": [
+                { "key": "organizationId", "value": "00000000-0000-0000-0000-000000000000" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Rename unit (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Novo Nome da Unidade\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/unit/:id/rename", "host": ["{{baseUrl}}"], "path": ["api", "v1", "unit", ":id", "rename"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Delete unit (MANAGER)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/unit/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "unit", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Recyclings",
+      "item": [
+        {
+          "name": "Register recycling business (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Recicladora Exemplo\",\n  \"cnpj\": \"00000000000000\",\n  \"email\": \"recycling@example.com\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/recyclings", "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings"] }
+          }
+        },
+        {
+          "name": "Find all recyclings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/recyclings", "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings"] }
+          }
+        },
+        {
+          "name": "Find recycling by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/recyclings/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Find recycling by cnpj",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/recyclings/cnpj/:cnpj", "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings", "cnpj", ":cnpj"], "variable": [{ "key": "cnpj", "value": "" }] }
+          }
+        },
+        {
+          "name": "Rename recycling (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recyclings/:id/name?name=Novo Nome",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings", ":id", "name"],
+              "query": [{ "key": "name", "value": "Novo Nome" }],
+              "variable": [{ "key": "id", "value": "" }]
+            }
+          }
+        },
+        {
+          "name": "Change recycling email (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recyclings/:id/email?email=novo@example.com",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "recyclings", ":id", "email"],
+              "query": [{ "key": "email", "value": "novo@example.com" }],
+              "variable": [{ "key": "id", "value": "" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Telephones",
+      "item": [
+        {
+          "name": "Find all telephones",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/telephone?page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone"],
+              "query": [{ "key": "page", "value": "0" }, { "key": "size", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "Find all telephones by organization",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/telephone/organization?organizationId=00000000-0000-0000-0000-000000000000&page=0&size=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", "organization"],
+              "query": [
+                { "key": "organizationId", "value": "00000000-0000-0000-0000-000000000000" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Find telephone by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/telephone/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Find telephone by user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/telephone/user?userId=00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", "user"],
+              "query": [{ "key": "userId", "value": "00000000-0000-0000-0000-000000000000" }]
+            }
+          }
+        },
+        {
+          "name": "Find telephone by recycling business",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/telephone/recyclings?recyclingBusinessId=00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", "recyclings"],
+              "query": [{ "key": "recyclingBusinessId", "value": "00000000-0000-0000-0000-000000000000" }]
+            }
+          }
+        },
+        {
+          "name": "Register telephone for user (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"number\": \"11999999999\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/telephone/user", "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", "user"] }
+          }
+        },
+        {
+          "name": "Register telephone for recycling (MANAGER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"recyclingBusinessId\": \"00000000-0000-0000-0000-000000000000\",\n  \"number\": \"11999999999\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/telephone/recyclings", "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", "recyclings"] }
+          }
+        },
+        {
+          "name": "Change telephone number (MANAGER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"number\": \"11888888888\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/telephone/:id/number", "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", ":id", "number"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        },
+        {
+          "name": "Delete telephone (MANAGER)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/telephone/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "telephone", ":id"], "variable": [{ "key": "id", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Receive alert (service-to-service)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"eventId\": \"00000000-0000-0000-0000-000000000000\",\n  \"ruleId\": \"00000000-0000-0000-0000-000000000000\",\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"unitId\": \"00000000-0000-0000-0000-000000000000\",\n  \"description\": \"Descricao do alerta\",\n  \"severity\": \"HIGH\",\n  \"kind\": \"THRESHOLD\",\n  \"status\": \"OPEN\",\n  \"occurredAt\": \"2026-09-06T12:00:00\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications/alerts", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications", "alerts"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Well-known",
+      "item": [
+        {
+          "name": "JWKS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/.well-known/jwks.json", "host": ["{{baseUrl}}"], "path": [".well-known", "jwks.json"] }
+          }
+        }
+      ]
+    }
+  ]
+}
