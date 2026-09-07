@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.zera.ms_administrative_core.core.usecase.organization.registerOrganization.RegisterOrganization;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
+import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
 
 @SpringBootTest
@@ -41,6 +42,7 @@ class RbacIntegrationTest {
     @MockitoBean private SuspendUser suspendUser;
     @MockitoBean private ChangePassword changePassword;
     @MockitoBean private FindAllUsers findAllUsers;
+    @MockitoBean private FindUserById findUserById;
     @MockitoBean private RegisterOrganization registerOrganization;
 
     private static MockHttpServletRequestBuilder asRole(MockHttpServletRequestBuilder request, String role) {
@@ -78,12 +80,43 @@ class RbacIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // --- leitura: GET /users e permitida para qualquer autenticado ---
+    // --- listagem: GET /users e MANAGER-only ---
 
     @Test
-    void listUsersAllowedForEmployee() throws Exception {
+    void listUsersForbiddenForEmployee() throws Exception {
         mockMvc.perform(asRole(get("/api/v1/users"), "EMPLOYEE"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void listUsersAllowedForManager() throws Exception {
+        mockMvc.perform(asRole(get("/api/v1/users"), "MANAGER"))
                 .andExpect(status().isOk());
+    }
+
+    // --- leitura por id: GET /users/{id} e SELF_OR_MANAGER ---
+
+    @Test
+    void getUserByIdAllowedForManager() throws Exception {
+        mockMvc.perform(asRole(get("/api/v1/users/{id}", UUID.randomUUID()), "MANAGER"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getUserByIdAllowedForTheOwner() throws Exception {
+        UUID ownerId = UUID.randomUUID();
+        mockMvc.perform(get("/api/v1/users/{id}", ownerId)
+                        .with(jwt().jwt(b -> b.subject(ownerId.toString()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getUserByIdForbiddenForADifferentEmployee() throws Exception {
+        mockMvc.perform(get("/api/v1/users/{id}", UUID.randomUUID())
+                        .with(jwt().jwt(b -> b.subject(UUID.randomUUID().toString()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isForbidden());
     }
 
     // --- self-service: PATCH /users/{id}/password ---
