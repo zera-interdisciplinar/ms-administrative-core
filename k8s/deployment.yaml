@@ -69,6 +69,8 @@ spec:
             secretKeyRef:
               name: postgres-secrets
               key: POSTGRES_PASSWORD
+        - name: ZERA_JWT_ISSUER
+          value: "ms-administrative-core-prod"
         - name: JWT_PRIVATE_KEY
           valueFrom:
             secretKeyRef:
