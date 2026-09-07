@@ -121,6 +121,7 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<List<UserOutput>> findAll(
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Status status,
@@ -135,6 +136,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize(Authz.SELF_OR_MANAGER)
     public ResponseEntity<UserOutput> findById(@PathVariable UUID id) {
         UserOutput output = findUserById.execute(id);
         return ResponseEntity.ok(output);
