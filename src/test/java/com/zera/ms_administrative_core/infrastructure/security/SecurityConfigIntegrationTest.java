@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -59,7 +60,8 @@ class SecurityConfigIntegrationTest {
     @Test
     void protectedEndpointAcceptsValidJwt() throws Exception {
         mockMvc.perform(get("/api/v1/users")
-                        .with(jwt().jwt(builder -> builder.claim("role", "MANAGER"))))
+                        .with(jwt().jwt(builder -> builder.claim("role", "MANAGER"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_MANAGER"))))
                 .andExpect(status().isOk());
     }
 }
