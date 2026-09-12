@@ -36,7 +36,7 @@ public class SessionTokenFactory {
                 refreshTokenGenerator.hash(rawRefreshToken),
                 expiresAt));
 
-        return TokenPair.bearer(accessToken, rawRefreshToken,
+        return TokenPair.bearer(user.userId(), accessToken, rawRefreshToken,
                 accessTokenIssuer.timeToLive().toSeconds());
     }
 }
