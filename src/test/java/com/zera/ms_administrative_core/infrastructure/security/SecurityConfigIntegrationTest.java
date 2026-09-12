@@ -44,7 +44,7 @@ class SecurityConfigIntegrationTest {
     void loginEndpointIsPublic() throws Exception {
         when(login.execute(any(), any()))
                 .thenReturn(com.zera.ms_administrative_core.core.usecase.auth.TokenPair
-                        .bearer("access", "refresh", 900));
+                        .bearer(java.util.UUID.randomUUID(), "access", "refresh", 900));
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType("application/json")

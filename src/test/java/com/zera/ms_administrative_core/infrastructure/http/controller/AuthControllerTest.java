@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
 import com.zera.ms_administrative_core.core.usecase.auth.Login;
@@ -38,13 +40,15 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /auth/login - 200 com o par de tokens")
     void loginReturnsTokenPair() throws Exception {
+        UUID userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         when(login.execute("alice@empresa.com", "secret"))
-                .thenReturn(TokenPair.bearer("access.jwt", "refresh-opaque", 900));
+                .thenReturn(TokenPair.bearer(userId, "access.jwt", "refresh-opaque", 900));
 
         mockMvc.perform(post(BASE_URL + "/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"alice@empresa.com\",\"password\":\"secret\"}"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId.toString()))
                 .andExpect(jsonPath("$.accessToken").value("access.jwt"))
                 .andExpect(jsonPath("$.refreshToken").value("refresh-opaque"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
@@ -75,7 +79,7 @@ class AuthControllerTest {
     @DisplayName("POST /auth/refresh - 200 com novo par")
     void refreshReturnsNewPair() throws Exception {
         when(refreshSession.execute("refresh-opaque"))
-                .thenReturn(TokenPair.bearer("access2.jwt", "refresh2", 900));
+                .thenReturn(TokenPair.bearer(UUID.randomUUID(), "access2.jwt", "refresh2", 900));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .contentType(MediaType.APPLICATION_JSON)

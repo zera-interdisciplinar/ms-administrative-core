@@ -57,6 +57,7 @@ class AuthSessionUseCasesTest {
     void loginIssuesBearerPairAndPersistsHashedRefreshToken() {
         TokenPair pair = login.execute("alice@empresa.com", "secret");
 
+        assertThat(pair.userId()).isEqualTo(alice.getUserId());
         assertThat(pair.tokenType()).isEqualTo("Bearer");
         assertThat(pair.accessToken()).isEqualTo("access-token-for-" + alice.getUserId());
         assertThat(pair.expiresInSeconds()).isEqualTo(900);
