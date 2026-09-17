@@ -25,7 +25,7 @@ class OrganizationMapperTest {
     @DisplayName("Should map JPA entity to domain entity")
     void shouldMapJpaToDomain() {
         OrganizationJpa jpa = new OrganizationJpa(id, "Org", "11222333000181",
-                Status.ACTIVE, "org@email.com", Plan.PRO, now, now);
+                Status.ACTIVE, "org@email.com", Plan.PROFISSIONAL, now, now);
 
         Organization domain = mapper.toDomain(jpa);
 
@@ -34,7 +34,7 @@ class OrganizationMapperTest {
         assertEquals("11222333000181", domain.getCnpj().value());
         assertEquals(Status.ACTIVE, domain.getStatus());
         assertEquals("org@email.com", domain.getEmail().value());
-        assertEquals(Plan.PRO, domain.getPlan());
+        assertEquals(Plan.PROFISSIONAL, domain.getPlan());
         assertEquals(now, domain.getCreatedAt());
         assertEquals(now, domain.getUpdatedAt());
     }

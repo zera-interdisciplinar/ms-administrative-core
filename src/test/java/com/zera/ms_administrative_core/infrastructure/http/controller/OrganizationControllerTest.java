@@ -169,10 +169,10 @@ class OrganizationControllerTest {
     void shouldChangePlan() throws Exception {
         mockMvc.perform(patch("/api/v1/organization/{id}/plan", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"plan\":\"PRO\"}"))
+                        .content("{\"plan\":\"PROFISSIONAL\"}"))
                 .andExpect(status().isNoContent());
 
-        verify(changeOrganizationPlan).execute(id, Plan.PRO);
+        verify(changeOrganizationPlan).execute(id, Plan.PROFISSIONAL);
     }
 
     @Test

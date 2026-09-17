@@ -129,9 +129,9 @@ class OrganizationMutationUseCasesTest {
         Organization org = organization();
         when(repository.findById(id)).thenReturn(Optional.of(org));
 
-        new ChangeOrganizationPlanImpl(repository).execute(id, Plan.PRO);
+        new ChangeOrganizationPlanImpl(repository).execute(id, Plan.PROFISSIONAL);
 
-        assertEquals(Plan.PRO, org.getPlan());
+        assertEquals(Plan.PROFISSIONAL, org.getPlan());
         verify(repository).save(org);
     }
 
@@ -152,6 +152,6 @@ class OrganizationMutationUseCasesTest {
         when(repository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(OrganizationNotFoundException.class,
-                () -> new ChangeOrganizationPlanImpl(repository).execute(id, Plan.PRO));
+                () -> new ChangeOrganizationPlanImpl(repository).execute(id, Plan.PROFISSIONAL));
     }
 }
