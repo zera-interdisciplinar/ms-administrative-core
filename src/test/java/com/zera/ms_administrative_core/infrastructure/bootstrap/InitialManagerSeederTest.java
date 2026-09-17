@@ -101,7 +101,7 @@ class InitialManagerSeederTest {
     @Test
     void reusesExistingOrganizationWithSameCnpj() {
         Organization existing = new Organization(java.util.UUID.randomUUID(), "Ja existe",
-                new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.PRO);
+                new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.PROFISSIONAL);
         when(organizations.findByCnpj(new Cnpj(VALID_CNPJ))).thenReturn(Optional.of(existing));
 
         runWith(env());

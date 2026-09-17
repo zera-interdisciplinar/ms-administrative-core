@@ -49,7 +49,7 @@ class OrganizationTest {
         LocalDateTime updatedAt = LocalDateTime.of(2024, 6, 1, 10, 0);
 
         Organization reconstituted = new Organization(
-                id, "Org", cnpj, Status.ACTIVE, email, Plan.PRO, createdAt, updatedAt);
+                id, "Org", cnpj, Status.ACTIVE, email, Plan.PROFISSIONAL, createdAt, updatedAt);
 
         assertEquals(createdAt, reconstituted.getCreatedAt());
         assertEquals(updatedAt, reconstituted.getUpdatedAt());
@@ -75,8 +75,8 @@ class OrganizationTest {
     @Test
     @DisplayName("Should change plan and touch updatedAt")
     void shouldChangePlan() {
-        organization.changePlan(Plan.PRO);
-        assertEquals(Plan.PRO, organization.getPlan());
+        organization.changePlan(Plan.PROFISSIONAL);
+        assertEquals(Plan.PROFISSIONAL, organization.getPlan());
     }
 
     @Test

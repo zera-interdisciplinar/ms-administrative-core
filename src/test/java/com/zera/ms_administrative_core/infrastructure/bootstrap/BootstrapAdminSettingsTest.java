@@ -59,7 +59,7 @@ class BootstrapAdminSettingsTest {
         env.put("BOOTSTRAP_ADMIN_NAME", "Fulano");
         env.put("BOOTSTRAP_ADMIN_ORG_NAME", "Zera LTDA");
         env.put("BOOTSTRAP_ADMIN_ORG_EMAIL", "contato@zera.com");
-        env.put("BOOTSTRAP_ADMIN_ORG_PLAN", "PRO");
+        env.put("BOOTSTRAP_ADMIN_ORG_PLAN", "PROFISSIONAL");
         env.put("BOOTSTRAP_ADMIN_UNIT_NAME", "Filial Sul");
 
         BootstrapAdminSettings settings = BootstrapAdminSettings.fromEnv(env::get).orElseThrow();
@@ -67,7 +67,7 @@ class BootstrapAdminSettingsTest {
         assertThat(settings.adminName()).isEqualTo("Fulano");
         assertThat(settings.organizationName()).isEqualTo("Zera LTDA");
         assertThat(settings.organizationEmail()).isEqualTo("contato@zera.com");
-        assertThat(settings.organizationPlan()).isEqualTo("PRO");
+        assertThat(settings.organizationPlan()).isEqualTo("PROFISSIONAL");
         assertThat(settings.unitName()).isEqualTo("Filial Sul");
     }
 
