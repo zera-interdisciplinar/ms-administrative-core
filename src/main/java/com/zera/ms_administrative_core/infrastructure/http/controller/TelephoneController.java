@@ -3,11 +3,15 @@ package com.zera.ms_administrative_core.infrastructure.http.controller;
 import com.zera.ms_administrative_core.core.usecase.telephone.changeTelephone.ChangeTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.deleteTelephone.DeleteTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.*;
+import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterOrganizationTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterRecyclingTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterTelephoneOutput;
+import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUnitTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUserTelephone;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeTelephoneRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterOrganizationTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingTelephoneRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUnitTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterUserTelephoneRequest;
 import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
@@ -29,8 +33,11 @@ public class TelephoneController {
     private final FindAllTelephonesByOrganizationId findAllTelephonesByOrganizationId;
     private final FindTelephoneById findTelephoneById;
     private final FindTelephoneByRecyclingBusinessId findTelephoneByRecyclingBusinessId;
+    private final FindTelephoneByUnitId findTelephoneByUnitId;
     private final FindTelephoneByUserId findTelephoneByUserId;
+    private final RegisterOrganizationTelephone registerOrganizationTelephone;
     private final RegisterRecyclingTelephone registerRecyclingTelephone;
+    private final RegisterUnitTelephone registerUnitTelephone;
     private final RegisterUserTelephone registerUserTelephone;
 
     public TelephoneController(ChangeTelephone changeTelephone,
@@ -39,8 +46,11 @@ public class TelephoneController {
                                FindAllTelephonesByOrganizationId findAllTelephonesByOrganizationId,
                                FindTelephoneById findTelephoneById,
                                FindTelephoneByRecyclingBusinessId findTelephoneByRecyclingBusinessId,
+                               FindTelephoneByUnitId findTelephoneByUnitId,
                                FindTelephoneByUserId findTelephoneByUserId,
+                               RegisterOrganizationTelephone registerOrganizationTelephone,
                                RegisterRecyclingTelephone registerRecyclingTelephone,
+                               RegisterUnitTelephone registerUnitTelephone,
                                RegisterUserTelephone registerUserTelephone) {
         this.changeTelephone = changeTelephone;
         this.deleteTelephone = deleteTelephone;
@@ -48,8 +58,11 @@ public class TelephoneController {
         this.findAllTelephonesByOrganizationId = findAllTelephonesByOrganizationId;
         this.findTelephoneById = findTelephoneById;
         this.findTelephoneByRecyclingBusinessId = findTelephoneByRecyclingBusinessId;
+        this.findTelephoneByUnitId = findTelephoneByUnitId;
         this.findTelephoneByUserId = findTelephoneByUserId;
+        this.registerOrganizationTelephone = registerOrganizationTelephone;
         this.registerRecyclingTelephone = registerRecyclingTelephone;
+        this.registerUnitTelephone = registerUnitTelephone;
         this.registerUserTelephone = registerUserTelephone;
     }
 
@@ -87,12 +100,35 @@ public class TelephoneController {
         return ResponseEntity.ok(findTelephoneByRecyclingBusinessId.execute(recyclingBusinessId));
     }
 
+    @GetMapping("/unit")
+    public ResponseEntity<TelephoneOutput> findByUnit(@RequestParam UUID unitId) {
+        return ResponseEntity.ok(findTelephoneByUnitId.execute(unitId));
+    }
+
     @PostMapping("/user")
     @PreAuthorize(Authz.MANAGER)
     public ResponseEntity<RegisterTelephoneOutput> registerForUser(
             @RequestBody @Valid RegisterUserTelephoneRequest request
             ){
         RegisterTelephoneOutput output = registerUserTelephone.execute(request.toCommand());
+        return created(output);
+    }
+
+    @PostMapping("/organization")
+    @PreAuthorize(Authz.MANAGER)
+    public ResponseEntity<RegisterTelephoneOutput> registerForOrganization(
+            @RequestBody @Valid RegisterOrganizationTelephoneRequest request
+    ){
+        RegisterTelephoneOutput output = registerOrganizationTelephone.execute(request.toCommand());
+        return created(output);
+    }
+
+    @PostMapping("/unit")
+    @PreAuthorize(Authz.MANAGER)
+    public ResponseEntity<RegisterTelephoneOutput> registerForUnit(
+            @RequestBody @Valid RegisterUnitTelephoneRequest request
+    ){
+        RegisterTelephoneOutput output = registerUnitTelephone.execute(request.toCommand());
         return created(output);
     }
 
