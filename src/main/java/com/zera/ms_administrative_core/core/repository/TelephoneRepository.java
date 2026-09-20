@@ -11,6 +11,8 @@ public interface TelephoneRepository {
     Optional<Telephone> findById(UUID id);
     Optional<Telephone> findByUserId(UUID id);
     Optional<Telephone> findByRecyclingBusinessId(UUID id);
+    Optional<Telephone> findByOrganizationId(UUID id);
+    Optional<Telephone> findByUnitId(UUID id);
 
     void delete(Telephone telephone);
     List<Telephone> findAll(int page, int size);
