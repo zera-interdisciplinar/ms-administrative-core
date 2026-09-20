@@ -10,6 +10,7 @@ import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.Find
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindAllTelephonesImpl;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByIdImpl;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByRecyclingBusinessIdImpl;
+import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByUnitIdImpl;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByUserIdImpl;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.TelephoneOutput;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +45,14 @@ class TelephoneUseCasesTest {
 
     private Telephone userTelephone;
     private Telephone recyclingTelephone;
+    private Telephone unitTelephone;
 
     @BeforeEach
     void setUp() {
         userTelephone = new Telephone(telephoneId, new TelephoneNumber("11987654321"),
                 userId, organizationId, unitId);
         recyclingTelephone = new Telephone(telephoneId, new TelephoneNumber("11987654321"), recyclingId);
+        unitTelephone = Telephone.forUnit(telephoneId, new TelephoneNumber("11987654321"), unitId);
     }
 
     // --- ChangeTelephone ---
@@ -145,6 +148,25 @@ class TelephoneUseCasesTest {
 
         assertThrows(TelephoneNotFoundException.class,
                 () -> new FindTelephoneByUserIdImpl(repository).execute(userId));
+    }
+
+    @Test
+    @DisplayName("FindTelephoneByUnitId should return the mapped output")
+    void shouldFindByUnitId() {
+        when(repository.findByUnitId(unitId)).thenReturn(Optional.of(unitTelephone));
+
+        TelephoneOutput output = new FindTelephoneByUnitIdImpl(repository).execute(unitId);
+
+        assertEquals(unitId, output.unitId());
+    }
+
+    @Test
+    @DisplayName("FindTelephoneByUnitId should fail when not found")
+    void shouldFailFindByUnitId() {
+        when(repository.findByUnitId(unitId)).thenReturn(Optional.empty());
+
+        assertThrows(TelephoneNotFoundException.class,
+                () -> new FindTelephoneByUnitIdImpl(repository).execute(unitId));
     }
 
     @Test

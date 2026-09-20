@@ -2,17 +2,14 @@ package com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone
 
 import com.zera.ms_administrative_core.core.domain.entity.Manager;
 import com.zera.ms_administrative_core.core.domain.entity.Telephone;
-import com.zera.ms_administrative_core.core.domain.entity.Unit;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
-import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.domain.valueobject.TelephoneNumber;
 import com.zera.ms_administrative_core.core.repository.TelephoneRepository;
-import com.zera.ms_administrative_core.core.repository.UnitRepository;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,25 +38,20 @@ class RegisterUserTelephoneImplTest {
     private TelephoneRepository telephoneRepository;
     @Mock
     private UserRepository userRepository;
-    @Mock
-    private UnitRepository unitRepository;
 
     @InjectMocks
     private RegisterUserTelephoneImpl useCase;
 
     private final UUID userId = UUID.randomUUID();
     private final UUID unitId = UUID.randomUUID();
-    private final UUID organizationId = UUID.randomUUID();
 
     private User user;
-    private Unit unit;
     private RegisterUserTelephoneCommand command;
 
     @BeforeEach
     void setUp() {
         user = new Manager(userId, "User", new Email("user@email.com"), new HashedPassword("hash"),
                 Status.ACTIVE, unitId, LocalDateTime.now(), LocalDateTime.now());
-        unit = new Unit(unitId, "Matriz", organizationId);
         command = new RegisterUserTelephoneCommand(userId, "11987654321");
     }
 
@@ -67,7 +59,6 @@ class RegisterUserTelephoneImplTest {
     @DisplayName("Should register a telephone for a user")
     void shouldRegister() {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(unitRepository.findById(unitId)).thenReturn(Optional.of(unit));
         when(telephoneRepository.findByUserId(userId)).thenReturn(Optional.empty());
         when(telephoneRepository.save(any(Telephone.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -88,22 +79,10 @@ class RegisterUserTelephoneImplTest {
     }
 
     @Test
-    @DisplayName("Should fail when the user's unit does not exist")
-    void shouldFailWhenUnitMissing() {
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(unitRepository.findById(unitId)).thenReturn(Optional.empty());
-
-        assertThrows(UnitNotFoundException.class, () -> useCase.execute(command));
-        verify(telephoneRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("Should fail when the user already has a telephone")
     void shouldFailWhenTelephoneAlreadyRegistered() {
-        Telephone existing = new Telephone(UUID.randomUUID(), new TelephoneNumber("1133334444"),
-                userId, organizationId, unitId);
+        Telephone existing = Telephone.forUser(UUID.randomUUID(), new TelephoneNumber("1133334444"), userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(unitRepository.findById(unitId)).thenReturn(Optional.of(unit));
         when(telephoneRepository.findByUserId(userId)).thenReturn(Optional.of(existing));
 
         assertThrows(TelephoneAlreadyRegisteredException.class, () -> useCase.execute(command));

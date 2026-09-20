@@ -8,10 +8,13 @@ import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.Find
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindAllTelephonesByOrganizationId;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneById;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByRecyclingBusinessId;
+import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByUnitId;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.FindTelephoneByUserId;
 import com.zera.ms_administrative_core.core.usecase.telephone.findTelephone.TelephoneOutput;
+import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterOrganizationTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterRecyclingTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterTelephoneOutput;
+import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUnitTelephone;
 import com.zera.ms_administrative_core.core.usecase.telephone.registerTelephone.RegisterUserTelephone;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,13 +51,17 @@ class TelephoneControllerTest {
     @MockitoBean private FindAllTelephonesByOrganizationId findAllTelephonesByOrganizationId;
     @MockitoBean private FindTelephoneById findTelephoneById;
     @MockitoBean private FindTelephoneByRecyclingBusinessId findTelephoneByRecyclingBusinessId;
+    @MockitoBean private FindTelephoneByUnitId findTelephoneByUnitId;
     @MockitoBean private FindTelephoneByUserId findTelephoneByUserId;
+    @MockitoBean private RegisterOrganizationTelephone registerOrganizationTelephone;
     @MockitoBean private RegisterRecyclingTelephone registerRecyclingTelephone;
+    @MockitoBean private RegisterUnitTelephone registerUnitTelephone;
     @MockitoBean private RegisterUserTelephone registerUserTelephone;
 
     private final UUID id = UUID.randomUUID();
     private final UUID userId = UUID.randomUUID();
     private final UUID organizationId = UUID.randomUUID();
+    private final UUID unitId = UUID.randomUUID();
     private final UUID recyclingId = UUID.randomUUID();
 
     private TelephoneOutput output() {
@@ -121,6 +128,15 @@ class TelephoneControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/telephone/unit - should find by unit")
+    void shouldFindByUnit() throws Exception {
+        when(findTelephoneByUnitId.execute(unitId)).thenReturn(output());
+
+        mockMvc.perform(get("/api/v1/telephone/unit").param("unitId", unitId.toString()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("POST /api/v1/telephone/user - should register for user")
     void shouldRegisterForUser() throws Exception {
         when(registerUserTelephone.execute(any())).thenReturn(new RegisterTelephoneOutput(id, "11987654321"));
@@ -139,6 +155,30 @@ class TelephoneControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"" + userId + "\",\"number\":\"\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/telephone/organization - should register for organization")
+    void shouldRegisterForOrganization() throws Exception {
+        when(registerOrganizationTelephone.execute(any())).thenReturn(new RegisterTelephoneOutput(id, "11987654321"));
+
+        mockMvc.perform(post("/api/v1/telephone/organization")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"organizationId\":\"" + organizationId + "\",\"number\":\"11987654321\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.telephoneId").value(id.toString()));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/telephone/unit - should register for unit")
+    void shouldRegisterForUnit() throws Exception {
+        when(registerUnitTelephone.execute(any())).thenReturn(new RegisterTelephoneOutput(id, "11987654321"));
+
+        mockMvc.perform(post("/api/v1/telephone/unit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"unitId\":\"" + unitId + "\",\"number\":\"11987654321\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.telephoneId").value(id.toString()));
     }
 
     @Test
