@@ -16,4 +16,12 @@ public class TelephoneAlreadyRegisteredException extends RuntimeException {
         return new TelephoneAlreadyRegisteredException(
                 "Telephone already registered for recycling business: " + recyclingBusinessId);
     }
+
+    public static TelephoneAlreadyRegisteredException forOrganization(UUID organizationId) {
+        return new TelephoneAlreadyRegisteredException("Telephone already registered for organization: " + organizationId);
+    }
+
+    public static TelephoneAlreadyRegisteredException forUnit(UUID unitId) {
+        return new TelephoneAlreadyRegisteredException("Telephone already registered for unit: " + unitId);
+    }
 }

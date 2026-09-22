@@ -14,6 +14,10 @@ interface TelephoneJpaRepository extends JpaRepository<TelephoneJpa, UUID> {
 
     Optional<TelephoneJpa> findByRecyclingBusinessId(UUID recyclingBusinessId);
 
+    Optional<TelephoneJpa> findByOrganizationId(UUID organizationId);
+
+    Optional<TelephoneJpa> findByUnitId(UUID unitId);
+
     Page<TelephoneJpa> findAllByOrganizationId(UUID organizationId, Pageable pageable);
 
     boolean existsByUserId(UUID userId);

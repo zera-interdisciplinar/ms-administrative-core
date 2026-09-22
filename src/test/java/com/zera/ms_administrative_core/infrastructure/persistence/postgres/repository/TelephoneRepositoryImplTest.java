@@ -89,6 +89,32 @@ class TelephoneRepositoryImplTest {
     }
 
     @Test
+    @DisplayName("Should find by organization ID")
+    void shouldFindByOrganizationId() {
+        UUID id = UUID.randomUUID();
+        TelephoneJpa entity = mock(TelephoneJpa.class);
+        Telephone domain = mock(Telephone.class);
+
+        when(jpa.findByOrganizationId(id)).thenReturn(Optional.of(entity));
+        when(mapper.toDomain(entity)).thenReturn(domain);
+
+        assertEquals(Optional.of(domain), repository.findByOrganizationId(id));
+    }
+
+    @Test
+    @DisplayName("Should find by unit ID")
+    void shouldFindByUnitId() {
+        UUID id = UUID.randomUUID();
+        TelephoneJpa entity = mock(TelephoneJpa.class);
+        Telephone domain = mock(Telephone.class);
+
+        when(jpa.findByUnitId(id)).thenReturn(Optional.of(entity));
+        when(mapper.toDomain(entity)).thenReturn(domain);
+
+        assertEquals(Optional.of(domain), repository.findByUnitId(id));
+    }
+
+    @Test
     @DisplayName("Should delete mapping the domain to JPA")
     void shouldDelete() {
         Telephone domain = mock(Telephone.class);

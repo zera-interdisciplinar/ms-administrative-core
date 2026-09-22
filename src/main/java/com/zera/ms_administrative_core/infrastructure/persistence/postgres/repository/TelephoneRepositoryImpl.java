@@ -49,6 +49,18 @@ public class TelephoneRepositoryImpl implements TelephoneRepository {
     }
 
     @Override
+    public Optional<Telephone> findByOrganizationId(UUID id) {
+        return jpa.findByOrganizationId(id)
+                .map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<Telephone> findByUnitId(UUID id) {
+        return jpa.findByUnitId(id)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public void delete(Telephone telephone) {
         jpa.delete(mapper.toJpa(telephone));
     }
