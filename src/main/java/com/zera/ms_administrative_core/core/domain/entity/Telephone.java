@@ -67,6 +67,20 @@ public class Telephone {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // Factory methods for single-owner registration
+
+    public static Telephone forUser(UUID telephoneId, TelephoneNumber number, UUID userId) {
+        return new Telephone(telephoneId, number, userId, null, null, null, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    public static Telephone forOrganization(UUID telephoneId, TelephoneNumber number, UUID organizationId) {
+        return new Telephone(telephoneId, number, null, organizationId, null, null, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    public static Telephone forUnit(UUID telephoneId, TelephoneNumber number, UUID unitId) {
+        return new Telephone(telephoneId, number, null, null, unitId, null, LocalDateTime.now(), LocalDateTime.now());
+    }
+
     // Getters
 
     public UUID getTelephoneId() {

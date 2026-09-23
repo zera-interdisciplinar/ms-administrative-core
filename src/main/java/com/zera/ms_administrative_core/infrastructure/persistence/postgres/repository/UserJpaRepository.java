@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,10 +21,20 @@ interface UserJpaRepository extends JpaRepository<UserJpa, UUID> {
     SELECT u FROM UserJpa u
     WHERE (:role IS NULL OR u.role = :role)
     AND (:status IS NULL OR u.status = :status)
+    AND (:managerId IS NULL OR TREAT(u AS EmployeeJpa).managerId = :managerId)
 """)
-    Page<UserJpa> findAllByRoleAndStatus(
+    Page<UserJpa> findAllByRoleAndStatusAndManagerId(
             @Param("role") Role role,
             @Param("status") Status status,
+            @Param("managerId") UUID managerId,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT e.managerId, COUNT(e)
+    FROM EmployeeJpa e
+    WHERE e.managerId IS NOT NULL
+    GROUP BY e.managerId
+""")
+    List<Object[]> countEmployeesGroupedByManager();
 }

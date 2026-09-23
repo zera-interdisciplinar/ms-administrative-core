@@ -7,6 +7,8 @@ import com.zera.ms_administrative_core.core.usecase.user.assignManager.AssignMan
 import com.zera.ms_administrative_core.core.usecase.user.changeUserEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePasswordCommand;
+import com.zera.ms_administrative_core.core.usecase.user.countUsersByManager.CountUsersByManager;
+import com.zera.ms_administrative_core.core.usecase.user.countUsersByManager.ManagerUserCountOutput;
 import com.zera.ms_administrative_core.core.usecase.user.deactivateUser.DeactivateUser;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmail;
@@ -40,6 +42,7 @@ public class UserController {
     private final FindAllUsers findAllUsers;
     private final FindUserById findUserById;
     private final AssignManager assignManager;
+    private final CountUsersByManager countUsersByManager;
 
     public UserController(RenameUser renameUser,
                           ChangeEmail changeEmail,
@@ -50,7 +53,8 @@ public class UserController {
                           FindUserByEmail findUserByEmail,
                           FindUserById findUserById,
                           FindAllUsers findAllUsers,
-                          AssignManager assignManager) {
+                          AssignManager assignManager,
+                          CountUsersByManager countUsersByManager) {
         this.renameUser = renameUser;
         this.changeEmail = changeEmail;
         this.changePassword = changePassword;
@@ -61,6 +65,7 @@ public class UserController {
         this.findAllUsers = findAllUsers;
         this.findUserById = findUserById;
         this.assignManager = assignManager;
+        this.countUsersByManager = countUsersByManager;
     }
 
     @PatchMapping("/{id}/rename")
@@ -126,13 +131,20 @@ public class UserController {
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) UUID managerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         if (email != null) {
             return ResponseEntity.ok(List.of(findUserByEmail.execute(email)));
         }
-        return ResponseEntity.ok(findAllUsers.execute(role, status, page, size));
+        return ResponseEntity.ok(findAllUsers.execute(role, status, managerId, page, size));
+    }
+
+    @GetMapping("/count-by-manager")
+    @PreAuthorize(Authz.MANAGER)
+    public ResponseEntity<List<ManagerUserCountOutput>> countByManager() {
+        return ResponseEntity.ok(countUsersByManager.execute());
     }
 
     @GetMapping("/{id}")

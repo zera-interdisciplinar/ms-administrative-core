@@ -101,7 +101,7 @@ class InitialManagerSeederTest {
     @Test
     void reusesExistingOrganizationWithSameCnpj() {
         Organization existing = new Organization(java.util.UUID.randomUUID(), "Ja existe",
-                new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.PRO);
+                new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.PROFISSIONAL);
         when(organizations.findByCnpj(new Cnpj(VALID_CNPJ))).thenReturn(Optional.of(existing));
 
         runWith(env());
@@ -116,11 +116,11 @@ class InitialManagerSeederTest {
                 new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.FREE);
         when(organizations.findByCnpj(any())).thenReturn(Optional.of(existing));
         runWith(env());
-        int before = users.findAll(null, null, 0, 100).size();
+        int before = users.findAll(null, null, null, 0, 100).size();
 
         runWith(env());
 
-        assertThat(users.findAll(null, null, 0, 100)).hasSize(before);
+        assertThat(users.findAll(null, null, null, 0, 100)).hasSize(before);
         verify(units).save(any()); // uma unica vez, na primeira execucao
     }
 }
