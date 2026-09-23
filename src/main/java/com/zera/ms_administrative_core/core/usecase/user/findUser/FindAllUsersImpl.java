@@ -6,6 +6,7 @@ import com.zera.ms_administrative_core.core.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class FindAllUsersImpl implements FindAllUsers {
@@ -17,8 +18,8 @@ public class FindAllUsersImpl implements FindAllUsers {
     }
 
     @Override
-    public List<UserOutput> execute(Role role, Status status, int size, int page) {
-        return repository.findAll(role, status, size, page).stream()
+    public List<UserOutput> execute(Role role, Status status, UUID managerId, int page, int size) {
+        return repository.findAll(role, status, managerId, page, size).stream()
                 .map(UserOutput::from)
                 .toList();
     }

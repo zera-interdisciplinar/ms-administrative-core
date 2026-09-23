@@ -4,6 +4,7 @@ import com.zera.ms_administrative_core.core.domain.entity.Role;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
+import com.zera.ms_administrative_core.core.repository.ManagerEmployeeCount;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.UserJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.UserMapper;
@@ -51,9 +52,9 @@ public class UserRepositoryImpl implements UserRepository {
 
     // UserRepositoryImpl
     @Override
-    public List<User> findAll(Role role, Status status, int page, int size) {
+    public List<User> findAll(Role role, Status status, UUID managerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return jpa.findAllByRoleAndStatus(role, status, pageable).stream()
+        return jpa.findAllByRoleAndStatusAndManagerId(role, status, managerId, pageable).stream()
                 .map(mapper::toDomain)
                 .toList();
     }
@@ -61,5 +62,12 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public boolean existsByEmail(Email email) {
         return jpa.existsByEmail(email.value());
+    }
+
+    @Override
+    public List<ManagerEmployeeCount> countEmployeesGroupedByManager() {
+        return jpa.countEmployeesGroupedByManager().stream()
+                .map(row -> new ManagerEmployeeCount((UUID) row[0], (Long) row[1]))
+                .toList();
     }
 }
