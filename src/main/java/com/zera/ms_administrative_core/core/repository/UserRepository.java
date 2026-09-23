@@ -14,6 +14,7 @@ public interface UserRepository {
     void delete(UUID id);
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(Email email);
-    List<User> findAll(Role role, Status status, int page, int size);
+    List<User> findAll(Role role, Status status, UUID managerId, int page, int size);
     boolean existsByEmail(Email email);
+    List<ManagerEmployeeCount> countEmployeesGroupedByManager();
 }

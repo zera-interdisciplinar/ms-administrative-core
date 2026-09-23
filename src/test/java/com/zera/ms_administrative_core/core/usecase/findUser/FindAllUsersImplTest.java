@@ -39,56 +39,56 @@ class FindAllUsersImplTest {
     @Test
     @DisplayName("Deve retornar lista de usuários sem filtros")
     void shouldReturnAllUsers() {
-        when(repository.findAll(null, null, 0, 10)).thenReturn(List.of(manager));
+        when(repository.findAll(null, null, null, 0, 10)).thenReturn(List.of(manager));
 
-        List<UserOutput> result = service.execute(null, null, 0, 10);
+        List<UserOutput> result = service.execute(null, null, null, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals(manager.getUserId(), result.get(0).userId());
-        verify(repository).findAll(null, null, 0, 10);
+        verify(repository).findAll(null, null, null, 0, 10);
     }
 
     @Test
     @DisplayName("Deve retornar lista filtrada por role")
     void shouldReturnFilteredByRole() {
-        when(repository.findAll(Role.MANAGER, null, 0, 10)).thenReturn(List.of(manager));
+        when(repository.findAll(Role.MANAGER, null, null, 0, 10)).thenReturn(List.of(manager));
 
-        List<UserOutput> result = service.execute(Role.MANAGER, null, 0, 10);
+        List<UserOutput> result = service.execute(Role.MANAGER, null, null, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals(Role.MANAGER, result.get(0).role());
-        verify(repository).findAll(Role.MANAGER, null, 0, 10);
+        verify(repository).findAll(Role.MANAGER, null, null, 0, 10);
     }
 
     @Test
     @DisplayName("Deve retornar lista filtrada por status")
     void shouldReturnFilteredByStatus() {
-        when(repository.findAll(null, Status.ACTIVE, 0, 10)).thenReturn(List.of(manager));
+        when(repository.findAll(null, Status.ACTIVE, null, 0, 10)).thenReturn(List.of(manager));
 
-        List<UserOutput> result = service.execute(null, Status.ACTIVE, 0, 10);
+        List<UserOutput> result = service.execute(null, Status.ACTIVE, null, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals(Status.ACTIVE, result.get(0).status());
-        verify(repository).findAll(null, Status.ACTIVE, 0, 10);
+        verify(repository).findAll(null, Status.ACTIVE, null, 0, 10);
     }
 
     @Test
     @DisplayName("Deve retornar lista filtrada por role e status")
     void shouldReturnFilteredByRoleAndStatus() {
-        when(repository.findAll(Role.MANAGER, Status.ACTIVE, 0, 10)).thenReturn(List.of(manager));
+        when(repository.findAll(Role.MANAGER, Status.ACTIVE, null, 0, 10)).thenReturn(List.of(manager));
 
-        List<UserOutput> result = service.execute(Role.MANAGER, Status.ACTIVE, 0, 10);
+        List<UserOutput> result = service.execute(Role.MANAGER, Status.ACTIVE, null, 0, 10);
 
         assertEquals(1, result.size());
-        verify(repository).findAll(Role.MANAGER, Status.ACTIVE, 0, 10);
+        verify(repository).findAll(Role.MANAGER, Status.ACTIVE, null, 0, 10);
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há usuários")
     void shouldReturnEmptyList() {
-        when(repository.findAll(any(), any(), anyInt(), anyInt())).thenReturn(List.of());
+        when(repository.findAll(any(), any(), any(), anyInt(), anyInt())).thenReturn(List.of());
 
-        List<UserOutput> result = service.execute(null, null, 0, 10);
+        List<UserOutput> result = service.execute(null, null, null, 0, 10);
 
         assertTrue(result.isEmpty());
     }
@@ -96,9 +96,9 @@ class FindAllUsersImplTest {
     @Test
     @DisplayName("Deve mapear corretamente os campos do UserOutput")
     void shouldMapOutputCorrectly() {
-        when(repository.findAll(null, null, 0, 10)).thenReturn(List.of(manager));
+        when(repository.findAll(null, null, null, 0, 10)).thenReturn(List.of(manager));
 
-        UserOutput output = service.execute(null, null, 0, 10).get(0);
+        UserOutput output = service.execute(null, null, null, 0, 10).get(0);
 
         assertEquals(manager.getUserId(), output.userId());
         assertEquals(manager.getName(), output.name());

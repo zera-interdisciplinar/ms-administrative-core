@@ -9,6 +9,8 @@ import com.zera.ms_administrative_core.core.usecase.user.activateUser.ActivateUs
 import com.zera.ms_administrative_core.core.usecase.user.assignManager.AssignManager;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserEmail.ChangeEmail;
 import com.zera.ms_administrative_core.core.usecase.user.changeUserPassword.ChangePassword;
+import com.zera.ms_administrative_core.core.usecase.user.countUsersByManager.CountUsersByManager;
+import com.zera.ms_administrative_core.core.usecase.user.countUsersByManager.ManagerUserCountOutput;
 import com.zera.ms_administrative_core.core.usecase.user.deactivateUser.DeactivateUser;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindAllUsers;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserByEmail;
@@ -57,6 +59,7 @@ class UserControllerTest {
     @MockitoBean private DeactivateUser deactivateUser;
     @MockitoBean private SuspendUser suspendUser;
     @MockitoBean private AssignManager assignManager;
+    @MockitoBean private CountUsersByManager countUsersByManager;
 
     private UserOutput userOutput;
 
@@ -103,7 +106,7 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users - deve retornar 200 com lista paginada")
     void shouldReturn200WithPagedList() throws Exception {
-        when(findAllUsers.execute(null, null, 0, 20)).thenReturn(List.of(userOutput));
+        when(findAllUsers.execute(null, null, null, 0, 20)).thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
@@ -114,7 +117,7 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users?role=MANAGER - deve filtrar por role")
     void shouldReturn200FilteredByRole() throws Exception {
-        when(findAllUsers.execute(eq(Role.MANAGER), isNull(), anyInt(), anyInt()))
+        when(findAllUsers.execute(eq(Role.MANAGER), isNull(), isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("role", "MANAGER"))
@@ -125,12 +128,24 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users?status=ACTIVE - deve filtrar por status")
     void shouldReturn200FilteredByStatus() throws Exception {
-        when(findAllUsers.execute(isNull(), eq(Status.ACTIVE), anyInt(), anyInt()))
+        when(findAllUsers.execute(isNull(), eq(Status.ACTIVE), isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("status", "ACTIVE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
+    }
+
+    @Test
+    @DisplayName("GET /users?managerId= - deve filtrar por gestor")
+    void shouldReturn200FilteredByManagerId() throws Exception {
+        UUID managerId = UUID.randomUUID();
+        when(findAllUsers.execute(isNull(), isNull(), eq(managerId), anyInt(), anyInt()))
+                .thenReturn(List.of(userOutput));
+
+        mockMvc.perform(get(BASE_URL).param("managerId", managerId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("João Silva"));
     }
 
     @Test
@@ -243,5 +258,20 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"managerId\": \"%s\"}".formatted(UUID.randomUUID())))
                 .andExpect(status().isBadRequest());
+    }
+
+    // --- GET /api/v1/users/count-by-manager ---
+
+    @Test
+    @DisplayName("GET /users/count-by-manager - deve retornar contagem de funcionários por gestor")
+    void shouldReturn200WithCountByManager() throws Exception {
+        UUID managerId = UUID.randomUUID();
+        when(countUsersByManager.execute())
+                .thenReturn(List.of(new ManagerUserCountOutput(managerId, 3)));
+
+        mockMvc.perform(get(BASE_URL + "/count-by-manager"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].managerId").value(managerId.toString()))
+                .andExpect(jsonPath("$[0].count").value(3));
     }
 }
