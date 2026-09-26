@@ -81,3 +81,8 @@ spec:
             secretKeyRef:
               name: ms-administrative-core-jwt
               key: public.pem
+        - name: MS_INVENTORY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: zera-service-clients
+              key: ms-inventory

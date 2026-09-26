@@ -15,6 +15,7 @@ import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundEx
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidServiceCredentialsException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 
 import org.slf4j.Logger;
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // --- 404 ---
+
+    @ExceptionHandler(InvalidServiceCredentialsException.class)
+    public ProblemDetail handleInvalidServiceCredentials(InvalidServiceCredentialsException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ProblemDetail handleUserNotFound(UserNotFoundException ex) {
