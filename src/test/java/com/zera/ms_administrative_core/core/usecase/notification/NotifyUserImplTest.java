@@ -142,4 +142,55 @@ class NotifyUserImplTest {
         verify(alertRepository).save(captor.capture());
         assertEquals(Severity.HIGH, captor.getValue().getSeverity());
     }
+
+    /**
+     * O momento informado por quem detectou o alerta era aceito e descartado: o alerta gravava a
+     * hora da chamada. Para o ms-inventory isso apagaria quando a regra disparou de fato.
+     */
+    @org.junit.jupiter.api.Test
+    @org.junit.jupiter.api.DisplayName("Deve gravar o occurredAt informado em vez da hora da chamada")
+    void shouldKeepTheInformedMoment() {
+        java.util.UUID userId = java.util.UUID.randomUUID();
+        java.time.LocalDateTime quando = java.time.LocalDateTime.of(2026, 9, 20, 3, 15);
+        org.mockito.Mockito.when(userRepository.findById(userId))
+                .thenReturn(java.util.Optional.of(org.mockito.Mockito.mock(
+                        com.zera.ms_administrative_core.core.domain.entity.User.class)));
+
+        new NotifyUserImpl(alertRepository, userRepository).execute(new NotifyUserCommand(
+                null, null, userId, java.util.UUID.randomUUID(), "garantia vencendo",
+                com.zera.ms_administrative_core.core.domain.entity.Severity.MEDIUM,
+                com.zera.ms_administrative_core.core.domain.entity.AlertKind.WARRANTY_EXPIRATION,
+                com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus.OPEN, quando));
+
+        org.mockito.ArgumentCaptor<com.zera.ms_administrative_core.core.domain.entity.Alert> salvo =
+                org.mockito.ArgumentCaptor.forClass(
+                        com.zera.ms_administrative_core.core.domain.entity.Alert.class);
+        org.mockito.Mockito.verify(alertRepository).save(salvo.capture());
+        org.junit.jupiter.api.Assertions.assertEquals(quando, salvo.getValue().getOccurredAt());
+        org.junit.jupiter.api.Assertions.assertEquals(
+                com.zera.ms_administrative_core.core.domain.entity.AlertKind.WARRANTY_EXPIRATION,
+                salvo.getValue().getKind());
+    }
+
+    /** Sem momento informado, vale a hora em que o alerta chegou. */
+    @org.junit.jupiter.api.Test
+    @org.junit.jupiter.api.DisplayName("Deve cair na hora atual quando o occurredAt nao vier")
+    void shouldFallBackToNowWithoutAMoment() {
+        java.util.UUID userId = java.util.UUID.randomUUID();
+        org.mockito.Mockito.when(userRepository.findById(userId))
+                .thenReturn(java.util.Optional.of(org.mockito.Mockito.mock(
+                        com.zera.ms_administrative_core.core.domain.entity.User.class)));
+
+        new NotifyUserImpl(alertRepository, userRepository).execute(new NotifyUserCommand(
+                null, null, userId, java.util.UUID.randomUUID(), "item aprovado",
+                com.zera.ms_administrative_core.core.domain.entity.Severity.LOW,
+                com.zera.ms_administrative_core.core.domain.entity.AlertKind.ITEM_APPROVED,
+                com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus.OPEN, null));
+
+        org.mockito.ArgumentCaptor<com.zera.ms_administrative_core.core.domain.entity.Alert> salvo =
+                org.mockito.ArgumentCaptor.forClass(
+                        com.zera.ms_administrative_core.core.domain.entity.Alert.class);
+        org.mockito.Mockito.verify(alertRepository).save(salvo.capture());
+        org.junit.jupiter.api.Assertions.assertNotNull(salvo.getValue().getOccurredAt());
+    }
 }
