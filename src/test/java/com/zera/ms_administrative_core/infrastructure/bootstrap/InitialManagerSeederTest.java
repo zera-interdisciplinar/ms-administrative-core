@@ -116,11 +116,11 @@ class InitialManagerSeederTest {
                 new Cnpj(VALID_CNPJ), Status.ACTIVE, new Email("x@z.com"), Plan.FREE);
         when(organizations.findByCnpj(any())).thenReturn(Optional.of(existing));
         runWith(env());
-        int before = users.findAll(null, null, null, 0, 100).size();
+        int before = users.findAll(null, null, null, null, 0, 100).size();
 
         runWith(env());
 
-        assertThat(users.findAll(null, null, null, 0, 100)).hasSize(before);
+        assertThat(users.findAll(null, null, null, null, 0, 100)).hasSize(before);
         verify(units).save(any()); // uma unica vez, na primeira execucao
     }
 }

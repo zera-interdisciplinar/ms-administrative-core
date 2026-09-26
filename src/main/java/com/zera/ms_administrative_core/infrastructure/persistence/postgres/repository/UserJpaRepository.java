@@ -22,11 +22,13 @@ interface UserJpaRepository extends JpaRepository<UserJpa, UUID> {
     WHERE (:role IS NULL OR u.role = :role)
     AND (:status IS NULL OR u.status = :status)
     AND (:managerId IS NULL OR TREAT(u AS EmployeeJpa).managerId = :managerId)
+    AND (:unitId IS NULL OR u.unitId = :unitId)
 """)
     Page<UserJpa> findAllByRoleAndStatusAndManagerId(
             @Param("role") Role role,
             @Param("status") Status status,
             @Param("managerId") UUID managerId,
+            @Param("unitId") UUID unitId,
             Pageable pageable
     );
 
