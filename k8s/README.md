@@ -28,6 +28,30 @@ kubectl create secret generic ms-administrative-core-jwt -n production \
 Rotação: gere um novo par, atualize o Secret e faça `kubectl rollout restart`.
 Tokens emitidos com a chave antiga deixam de valer (o `kid` muda).
 
+## Credenciais de serviço
+
+As rotas internas (hoje `POST /api/v1/notifications/alerts`) exigem um token de serviço, obtido em
+`POST /api/v1/auth/service-token` com as credenciais do cliente. O segredo de cada cliente fica num
+Secret e entra no pod como variável de ambiente.
+
+```bash
+# gere um segredo forte por cliente e por ambiente
+openssl rand -base64 48 > ms-inventory-secret.txt
+
+# QA
+kubectl create secret generic zera-service-clients -n qa \
+  --from-file=ms-inventory=ms-inventory-secret.txt
+
+# Produção
+kubectl create secret generic zera-service-clients -n production \
+  --from-file=ms-inventory=ms-inventory-secret.txt
+```
+
+O mesmo valor precisa ser configurado no ms-inventory, que o usa para pedir o token.
+
+Rotação: gere um novo segredo, atualize o Secret **nos dois serviços** e faça `kubectl rollout
+restart` em ambos. Tokens já emitidos continuam valendo até expirar (15 minutos por padrão).
+
 ## 2. `ms-administrative-core-bootstrap` (opcional)
 
 Consumido **apenas** pelo `InitialManagerSeeder` no startup, que cria a árvore
