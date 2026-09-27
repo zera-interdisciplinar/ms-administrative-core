@@ -43,12 +43,14 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> findAll(Role role, Status status, UUID managerId, int page, int size) {
+    public List<User> findAll(Role role, Status status, UUID managerId, UUID unitId, int page,
+            int size) {
         List<User> filtered = users.values().stream()
                 .filter(user -> role == null || user.role().equals(role))
                 .filter(user -> status == null || user.getStatus().equals(status))
                 .filter(user -> managerId == null
                         || (user instanceof Employee employee && managerId.equals(employee.getManagerId())))
+                .filter(user -> unitId == null || unitId.equals(user.getUnitId()))
                 .toList();
 
         int start = Math.max(page, 0) * Math.max(size, 1);

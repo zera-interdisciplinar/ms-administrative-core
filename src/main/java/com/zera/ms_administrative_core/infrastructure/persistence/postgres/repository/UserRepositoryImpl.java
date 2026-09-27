@@ -52,9 +52,9 @@ public class UserRepositoryImpl implements UserRepository {
 
     // UserRepositoryImpl
     @Override
-    public List<User> findAll(Role role, Status status, UUID managerId, int page, int size) {
+    public List<User> findAll(Role role, Status status, UUID managerId, UUID unitId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return jpa.findAllByRoleAndStatusAndManagerId(role, status, managerId, pageable).stream()
+        return jpa.findAllByRoleAndStatusAndManagerId(role, status, managerId, unitId, pageable).stream()
                 .map(mapper::toDomain)
                 .toList();
     }

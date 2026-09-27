@@ -18,8 +18,9 @@ public class FindAllUsersImpl implements FindAllUsers {
     }
 
     @Override
-    public List<UserOutput> execute(Role role, Status status, UUID managerId, int page, int size) {
-        return repository.findAll(role, status, managerId, page, size).stream()
+    public List<UserOutput> execute(Role role, Status status, UUID managerId, UUID unitId, int page,
+            int size) {
+        return repository.findAll(role, status, managerId, unitId, page, size).stream()
                 .map(UserOutput::from)
                 .toList();
     }
