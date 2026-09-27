@@ -1,0 +1,116 @@
+package com.zera.ms_administrative_core.core.usecase.recyclingPlace;
+
+import com.zera.ms_administrative_core.core.domain.entity.RecyclingPlace;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidCoordinateException;
+import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlacesUnavailableException;
+import com.zera.ms_administrative_core.core.domain.valueobject.GeoCoordinate;
+import com.zera.ms_administrative_core.core.repository.RecyclingPlaceFinder;
+import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.FindNearbyRecyclingPlacesImpl;
+import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.RecyclingPlaceOutput;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class FindNearbyRecyclingPlacesImplTest {
+
+    private static final int DEFAULT_RADIUS = 5000;
+    private static final int MAX_RADIUS = 20000;
+
+    @Mock
+    private RecyclingPlaceFinder recyclingPlaceFinder;
+
+    private FindNearbyRecyclingPlacesImpl usecase;
+
+    @BeforeEach
+    void setUp() {
+        usecase = new FindNearbyRecyclingPlacesImpl(recyclingPlaceFinder, DEFAULT_RADIUS, MAX_RADIUS);
+    }
+
+    @Test
+    @DisplayName("Should use the default radius when none is given")
+    void shouldUseDefaultRadiusWhenNull() {
+        when(recyclingPlaceFinder.findNearby(any(), eq(DEFAULT_RADIUS))).thenReturn(List.of());
+
+        usecase.execute(-23.5505, -46.6333, null);
+
+        verify(recyclingPlaceFinder).findNearby(any(), eq(DEFAULT_RADIUS));
+    }
+
+    @Test
+    @DisplayName("Should clamp the radius to the ceiling instead of erroring out")
+    void shouldClampRadiusToCeiling() {
+        when(recyclingPlaceFinder.findNearby(any(), eq(MAX_RADIUS))).thenReturn(List.of());
+
+        usecase.execute(-23.5505, -46.6333, 500_000);
+
+        verify(recyclingPlaceFinder).findNearby(any(), eq(MAX_RADIUS));
+    }
+
+    @Test
+    @DisplayName("Should keep a radius that is already within bounds")
+    void shouldKeepRadiusWithinBounds() {
+        when(recyclingPlaceFinder.findNearby(any(), eq(1000))).thenReturn(List.of());
+
+        usecase.execute(-23.5505, -46.6333, 1000);
+
+        verify(recyclingPlaceFinder).findNearby(any(), eq(1000));
+    }
+
+    @Test
+    @DisplayName("Should reject an implausible coordinate before calling the port")
+    void shouldRejectInvalidCoordinate() {
+        assertThrows(InvalidCoordinateException.class, () -> usecase.execute(200, 0, null));
+    }
+
+    @Test
+    @DisplayName("Should return results ordered by ascending distance")
+    void shouldSortResultsByDistance() {
+        GeoCoordinate origin = new GeoCoordinate(-23.5505, -46.6333);
+        RecyclingPlace far = new RecyclingPlace("far", "Far", "addr", new GeoCoordinate(-23.6000, -46.7000));
+        RecyclingPlace near = new RecyclingPlace("near", "Near", "addr", new GeoCoordinate(-23.5510, -46.6335));
+        when(recyclingPlaceFinder.findNearby(any(), anyInt())).thenReturn(List.of(far, near));
+
+        List<RecyclingPlaceOutput> result = usecase.execute(origin.latitude(), origin.longitude(), null);
+
+        assertEquals(2, result.size());
+        assertEquals("near", result.get(0).placeId());
+        assertEquals("far", result.get(1).placeId());
+        assertTrue(result.get(0).distanceMeters() < result.get(1).distanceMeters());
+    }
+
+    @Test
+    @DisplayName("Should propagate the unavailable exception from the port")
+    void shouldPropagateUnavailableException() {
+        when(recyclingPlaceFinder.findNearby(any(), anyInt()))
+                .thenThrow(new RecyclingPlacesUnavailableException("indisponivel"));
+
+        assertThrows(RecyclingPlacesUnavailableException.class,
+                () -> usecase.execute(-23.5505, -46.6333, null));
+    }
+
+    @Test
+    @DisplayName("Should return an empty list when Google succeeds without results in range")
+    void shouldReturnEmptyListWhenNoResults() {
+        when(recyclingPlaceFinder.findNearby(any(), anyInt())).thenReturn(List.of());
+
+        List<RecyclingPlaceOutput> result = usecase.execute(-23.5505, -46.6333, null);
+
+        assertTrue(result.isEmpty());
+    }
+}

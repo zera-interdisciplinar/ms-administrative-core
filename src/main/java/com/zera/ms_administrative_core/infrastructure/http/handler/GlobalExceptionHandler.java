@@ -8,10 +8,12 @@ import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsE
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidTelephoneNumberException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidCoordinateException;
 import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredException;
 import com.zera.ms_administrative_core.core.domain.exception.InvitationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlacesUnavailableException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
@@ -90,6 +92,11 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidCoordinateException.class)
+    public ProblemDetail handleInvalidCoordinate(InvalidCoordinateException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -129,6 +136,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ProblemDetail handleAccessDenied(AuthorizationDeniedException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Acesso negado");
+    }
+
+    // --- 503 ---
+
+    /**
+     * Integracao desligada ou Google indisponivel apos os retries: 503, nunca lista vazia
+     * (lista vazia so e legitima quando o Google respondeu e nao havia nada no raio).
+     */
+    @ExceptionHandler(RecyclingPlacesUnavailableException.class)
+    public ProblemDetail handleRecyclingPlacesUnavailable(RecyclingPlacesUnavailableException ex) {
+        log.warn("Busca de recicladoras proximas indisponivel: {}", ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
     }
 
     // --- 409 ---

@@ -188,6 +188,32 @@ class GlobalExceptionHandlerTest {
         assertEquals(ex.getMessage(), result.getDetail());
     }
 
+    // --- InvalidCoordinateException ---
+
+    @Test
+    @DisplayName("Should return 400 when InvalidCoordinateException is thrown")
+    void shouldReturn400OnInvalidCoordinate() {
+        InvalidCoordinateException ex = new InvalidCoordinateException(200.0, 10.0);
+
+        ProblemDetail result = handler.handleInvalidCoordinate(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
+    // --- RecyclingPlacesUnavailableException ---
+
+    @Test
+    @DisplayName("Should return 503 when RecyclingPlacesUnavailableException is thrown")
+    void shouldReturn503OnRecyclingPlacesUnavailable() {
+        RecyclingPlacesUnavailableException ex = new RecyclingPlacesUnavailableException("Google indisponivel");
+
+        ProblemDetail result = handler.handleRecyclingPlacesUnavailable(ex);
+
+        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
     // --- OrganizationNotFoundException ---
 
     @Test
