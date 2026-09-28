@@ -86,3 +86,14 @@ spec:
             secretKeyRef:
               name: zera-service-clients
               key: ms-inventory
+        # Recicladoras proximas (Google Places). optional: true para o pod nao entrar em
+        # crash loop se o secret ainda nao existir — sem a chave, o endpoint responde 503
+        # em vez de subir, ver GooglePlacesConfig.
+        - name: GOOGLE_PLACES_ENABLED
+          value: "true"
+        - name: GOOGLE_PLACES_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: google-places
+              key: api-key
+              optional: true
