@@ -8,5 +8,6 @@ public record GenerateInvitationCodeOutput(
     String code,
     UUID managerId,
     UUID unitId,
+    String inviteeName,
     LocalDateTime expiresAt
 ) {}

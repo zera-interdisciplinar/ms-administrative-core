@@ -56,12 +56,13 @@ class GenerateInvitationCodeImplTest {
         when(invitationRepository.findPendingByCode(any())).thenReturn(Optional.empty());
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        GenerateInvitationCodeOutput output = useCase.execute(manager.getUserId());
+        GenerateInvitationCodeOutput output = useCase.execute(manager.getUserId(), "Carol");
 
         assertEquals(6, output.code().length());
         assertTrue(output.code().chars().allMatch(Character::isDigit));
         assertEquals(manager.getUserId(), output.managerId());
         assertEquals(manager.getUnitId(), output.unitId());
+        assertEquals("Carol", output.inviteeName());
         verify(invitationRepository).save(any(Invitation.class));
     }
 
@@ -71,7 +72,7 @@ class GenerateInvitationCodeImplTest {
         UUID managerId = UUID.randomUUID();
         when(userRepository.findById(managerId)).thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> useCase.execute(managerId));
+        assertThrows(UserNotFoundException.class, () -> useCase.execute(managerId, "Carol"));
     }
 
     @Test
@@ -81,7 +82,7 @@ class GenerateInvitationCodeImplTest {
         when(userRepository.findById(employee.getUserId())).thenReturn(Optional.of(employee));
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> useCase.execute(employee.getUserId()));
+                () -> useCase.execute(employee.getUserId(), "Carol"));
         assertEquals("Only managers can generate invitation codes", exception.getMessage());
     }
 
@@ -94,7 +95,7 @@ class GenerateInvitationCodeImplTest {
                 .thenReturn(Optional.empty());
         when(invitationRepository.save(any(Invitation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        useCase.execute(manager.getUserId());
+        useCase.execute(manager.getUserId(), "Carol");
 
         ArgumentCaptor<Invitation> captor = ArgumentCaptor.forClass(Invitation.class);
         verify(invitationRepository).save(captor.capture());
@@ -110,7 +111,7 @@ class GenerateInvitationCodeImplTest {
                 .thenThrow(new DataIntegrityViolationException("duplicate"))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        GenerateInvitationCodeOutput output = useCase.execute(manager.getUserId());
+        GenerateInvitationCodeOutput output = useCase.execute(manager.getUserId(), "Carol");
 
         assertEquals(manager.getUserId(), output.managerId());
     }

@@ -30,7 +30,7 @@ public class GenerateInvitationCodeImpl implements GenerateInvitationCode {
     }
 
     @Override
-    public GenerateInvitationCodeOutput execute(UUID managerId) {
+    public GenerateInvitationCodeOutput execute(UUID managerId, String inviteeName) {
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new UserNotFoundException(managerId));
 
@@ -38,18 +38,19 @@ public class GenerateInvitationCodeImpl implements GenerateInvitationCode {
             throw new IllegalArgumentException("Only managers can generate invitation codes");
         }
 
-        Invitation invitation = createUniqueInvitation(manager);
+        Invitation invitation = createUniqueInvitation(manager, inviteeName);
 
         return new GenerateInvitationCodeOutput(
                 invitation.getId(),
                 invitation.getCode(),
                 invitation.getManagerId(),
                 invitation.getUnitId(),
+                invitation.getInviteeName(),
                 invitation.getExpiresAt()
         );
     }
 
-    private Invitation createUniqueInvitation(User manager) {
+    private Invitation createUniqueInvitation(User manager, String inviteeName) {
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             String code = generateCode();
 
@@ -62,6 +63,7 @@ public class GenerateInvitationCodeImpl implements GenerateInvitationCode {
                     code,
                     manager.getUserId(),
                     manager.getUnitId(),
+                    inviteeName,
                     LocalDateTime.now().plusHours(EXPIRATION_HOURS)
             );
 
