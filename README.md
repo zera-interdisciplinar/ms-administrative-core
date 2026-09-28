@@ -1,6 +1,6 @@
 # ms-administrative-core
 
-![CI](https://github.com/zera-interdisciplinar/ms-administrative-core/actions/workflows/ci.yml/badge.svg)
+[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/projects/jdk/25/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Núcleo administrativo do sistema Zera: organizações, unidades, usuários, autenticação e
