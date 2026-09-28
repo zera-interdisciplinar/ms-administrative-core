@@ -2,7 +2,21 @@
 
 Manifests aplicados pelos workflows `deploy-qa` (namespace `qa`) e `deploy-prod`
 (namespace `production`). Além dos manifests versionados aqui, cada ambiente
-precisa de dois Secrets criados manualmente (uma vez).
+precisa de Secrets criados manualmente (uma vez) — obrigatórios para o pod
+subir saudável, e opcionais para as integrações que nascem desligadas.
+
+## 0. `postgres-secrets` (obrigatório)
+
+Credenciais do Postgres, consumidas tanto por `postgres-qa.yaml`/`postgres.yaml` (o próprio
+banco) quanto por `deployment-qa.yaml`/`deployment.yaml` (a aplicação). Sem ele nenhum dos dois
+sobe.
+
+```sh
+kubectl create secret generic postgres-secrets -n qa \
+  --from-literal=POSTGRES_DB=zera \
+  --from-literal=POSTGRES_USER=<usuario> \
+  --from-literal=POSTGRES_PASSWORD='<senha-forte>'
+```
 
 ## 1. `ms-administrative-core-jwt` (obrigatório)
 
@@ -81,3 +95,22 @@ kubectl create secret generic ms-administrative-core-bootstrap -n production \
 
 Depois que o primeiro MANAGER existir e conseguir logar, o Secret pode ser
 removido — ele só é lido no `flyway migrate` do boot.
+
+## 3. `google-places` (opcional — recicladoras próximas)
+
+`GET /api/v1/recycling-places` usa a Google Places API (New). O deployment já manda
+`GOOGLE_PLACES_ENABLED=true`, e a chave é `optional: true`: sem o Secret, o pod sobe normalmente
+e o endpoint responde 503 em vez de crash-loop — mesmo padrão do resto das integrações opcionais.
+
+```sh
+kubectl create secret generic google-places -n qa \
+  --from-literal=api-key='<chave-da-api-do-google-places>'
+
+kubectl create secret generic google-places -n production \
+  --from-literal=api-key='<chave-da-api-do-google-places>'
+```
+
+A chave é gerada no Console do GCP (Places API, New), restrita por IP do cluster (a chamada sai
+do servidor, não do app do usuário). Custo por chamada — ver `zera.places.cache-ttl` em
+`application.properties` para o TTL do cache que reduz chamadas repetidas (6h por padrão; nome,
+endereço e coordenada não podem ser cacheados além de 30 dias pelos Termos de Uso do Google).
