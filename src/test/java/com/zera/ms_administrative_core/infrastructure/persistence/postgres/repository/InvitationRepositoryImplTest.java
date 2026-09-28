@@ -55,7 +55,7 @@ class InvitationRepositoryImplTest {
     @DisplayName("Deve encontrar convite pendente por código")
     void shouldFindPendingByCode() {
         InvitationJpa jpaEntity = new InvitationJpa(UUID.randomUUID(), "123456", UUID.randomUUID(),
-                UUID.randomUUID(), InvitationStatus.PENDING, LocalDateTime.now().plusHours(1), null,
+                UUID.randomUUID(), "Carol", InvitationStatus.PENDING, LocalDateTime.now().plusHours(1), null,
                 LocalDateTime.now(), LocalDateTime.now());
         when(jpa.findByCodeAndStatus("123456", InvitationStatus.PENDING)).thenReturn(Optional.of(jpaEntity));
 
@@ -73,5 +73,22 @@ class InvitationRepositoryImplTest {
         Optional<Invitation> result = repository.findPendingByCode("000000");
 
         assertFalse(result.isPresent());
+    }
+
+    @Test
+    @DisplayName("Deve listar convites pendentes e não vencidos de um gestor")
+    void shouldFindAllPendingByManager() {
+        UUID managerId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.now();
+        InvitationJpa jpaEntity = new InvitationJpa(UUID.randomUUID(), "123456", managerId, UUID.randomUUID(),
+                "Carol", InvitationStatus.PENDING, now.plusHours(1), null, now, now);
+        when(jpa.findAllByManagerIdAndStatusAndExpiresAtAfterOrderByExpiresAtAsc(managerId, InvitationStatus.PENDING, now))
+                .thenReturn(java.util.List.of(jpaEntity));
+
+        java.util.List<Invitation> result = repository.findAllPendingByManager(managerId, now);
+
+        assertEquals(1, result.size());
+        assertEquals("123456", result.get(0).getCode());
+        assertEquals("Carol", result.get(0).getInviteeName());
     }
 }

@@ -14,6 +14,7 @@ public class Invitation {
     private final String code;
     private final UUID managerId;
     private final UUID unitId;
+    private final String inviteeName;
     private InvitationStatus status;
     private final LocalDateTime expiresAt;
     private UUID usedByUserId;
@@ -21,12 +22,16 @@ public class Invitation {
     private LocalDateTime updatedAt;
 
     public Invitation(UUID id, String code, UUID managerId, UUID unitId, LocalDateTime expiresAt) {
-        this(id, code, managerId, unitId, InvitationStatus.PENDING, expiresAt, null,
+        this(id, code, managerId, unitId, null, expiresAt);
+    }
+
+    public Invitation(UUID id, String code, UUID managerId, UUID unitId, String inviteeName, LocalDateTime expiresAt) {
+        this(id, code, managerId, unitId, inviteeName, InvitationStatus.PENDING, expiresAt, null,
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
     // used when loading data from database
-    public Invitation(UUID id, String code, UUID managerId, UUID unitId, InvitationStatus status,
+    public Invitation(UUID id, String code, UUID managerId, UUID unitId, String inviteeName, InvitationStatus status,
             LocalDateTime expiresAt, UUID usedByUserId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         if (code == null || !CODE_PATTERN.matcher(code).matches()) {
             throw new IllegalArgumentException("Invitation code must have exactly 6 digits: " + code);
@@ -35,6 +40,7 @@ public class Invitation {
         this.code = code;
         this.managerId = managerId;
         this.unitId = unitId;
+        this.inviteeName = inviteeName;
         this.status = status;
         this.expiresAt = expiresAt;
         this.usedByUserId = usedByUserId;
@@ -56,6 +62,10 @@ public class Invitation {
 
     public UUID getUnitId() {
         return unitId;
+    }
+
+    public String getInviteeName() {
+        return inviteeName;
     }
 
     public InvitationStatus getStatus() {

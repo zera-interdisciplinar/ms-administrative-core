@@ -1,6 +1,9 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
@@ -28,5 +31,13 @@ public class InvitationRepositoryImpl implements InvitationRepository {
     @Override
     public Optional<Invitation> findPendingByCode(String code) {
         return jpa.findByCodeAndStatus(code, InvitationStatus.PENDING).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Invitation> findAllPendingByManager(UUID managerId, LocalDateTime now) {
+        return jpa.findAllByManagerIdAndStatusAndExpiresAtAfterOrderByExpiresAtAsc(managerId, InvitationStatus.PENDING, now)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

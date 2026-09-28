@@ -23,7 +23,7 @@ class InvitationMapperTest {
         UUID managerId = UUID.randomUUID();
         UUID unitId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
-        InvitationJpa jpa = new InvitationJpa(id, "123456", managerId, unitId, InvitationStatus.PENDING,
+        InvitationJpa jpa = new InvitationJpa(id, "123456", managerId, unitId, "Carol", InvitationStatus.PENDING,
                 now.plusHours(1), null, now, now);
 
         Invitation domain = mapper.toDomain(jpa);
@@ -32,6 +32,7 @@ class InvitationMapperTest {
         assertEquals("123456", domain.getCode());
         assertEquals(managerId, domain.getManagerId());
         assertEquals(unitId, domain.getUnitId());
+        assertEquals("Carol", domain.getInviteeName());
         assertEquals(InvitationStatus.PENDING, domain.getStatus());
         assertEquals(now.plusHours(1), domain.getExpiresAt());
     }
@@ -44,7 +45,7 @@ class InvitationMapperTest {
         UUID unitId = UUID.randomUUID();
         UUID usedBy = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
-        Invitation domain = new Invitation(id, "654321", managerId, unitId, InvitationStatus.USED,
+        Invitation domain = new Invitation(id, "654321", managerId, unitId, "Carol", InvitationStatus.USED,
                 now.plusHours(1), usedBy, now, now);
 
         InvitationJpa jpa = mapper.toJpa(domain);
@@ -53,6 +54,7 @@ class InvitationMapperTest {
         assertEquals("654321", jpa.getCode());
         assertEquals(managerId, jpa.getManagerId());
         assertEquals(unitId, jpa.getUnitId());
+        assertEquals("Carol", jpa.getInviteeName());
         assertEquals(InvitationStatus.USED, jpa.getStatus());
         assertEquals(usedBy, jpa.getUsedByUserId());
     }

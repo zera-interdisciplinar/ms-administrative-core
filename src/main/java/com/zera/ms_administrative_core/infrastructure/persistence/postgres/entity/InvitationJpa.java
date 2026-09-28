@@ -34,6 +34,9 @@ public class InvitationJpa {
     @Column(name = "unit_id", columnDefinition = "uuid", nullable = false)
     private UUID unitId;
 
+    @Column(name = "invitee_name")
+    private String inviteeName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
     private InvitationStatus status;
@@ -50,12 +53,13 @@ public class InvitationJpa {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public InvitationJpa(UUID id, String code, UUID managerId, UUID unitId, InvitationStatus status,
+    public InvitationJpa(UUID id, String code, UUID managerId, UUID unitId, String inviteeName, InvitationStatus status,
             LocalDateTime expiresAt, UUID usedByUserId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.code = code;
         this.managerId = managerId;
         this.unitId = unitId;
+        this.inviteeName = inviteeName;
         this.status = status;
         this.expiresAt = expiresAt;
         this.usedByUserId = usedByUserId;
