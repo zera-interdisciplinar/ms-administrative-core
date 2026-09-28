@@ -34,6 +34,9 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean private Login login;
+
+    @MockitoBean
+    private com.zera.ms_administrative_core.core.usecase.auth.IssueServiceToken issueServiceToken;
     @MockitoBean private RefreshSession refreshSession;
     @MockitoBean private Logout logout;
 
@@ -118,6 +121,48 @@ class AuthControllerTest {
         mockMvc.perform(post(BASE_URL + "/logout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/service-token - deve emitir o token do cliente de servico")
+    void serviceTokenReturnsToken() throws Exception {
+        org.mockito.Mockito.when(issueServiceToken.execute("ms-inventory", "segredo"))
+                .thenReturn(new com.zera.ms_administrative_core.core.usecase.auth.ServiceToken(
+                        "token-de-servico", "Bearer", 900));
+
+        mockMvc.perform(post("/api/v1/auth/service-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"clientId\":\"ms-inventory\",\"clientSecret\":\"segredo\"}"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.accessToken").value("token-de-servico"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.expiresIn").value(900));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/service-token - credencial invalida deve retornar 401")
+    void serviceTokenRejectsBadCredentials() throws Exception {
+        org.mockito.Mockito.when(issueServiceToken.execute(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+                .thenThrow(new com.zera.ms_administrative_core.core.domain.exception
+                        .InvalidServiceCredentialsException());
+
+        mockMvc.perform(post("/api/v1/auth/service-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"clientId\":\"ms-inventory\",\"clientSecret\":\"errado\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/service-token - corpo incompleto deve retornar 400")
+    void serviceTokenValidatesBody() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/service-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"clientId\":\"  \"}"))
                 .andExpect(status().isBadRequest());
     }
 }

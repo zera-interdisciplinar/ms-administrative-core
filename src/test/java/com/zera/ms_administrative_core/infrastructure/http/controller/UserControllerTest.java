@@ -106,7 +106,7 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users - deve retornar 200 com lista paginada")
     void shouldReturn200WithPagedList() throws Exception {
-        when(findAllUsers.execute(null, null, null, 0, 20)).thenReturn(List.of(userOutput));
+        when(findAllUsers.execute(null, null, null, null, 0, 20)).thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
@@ -117,7 +117,7 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users?role=MANAGER - deve filtrar por role")
     void shouldReturn200FilteredByRole() throws Exception {
-        when(findAllUsers.execute(eq(Role.MANAGER), isNull(), isNull(), anyInt(), anyInt()))
+        when(findAllUsers.execute(eq(Role.MANAGER), isNull(), isNull(), isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("role", "MANAGER"))
@@ -128,7 +128,7 @@ class UserControllerTest {
     @Test
     @DisplayName("GET /users?status=ACTIVE - deve filtrar por status")
     void shouldReturn200FilteredByStatus() throws Exception {
-        when(findAllUsers.execute(isNull(), eq(Status.ACTIVE), isNull(), anyInt(), anyInt()))
+        when(findAllUsers.execute(isNull(), eq(Status.ACTIVE), isNull(), isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("status", "ACTIVE"))
@@ -136,11 +136,36 @@ class UserControllerTest {
                 .andExpect(jsonPath("$[0].status").value("ACTIVE"));
     }
 
+    /** O ms-inventory usa este filtro para achar o gestor da unidade e destinar o alerta. */
+    @Test
+    @DisplayName("GET /users?unitId= - deve filtrar por unidade")
+    void shouldReturn200FilteredByUnitId() throws Exception {
+        UUID unitId = UUID.randomUUID();
+        when(findAllUsers.execute(isNull(), isNull(), isNull(), eq(unitId), anyInt(), anyInt()))
+                .thenReturn(List.of(userOutput));
+
+        mockMvc.perform(get(BASE_URL).param("unitId", unitId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("GET /users?role=MANAGER&unitId= - deve combinar papel e unidade")
+    void shouldReturn200FilteredByRoleAndUnit() throws Exception {
+        UUID unitId = UUID.randomUUID();
+        when(findAllUsers.execute(eq(Role.MANAGER), isNull(), isNull(), eq(unitId), anyInt(), anyInt()))
+                .thenReturn(List.of(userOutput));
+
+        mockMvc.perform(get(BASE_URL).param("role", "MANAGER").param("unitId", unitId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("João Silva"));
+    }
+
     @Test
     @DisplayName("GET /users?managerId= - deve filtrar por gestor")
     void shouldReturn200FilteredByManagerId() throws Exception {
         UUID managerId = UUID.randomUUID();
-        when(findAllUsers.execute(isNull(), isNull(), eq(managerId), anyInt(), anyInt()))
+        when(findAllUsers.execute(isNull(), isNull(), eq(managerId), isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(userOutput));
 
         mockMvc.perform(get(BASE_URL).param("managerId", managerId.toString()))

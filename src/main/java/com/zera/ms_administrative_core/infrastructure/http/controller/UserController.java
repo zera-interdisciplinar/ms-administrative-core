@@ -132,13 +132,14 @@ public class UserController {
             @RequestParam(required = false) Status status,
             @RequestParam(required = false) String email,
             @RequestParam(required = false) UUID managerId,
+            @RequestParam(required = false) UUID unitId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         if (email != null) {
             return ResponseEntity.ok(List.of(findUserByEmail.execute(email)));
         }
-        return ResponseEntity.ok(findAllUsers.execute(role, status, managerId, page, size));
+        return ResponseEntity.ok(findAllUsers.execute(role, status, managerId, unitId, page, size));
     }
 
     @GetMapping("/count-by-manager")

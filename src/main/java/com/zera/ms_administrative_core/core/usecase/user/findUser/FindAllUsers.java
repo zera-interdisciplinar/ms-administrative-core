@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface FindAllUsers {
-    List<UserOutput> execute(Role role, Status status, UUID managerId, int page, int size);
+    List<UserOutput> execute(Role role, Status status, UUID managerId, UUID unitId, int page, int size);
 }

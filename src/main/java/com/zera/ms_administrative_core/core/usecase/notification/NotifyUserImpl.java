@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.core.usecase.notification;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,8 +39,12 @@ public class NotifyUserImpl implements NotifyUser {
             }
         }
 
+        // o momento informado por quem detectou vale mais que a hora em que a chamada chegou aqui;
+        // sem ele, cai no agora
+        LocalDateTime occurredAt = command.occurredAt() != null ? command.occurredAt() : LocalDateTime.now();
         Alert alert = new Alert(command.kind(), command.severity(), command.description(), command.userId(),
-                command.ruleId(), command.eventId(), command.unitId(), command.status(), UUID.randomUUID());
+                command.ruleId(), command.eventId(), LocalDateTime.now(), LocalDateTime.now(), occurredAt,
+                command.unitId(), command.status(), UUID.randomUUID());
 
         try {
             alertRepository.save(alert);

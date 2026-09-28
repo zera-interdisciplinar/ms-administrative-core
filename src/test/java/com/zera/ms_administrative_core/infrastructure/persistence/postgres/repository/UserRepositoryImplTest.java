@@ -69,13 +69,13 @@ class UserRepositoryImplTest {
     void shouldFindAll() {
         ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
         Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
-        when(jpa.findAllByRoleAndStatusAndManagerId(null, null, null, PageRequest.of(0, 10))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatusAndManagerId(null, null, null, null, PageRequest.of(0, 10))).thenReturn(page);
 
-        List<User> result = repository.findAll(null, null, null, 0, 10);
+        List<User> result = repository.findAll(null, null, null, null, 0, 10);
 
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
-        verify(jpa).findAllByRoleAndStatusAndManagerId(null, null, null, PageRequest.of(0, 10));
+        verify(jpa).findAllByRoleAndStatusAndManagerId(null, null, null, null, PageRequest.of(0, 10));
     }
 
     @Test
@@ -83,13 +83,13 @@ class UserRepositoryImplTest {
     void shouldFindAllByRole() {
         ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
         Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
-        when(jpa.findAllByRoleAndStatusAndManagerId(Role.MANAGER, null, null, PageRequest.of(0, 10))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatusAndManagerId(Role.MANAGER, null, null, null, PageRequest.of(0, 10))).thenReturn(page);
 
-        List<User> result = repository.findAll(Role.MANAGER, null, null, 0, 10);
+        List<User> result = repository.findAll(Role.MANAGER, null, null, null, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals(Role.MANAGER, result.get(0).role());
-        verify(jpa).findAllByRoleAndStatusAndManagerId(Role.MANAGER, null, null, PageRequest.of(0, 10));
+        verify(jpa).findAllByRoleAndStatusAndManagerId(Role.MANAGER, null, null, null, PageRequest.of(0, 10));
     }
 
     @Test
@@ -97,13 +97,13 @@ class UserRepositoryImplTest {
     void shouldFindAllByStatus() {
         ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
         Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
-        when(jpa.findAllByRoleAndStatusAndManagerId(null, Status.ACTIVE, null, PageRequest.of(0, 10))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatusAndManagerId(null, Status.ACTIVE, null, null, PageRequest.of(0, 10))).thenReturn(page);
 
-        List<User> result = repository.findAll(null, Status.ACTIVE, null, 0, 10);
+        List<User> result = repository.findAll(null, Status.ACTIVE, null, null, 0, 10);
 
         assertEquals(1, result.size());
         assertEquals(Status.ACTIVE, result.get(0).getStatus());
-        verify(jpa).findAllByRoleAndStatusAndManagerId(null, Status.ACTIVE, null, PageRequest.of(0, 10));
+        verify(jpa).findAllByRoleAndStatusAndManagerId(null, Status.ACTIVE, null, null, PageRequest.of(0, 10));
     }
 
     @Test
@@ -111,23 +111,99 @@ class UserRepositoryImplTest {
     void shouldFindAllByRoleAndStatus() {
         ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
         Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
-        when(jpa.findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, PageRequest.of(0, 10))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, null, PageRequest.of(0, 10))).thenReturn(page);
 
-        List<User> result = repository.findAll(Role.MANAGER, Status.ACTIVE, null, 0, 10);
+        List<User> result = repository.findAll(Role.MANAGER, Status.ACTIVE, null, null, 0, 10);
 
         assertEquals(1, result.size());
-        verify(jpa).findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, PageRequest.of(0, 10));
+        verify(jpa).findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, null, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve retornar todos filtrados por unidade")
+    void shouldFindAllByUnitId() {
+        UUID unitId = UUID.randomUUID();
+        ManagerJpa jpaEntity = createManagerJpaInUnit(unitId);
+        Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
+        when(jpa.findAllByRoleAndStatusAndManagerId(null, null, null, unitId, PageRequest.of(0, 10))).thenReturn(page);
+
+        List<User> result = repository.findAll(null, null, null, unitId, 0, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(unitId, result.get(0).getUnitId());
+        verify(jpa).findAllByRoleAndStatusAndManagerId(null, null, null, unitId, PageRequest.of(0, 10));
+    }
+
+    @Test
+    @DisplayName("Deve combinar unidade com role e status")
+    void shouldFindAllByUnitIdRoleAndStatus() {
+        UUID unitId = UUID.randomUUID();
+        ManagerJpa jpaEntity = createManagerJpaInUnit(unitId);
+        Page<UserJpa> page = new PageImpl<>(List.of(jpaEntity));
+        when(jpa.findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, unitId,
+                PageRequest.of(0, 10))).thenReturn(page);
+
+        List<User> result = repository.findAll(Role.MANAGER, Status.ACTIVE, null, unitId, 0, 10);
+
+        assertEquals(1, result.size());
+        verify(jpa).findAllByRoleAndStatusAndManagerId(Role.MANAGER, Status.ACTIVE, null, unitId,
+                PageRequest.of(0, 10));
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há usuários")
     void shouldReturnEmptyList() {
         Page<UserJpa> page = new PageImpl<>(List.of());
-        when(jpa.findAllByRoleAndStatusAndManagerId(any(), any(), any(), any(Pageable.class))).thenReturn(page);
+        when(jpa.findAllByRoleAndStatusAndManagerId(any(), any(), any(), any(), any(Pageable.class))).thenReturn(page);
 
-        List<User> result = repository.findAll(null, null, null, 0, 10);
+        List<User> result = repository.findAll(null, null, null, null, 0, 10);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Deve buscar por id")
+    void shouldFindById() {
+        UUID id = UUID.randomUUID();
+        ManagerJpa jpaEntity = createManagerJpa(id);
+        when(jpa.findById(id)).thenReturn(Optional.of(jpaEntity));
+
+        Optional<User> result = repository.findById(id);
+
+        assertTrue(result.isPresent());
+        assertEquals(id, result.get().getUserId());
+        verify(jpa).findById(id);
+    }
+
+    @Test
+    @DisplayName("Deve retornar vazio ao buscar id inexistente")
+    void shouldReturnEmptyWhenIdNotFound() {
+        UUID id = UUID.randomUUID();
+        when(jpa.findById(id)).thenReturn(Optional.empty());
+
+        assertTrue(repository.findById(id).isEmpty());
+    }
+
+    @Test
+    @DisplayName("Deve buscar por email")
+    void shouldFindByEmail() {
+        Email email = new Email("gestor@zera.com");
+        ManagerJpa jpaEntity = createManagerJpa(UUID.randomUUID());
+        when(jpa.findByEmail(email.value())).thenReturn(Optional.of(jpaEntity));
+
+        Optional<User> result = repository.findByEmail(email);
+
+        assertTrue(result.isPresent());
+        verify(jpa).findByEmail(email.value());
+    }
+
+    @Test
+    @DisplayName("Deve retornar vazio ao buscar email inexistente")
+    void shouldReturnEmptyWhenEmailNotFound() {
+        Email email = new Email("ninguem@zera.com");
+        when(jpa.findByEmail(email.value())).thenReturn(Optional.empty());
+
+        assertTrue(repository.findByEmail(email).isEmpty());
     }
 
     @Test
@@ -142,6 +218,30 @@ class UserRepositoryImplTest {
         verify(jpa).existsByEmail(email.value());
     }
 
+    @Test
+    @DisplayName("Deve agrupar a contagem de funcionarios por gestor")
+    void shouldCountEmployeesGroupedByManager() {
+        UUID managerId = UUID.randomUUID();
+        List<Object[]> rows = new java.util.ArrayList<>();
+        rows.add(new Object[] {managerId, 3L});
+        when(jpa.countEmployeesGroupedByManager()).thenReturn(rows);
+
+        List<com.zera.ms_administrative_core.core.repository.ManagerEmployeeCount> result =
+                repository.countEmployeesGroupedByManager();
+
+        assertEquals(1, result.size());
+        assertEquals(managerId, result.get(0).managerId());
+        assertEquals(3L, result.get(0).count());
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia quando nenhum gestor tem funcionarios")
+    void shouldReturnEmptyGroupingWhenThereAreNoEmployees() {
+        when(jpa.countEmployeesGroupedByManager()).thenReturn(List.of());
+
+        assertTrue(repository.countEmployeesGroupedByManager().isEmpty());
+    }
+
     private User createManager() {
         return com.zera.ms_administrative_core.core.domain.UserFactory.load(
                 Role.MANAGER, UUID.randomUUID(), "Name", new Email("test@test.com"),
@@ -152,5 +252,10 @@ class UserRepositoryImplTest {
     private ManagerJpa createManagerJpa(UUID id) {
         return new ManagerJpa(id, "Name", "test@test.com", "hash",
                 Status.ACTIVE, UUID.randomUUID(), LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    private ManagerJpa createManagerJpaInUnit(UUID unitId) {
+        return new ManagerJpa(UUID.randomUUID(), "Name", "test@test.com", "hash",
+                Status.ACTIVE, unitId, LocalDateTime.now(), LocalDateTime.now());
     }
 }
