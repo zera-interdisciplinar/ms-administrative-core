@@ -29,9 +29,19 @@ class InvitationTest {
         assertEquals("123456", invitation.getCode());
         assertEquals(managerId, invitation.getManagerId());
         assertEquals(unitId, invitation.getUnitId());
+        assertNull(invitation.getInviteeName());
         assertEquals(InvitationStatus.PENDING, invitation.getStatus());
         assertNull(invitation.getUsedByUserId());
         assertFalse(invitation.isExpired());
+    }
+
+    @Test
+    @DisplayName("Deve criar um convite com o nome de quem vai entrar")
+    void shouldCreateInvitationWithInviteeName() {
+        Invitation invitation = new Invitation(UUID.randomUUID(), "123456", UUID.randomUUID(), UUID.randomUUID(),
+                "Operadora Carol the Best", LocalDateTime.now().plusHours(1));
+
+        assertEquals("Operadora Carol the Best", invitation.getInviteeName());
     }
 
     @Test
@@ -59,7 +69,7 @@ class InvitationTest {
     void shouldMarkAsUsed() {
         LocalDateTime before = LocalDateTime.now().minusDays(1);
         Invitation invitation = new Invitation(UUID.randomUUID(), "111222", UUID.randomUUID(), UUID.randomUUID(),
-                InvitationStatus.PENDING, LocalDateTime.now().plusHours(1), null, before, before);
+                "Carol", InvitationStatus.PENDING, LocalDateTime.now().plusHours(1), null, before, before);
         UUID userId = UUID.randomUUID();
 
         invitation.markUsed(userId);

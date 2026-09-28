@@ -17,13 +17,18 @@ import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredEx
 import com.zera.ms_administrative_core.core.domain.exception.InvitationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.usecase.user.findInvitation.FindPendingInvitations;
+import com.zera.ms_administrative_core.core.usecase.user.findInvitation.PendingInvitationOutput;
 import com.zera.ms_administrative_core.core.usecase.user.generateInvitationCode.GenerateInvitationCode;
 import com.zera.ms_administrative_core.core.usecase.user.generateInvitationCode.GenerateInvitationCodeOutput;
 import com.zera.ms_administrative_core.core.usecase.user.registerUser.RegisterUserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.registerWithInvitationCode.RegisterWithInvitationCode;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,6 +48,9 @@ class InvitationControllerTest {
     @MockitoBean
     private RegisterWithInvitationCode registerWithInvitationCode;
 
+    @MockitoBean
+    private FindPendingInvitations findPendingInvitations;
+
     // --- POST /api/v1/invitations ---
 
     @Test
@@ -51,26 +59,27 @@ class InvitationControllerTest {
         UUID managerId = UUID.randomUUID();
         UUID unitId = UUID.randomUUID();
         GenerateInvitationCodeOutput output = new GenerateInvitationCodeOutput(
-                UUID.randomUUID(), "123456", managerId, unitId, LocalDateTime.now().plusHours(24));
-        when(generateInvitationCode.execute(managerId)).thenReturn(output);
+                UUID.randomUUID(), "123456", managerId, unitId, "Carol", LocalDateTime.now().plusHours(24));
+        when(generateInvitationCode.execute(managerId, "Carol")).thenReturn(output);
 
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"managerId\": \"%s\"}".formatted(managerId)))
+                        .content("{\"managerId\": \"%s\", \"inviteeName\": \"Carol\"}".formatted(managerId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("123456"))
-                .andExpect(jsonPath("$.managerId").value(managerId.toString()));
+                .andExpect(jsonPath("$.managerId").value(managerId.toString()))
+                .andExpect(jsonPath("$.inviteeName").value("Carol"));
     }
 
     @Test
     @DisplayName("POST /invitations - deve retornar 404 quando gestor não existe")
     void shouldReturn404WhenManagerNotFound() throws Exception {
         UUID managerId = UUID.randomUUID();
-        when(generateInvitationCode.execute(managerId)).thenThrow(new UserNotFoundException(managerId));
+        when(generateInvitationCode.execute(managerId, "Carol")).thenThrow(new UserNotFoundException(managerId));
 
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"managerId\": \"%s\"}".formatted(managerId)))
+                        .content("{\"managerId\": \"%s\", \"inviteeName\": \"Carol\"}".formatted(managerId)))
                 .andExpect(status().isNotFound());
     }
 
@@ -80,6 +89,52 @@ class InvitationControllerTest {
         mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /invitations - deve retornar 400 quando inviteeName está em branco")
+    void shouldReturn400WhenInviteeNameBlank() throws Exception {
+        UUID managerId = UUID.randomUUID();
+
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"managerId\": \"%s\", \"inviteeName\": \"\"}".formatted(managerId)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // --- GET /api/v1/invitations/pending ---
+
+    @Test
+    @DisplayName("GET /invitations/pending - deve listar convites pendentes do gestor")
+    void shouldListPendingInvitations() throws Exception {
+        UUID managerId = UUID.randomUUID();
+        PendingInvitationOutput output = new PendingInvitationOutput(
+                "120443", "Operadora Carol the Best", LocalDateTime.now().plusHours(23));
+        when(findPendingInvitations.execute(managerId)).thenReturn(List.of(output));
+
+        mockMvc.perform(get(BASE_URL + "/pending").param("managerId", managerId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].code").value("120443"))
+                .andExpect(jsonPath("$[0].inviteeName").value("Operadora Carol the Best"));
+    }
+
+    @Test
+    @DisplayName("GET /invitations/pending - deve retornar lista vazia quando não há convites pendentes")
+    void shouldReturnEmptyListWhenNoPendingInvitations() throws Exception {
+        UUID managerId = UUID.randomUUID();
+        when(findPendingInvitations.execute(managerId)).thenReturn(List.of());
+
+        mockMvc.perform(get(BASE_URL + "/pending").param("managerId", managerId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    @DisplayName("GET /invitations/pending - deve retornar 400 quando managerId está ausente")
+    void shouldReturn400WhenManagerIdMissing() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/pending"))
                 .andExpect(status().isBadRequest());
     }
 
