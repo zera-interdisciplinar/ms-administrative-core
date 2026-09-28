@@ -1,6 +1,7 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -37,8 +38,12 @@ class UserJpaRepositoryTest {
     }
 
     private UserJpa employee(UUID unitId, UUID managerId) {
+        return employee(unitId, managerId, Status.ACTIVE);
+    }
+
+    private UserJpa employee(UUID unitId, UUID managerId, Status status) {
         return new EmployeeJpa(UUID.randomUUID(), "Operario", "operario-" + UUID.randomUUID() + "@zera.com",
-                "hash", Status.ACTIVE, unitId, LocalDateTime.now(), LocalDateTime.now(), managerId);
+                "hash", status, unitId, LocalDateTime.now(), LocalDateTime.now(), managerId);
     }
 
     @Test
@@ -107,5 +112,20 @@ class UserJpaRepositoryTest {
                 null, null, null, UUID.randomUUID(), PageRequest.of(0, 10));
 
         assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
+    void shouldCountOnlyActiveEmployeesGroupedByManager() {
+        UUID managerId = UUID.randomUUID();
+        repository.save(employee(UUID.randomUUID(), managerId, Status.ACTIVE));
+        repository.save(employee(UUID.randomUUID(), managerId, Status.ACTIVE));
+        repository.save(employee(UUID.randomUUID(), managerId, Status.INACTIVE));
+        repository.save(employee(UUID.randomUUID(), managerId, Status.SUSPENDED));
+
+        List<Object[]> result = repository.countEmployeesGroupedByManager();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)[0]).isEqualTo(managerId);
+        assertThat(result.get(0)[1]).isEqualTo(2L);
     }
 }
