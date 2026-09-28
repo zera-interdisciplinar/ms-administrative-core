@@ -36,6 +36,7 @@ interface UserJpaRepository extends JpaRepository<UserJpa, UUID> {
     SELECT e.managerId, COUNT(e)
     FROM EmployeeJpa e
     WHERE e.managerId IS NOT NULL
+    AND e.status = com.zera.ms_administrative_core.core.domain.valueobject.Status.ACTIVE
     GROUP BY e.managerId
 """)
     List<Object[]> countEmployeesGroupedByManager();
