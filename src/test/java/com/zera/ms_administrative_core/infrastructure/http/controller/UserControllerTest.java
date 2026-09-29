@@ -18,6 +18,7 @@ import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
+import com.zera.ms_administrative_core.core.usecase.user.updateUserImage.UpdateUserImage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +61,7 @@ class UserControllerTest {
     @MockitoBean private SuspendUser suspendUser;
     @MockitoBean private AssignManager assignManager;
     @MockitoBean private CountUsersByManager countUsersByManager;
+    @MockitoBean private UpdateUserImage updateUserImage;
 
     private UserOutput userOutput;
 
@@ -74,6 +76,7 @@ class UserControllerTest {
                 UUID.randomUUID(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
+                null,
                 null
         );
     }
@@ -283,6 +286,44 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"managerId\": \"%s\"}".formatted(UUID.randomUUID())))
                 .andExpect(status().isBadRequest());
+    }
+
+    // --- PATCH /api/v1/users/{id}/image ---
+
+    @Test
+    @DisplayName("PATCH /users/{id}/image - deve retornar 204 ao atualizar imagem")
+    void shouldReturn204WhenImageUpdated() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/image", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"imageUrl\": \"https://cdn.example.com/avatar.png\"}"))
+                .andExpect(status().isNoContent());
+        verify(updateUserImage).execute(id, "https://cdn.example.com/avatar.png");
+    }
+
+    @Test
+    @DisplayName("PATCH /users/{id}/image - deve retornar 204 ao remover imagem")
+    void shouldReturn204WhenImageCleared() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/image", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNoContent());
+        verify(updateUserImage).execute(id, null);
+    }
+
+    @Test
+    @DisplayName("PATCH /users/{id}/image - deve retornar 404 quando usuário não encontrado")
+    void shouldReturn404WhenUserNotFoundOnUpdateImage() throws Exception {
+        UUID id = UUID.randomUUID();
+        doThrow(new UserNotFoundException(id)).when(updateUserImage).execute(eq(id), any());
+
+        mockMvc.perform(patch(BASE_URL + "/{id}/image", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"imageUrl\": \"https://cdn.example.com/avatar.png\"}"))
+                .andExpect(status().isNotFound());
     }
 
     // --- GET /api/v1/users/count-by-manager ---

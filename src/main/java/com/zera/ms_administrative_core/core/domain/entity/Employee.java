@@ -19,7 +19,13 @@ public class Employee extends User {
       public Employee(UUID userId, String name, Email email,
                   HashedPassword password, Status status, UUID unitId,
                   LocalDateTime createdAt, LocalDateTime updatedAt, UUID managerId) {
-            super(userId, name, email, password, status, unitId, createdAt, updatedAt);
+            this(userId, name, email, password, status, unitId, createdAt, updatedAt, managerId, null);
+      }
+
+      public Employee(UUID userId, String name, Email email,
+                  HashedPassword password, Status status, UUID unitId,
+                  LocalDateTime createdAt, LocalDateTime updatedAt, UUID managerId, String imageUrl) {
+            super(userId, name, email, password, status, unitId, createdAt, updatedAt, imageUrl);
             this.managerId = managerId;
       }
 

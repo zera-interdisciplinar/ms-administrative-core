@@ -50,6 +50,9 @@ public abstract class UserJpa {
     @Column(name = "unit_id", columnDefinition = "uuid", nullable = false)
     private UUID unitId;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -59,6 +62,12 @@ public abstract class UserJpa {
     protected UserJpa(UUID id, String name, String email, String password,
                       Role role, Status status, UUID unitId,
                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(id, name, email, password, role, status, unitId, createdAt, updatedAt, null);
+    }
+
+    protected UserJpa(UUID id, String name, String email, String password,
+                      Role role, Status status, UUID unitId,
+                      LocalDateTime createdAt, LocalDateTime updatedAt, String imageUrl) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -68,5 +77,6 @@ public abstract class UserJpa {
         this.unitId = unitId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.imageUrl = imageUrl;
     }
 }

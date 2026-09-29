@@ -24,7 +24,13 @@ public class EmployeeJpa extends UserJpa {
     public EmployeeJpa(UUID id, String name, String email, String password,
                        Status status, UUID unitId,
                        LocalDateTime createdAt, LocalDateTime updatedAt, UUID managerId) {
-        super(id, name, email, password, Role.EMPLOYEE, status, unitId, createdAt, updatedAt);
+        this(id, name, email, password, status, unitId, createdAt, updatedAt, managerId, null);
+    }
+
+    public EmployeeJpa(UUID id, String name, String email, String password,
+                       Status status, UUID unitId,
+                       LocalDateTime createdAt, LocalDateTime updatedAt, UUID managerId, String imageUrl) {
+        super(id, name, email, password, Role.EMPLOYEE, status, unitId, createdAt, updatedAt, imageUrl);
         this.managerId = managerId;
     }
 }

@@ -18,7 +18,8 @@ public record UserOutput(
         UUID unitId,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        UUID managerId
+        UUID managerId,
+        String imageUrl
 ) {
     public static UserOutput from(User user) {
         return new UserOutput(
@@ -30,7 +31,8 @@ public record UserOutput(
                 user.getUnitId(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user instanceof Employee employee ? employee.getManagerId() : null
+                user instanceof Employee employee ? employee.getManagerId() : null,
+                user.getImageUrl()
         );
     }
 }
