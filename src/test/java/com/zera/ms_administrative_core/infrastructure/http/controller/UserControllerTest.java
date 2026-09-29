@@ -18,6 +18,7 @@ import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
+import com.zera.ms_administrative_core.core.usecase.user.updateUserImage.UpdateUserImage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +61,7 @@ class UserControllerTest {
     @MockitoBean private SuspendUser suspendUser;
     @MockitoBean private AssignManager assignManager;
     @MockitoBean private CountUsersByManager countUsersByManager;
+    @MockitoBean private UpdateUserImage updateUserImage;
 
     private UserOutput userOutput;
 
@@ -74,6 +76,7 @@ class UserControllerTest {
                 UUID.randomUUID(),
                 LocalDateTime.now(),
                 LocalDateTime.now(),
+                null,
                 null
         );
     }

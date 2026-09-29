@@ -26,7 +26,8 @@ public class UserMapper {
                 user.getUnitId(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                managerId
+                managerId,
+                user.getImageUrl()
         );
     }
 
@@ -40,7 +41,8 @@ public class UserMapper {
                     domain.getStatus(),
                     domain.getUnitId(),
                     domain.getCreatedAt(),
-                    domain.getUpdatedAt()
+                    domain.getUpdatedAt(),
+                    domain.getImageUrl()
             );
             case EMPLOYEE -> new EmployeeJpa(
                     domain.getUserId(),
@@ -51,7 +53,8 @@ public class UserMapper {
                     domain.getUnitId(),
                     domain.getCreatedAt(),
                     domain.getUpdatedAt(),
-                    ((Employee) domain).getManagerId()
+                    ((Employee) domain).getManagerId(),
+                    domain.getImageUrl()
             );
         };
     }

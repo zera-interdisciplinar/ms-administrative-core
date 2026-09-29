@@ -22,6 +22,8 @@ public abstract class User {
     // reference to unit that the user belongs to
     private final UUID unitId;
 
+    private String imageUrl;
+
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -41,6 +43,13 @@ public abstract class User {
     protected User(UUID userId, String name, Email email,
             HashedPassword password, Status status, UUID unitId,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(userId, name, email, password, status, unitId, createdAt, updatedAt, null);
+    }
+
+    // used when loading data from database
+    protected User(UUID userId, String name, Email email,
+            HashedPassword password, Status status, UUID unitId,
+            LocalDateTime createdAt, LocalDateTime updatedAt, String imageUrl) {
         this.userId = userId;
         this.name = name;
         this.email = email;
@@ -49,6 +58,7 @@ public abstract class User {
         this.unitId = unitId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.imageUrl = imageUrl;
     }
 
     public abstract Role role();
@@ -84,6 +94,10 @@ public abstract class User {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     // ------------------------------------------
@@ -133,6 +147,11 @@ public abstract class User {
 
     public void changePassword(HashedPassword newPassword) {
         this.password = newPassword;
+        touch();
+    }
+
+    public void updateImageUrl(String newImageUrl) {
+        this.imageUrl = newImageUrl;
         touch();
     }
     // TODO: think about if we should have a method to change the unit of the user

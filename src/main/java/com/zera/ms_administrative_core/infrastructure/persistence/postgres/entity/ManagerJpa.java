@@ -18,6 +18,12 @@ public class ManagerJpa extends UserJpa {
     public ManagerJpa(UUID id, String name, String email, String password,
                       Status status, UUID unitId,
                       LocalDateTime createdAt, LocalDateTime updatedAt) {
-        super(id, name, email, password, Role.MANAGER, status, unitId, createdAt, updatedAt);
+        this(id, name, email, password, status, unitId, createdAt, updatedAt, null);
+    }
+
+    public ManagerJpa(UUID id, String name, String email, String password,
+                      Status status, UUID unitId,
+                      LocalDateTime createdAt, LocalDateTime updatedAt, String imageUrl) {
+        super(id, name, email, password, Role.MANAGER, status, unitId, createdAt, updatedAt, imageUrl);
     }
 }
