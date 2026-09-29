@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
@@ -47,18 +48,23 @@ class UserTest {
 
         user.changePassword(new HashedPassword("hash-2"));
 
+        user.updateImageUrl("https://cdn.example.com/avatar.png");
+        LocalDateTime afterImageUpdate = user.getUpdatedAt();
+
         assertEquals("Alicia", user.getName());
         assertEquals(new Email("alicia@example.com"), user.getEmail());
         assertEquals(Status.SUSPENDED, user.getStatus());
         assertEquals(new HashedPassword("hash-2"), user.getPassword());
         assertEquals(createdAt, user.getCreatedAt());
         assertEquals(Role.MANAGER, user.role());
+        assertEquals("https://cdn.example.com/avatar.png", user.getImageUrl());
 
         assertNotEquals(updatedAt, afterRename);
         assertNotEquals(afterRename, afterEmailChange);
         assertNotEquals(afterEmailChange, afterDeactivate);
         assertNotEquals(afterDeactivate, afterActivate);
         assertNotEquals(afterActivate, afterSuspend);
+        assertNotEquals(afterSuspend, afterImageUpdate);
     }
 
     @Test
@@ -99,5 +105,6 @@ class UserTest {
         assertEquals(Status.ACTIVE, user.getStatus());
         assertEquals(unitId, user.getUnitId());
         assertEquals(Role.EMPLOYEE, user.role());
+        assertNull(user.getImageUrl());
     }
 }

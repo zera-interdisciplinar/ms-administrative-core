@@ -39,9 +39,16 @@ public final class UserFactory {
                                      HashedPassword password, Status status, UUID unitId,
                                      java.time.LocalDateTime createdAt,
                                      java.time.LocalDateTime updatedAt, UUID managerId) {
+        return load(role, id, name, email, password, status, unitId, createdAt, updatedAt, managerId, null);
+    }
+
+    public static User load(Role role, UUID id, String name, Email email,
+                                     HashedPassword password, Status status, UUID unitId,
+                                     java.time.LocalDateTime createdAt,
+                                     java.time.LocalDateTime updatedAt, UUID managerId, String imageUrl) {
         return switch (role) {
-            case MANAGER  -> new Manager(id, name, email, password, status, unitId, createdAt, updatedAt);
-            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, createdAt, updatedAt, managerId);
+            case MANAGER  -> new Manager(id, name, email, password, status, unitId, createdAt, updatedAt, imageUrl);
+            case EMPLOYEE -> new Employee(id, name, email, password, status, unitId, createdAt, updatedAt, managerId, imageUrl);
         };
     }
 }

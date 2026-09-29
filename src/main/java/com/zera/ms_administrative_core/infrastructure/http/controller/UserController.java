@@ -16,10 +16,12 @@ import com.zera.ms_administrative_core.core.usecase.user.findUser.FindUserById;
 import com.zera.ms_administrative_core.core.usecase.user.findUser.UserOutput;
 import com.zera.ms_administrative_core.core.usecase.user.renameUser.RenameUser;
 import com.zera.ms_administrative_core.core.usecase.user.suspendUser.SuspendUser;
+import com.zera.ms_administrative_core.core.usecase.user.updateUserImage.UpdateUserImage;
 import com.zera.ms_administrative_core.infrastructure.http.request.AssignManagerRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangeEmailRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ChangePasswordRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RenameUserRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.UpdateUserImageRequest;
 import com.zera.ms_administrative_core.infrastructure.security.Authz;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,7 @@ public class UserController {
     private final FindUserById findUserById;
     private final AssignManager assignManager;
     private final CountUsersByManager countUsersByManager;
+    private final UpdateUserImage updateUserImage;
 
     public UserController(RenameUser renameUser,
                           ChangeEmail changeEmail,
@@ -54,7 +57,8 @@ public class UserController {
                           FindUserById findUserById,
                           FindAllUsers findAllUsers,
                           AssignManager assignManager,
-                          CountUsersByManager countUsersByManager) {
+                          CountUsersByManager countUsersByManager,
+                          UpdateUserImage updateUserImage) {
         this.renameUser = renameUser;
         this.changeEmail = changeEmail;
         this.changePassword = changePassword;
@@ -66,6 +70,7 @@ public class UserController {
         this.findUserById = findUserById;
         this.assignManager = assignManager;
         this.countUsersByManager = countUsersByManager;
+        this.updateUserImage = updateUserImage;
     }
 
     @PatchMapping("/{id}/rename")
@@ -101,6 +106,14 @@ public class UserController {
                 request.rawPassword(),
                 request.confirmPassword()
         ));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/image")
+    @PreAuthorize(Authz.SELF_OR_MANAGER)
+    public ResponseEntity<Void> updateImage(@PathVariable UUID id,
+                                            @RequestBody @Valid UpdateUserImageRequest request) {
+        updateUserImage.execute(id, request.imageUrl());
         return ResponseEntity.noContent().build();
     }
 
