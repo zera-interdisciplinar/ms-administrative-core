@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -8,6 +9,8 @@ import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 import com.zera.ms_administrative_core.core.repository.AlertRepository;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.AlertJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.AlertMapper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -30,5 +33,13 @@ public class AlertRepositoryImpl implements AlertRepository {
     @Override
     public Optional<Alert> findOpenByRuleIdAndEventId(UUID ruleId, UUID eventId) {
         return jpa.findByRuleIdAndEventIdAndStatus(ruleId, eventId, AlertStatus.OPEN).map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Alert> findByUserId(UUID userId, AlertStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return jpa.findAllByUserIdAndStatus(userId, status, pageable).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
