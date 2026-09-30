@@ -17,12 +17,17 @@ import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.AlertJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.AlertMapper;
 
+import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -81,5 +86,24 @@ class AlertRepositoryImplTest {
         assertTrue(result.isPresent());
         assertEquals(ruleId, result.get().getRuleId());
         assertEquals(eventId, result.get().getEventId());
+    }
+
+    @Test
+    @DisplayName("Deve listar os alertas do usuario, sem filtro de status")
+    void shouldListAlertsByUserWithoutStatusFilter() {
+        UUID userId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.of(2024, 1, 1, 8, 0);
+
+        Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", userId, UUID.randomUUID(),
+                UUID.randomUUID(), now, now, now, UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        AlertJpa jpaAlert = mapper.toJpa(alert);
+
+        when(jpa.findAllByUserIdAndStatus(eq(userId), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(jpaAlert)));
+
+        List<Alert> result = repository.findByUserId(userId, null, 0, 20);
+
+        assertEquals(1, result.size());
+        assertEquals(userId, result.get(0).getUserId());
     }
 }
