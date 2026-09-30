@@ -1,6 +1,8 @@
 package com.zera.ms_administrative_core.infrastructure.http.controller;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
@@ -17,10 +19,17 @@ import com.zera.ms_administrative_core.core.domain.entity.Severity;
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 import com.zera.ms_administrative_core.core.usecase.notification.NotifyUser;
 import com.zera.ms_administrative_core.core.usecase.notification.NotifyUserCommand;
+import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.AlertOutput;
+import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.FindAlertsForUser;
 import com.zera.ms_administrative_core.infrastructure.http.request.AlertNotificationRequest;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(NotificationController.class)
@@ -34,6 +43,9 @@ class NotificationControllerTest {
 
     @MockitoBean
     private NotifyUser notifyUser;
+
+    @MockitoBean
+    private FindAlertsForUser findAlertsForUser;
 
     @Test
     @DisplayName("POST /api/v1/notifications/alerts - deve aceitar o alerta e chamar o use case")
@@ -133,5 +145,44 @@ class NotificationControllerTest {
                 .andExpect(status().isAccepted());
 
         verify(notifyUser).execute(request.toCommand());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/notifications/alerts - deve listar os alertas do usuario do token")
+    void shouldListAlertsForAuthenticatedUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        AlertOutput output = new AlertOutput(UUID.randomUUID(), AlertKind.STORAGE, Severity.HIGH,
+                AlertStatus.OPEN, "estoque cheio", UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                LocalDateTime.of(2024, 1, 1, 8, 0), LocalDateTime.of(2024, 1, 1, 8, 0),
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        when(findAlertsForUser.execute(eq(userId), isNull(), eq(0), eq(20))).thenReturn(List.of(output));
+
+        Principal principal = userId::toString;
+
+        mockMvc.perform(get("/api/v1/notifications/alerts").principal(principal))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].alertId").value(output.alertId().toString()));
+
+        verify(findAlertsForUser).execute(userId, null, 0, 20);
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/notifications/alerts - deve repassar o filtro de status e a paginacao")
+    void shouldListAlertsFilteredByStatus() throws Exception {
+        UUID userId = UUID.randomUUID();
+        Principal principal = userId::toString;
+
+        when(findAlertsForUser.execute(eq(userId), eq(AlertStatus.CLOSED), eq(1), eq(5)))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/notifications/alerts")
+                        .principal(principal)
+                        .param("status", "CLOSED")
+                        .param("page", "1")
+                        .param("size", "5"))
+                .andExpect(status().isOk());
+
+        verify(findAlertsForUser).execute(userId, AlertStatus.CLOSED, 1, 5);
     }
 }
