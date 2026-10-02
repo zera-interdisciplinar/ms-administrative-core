@@ -6,6 +6,7 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.OrganizationJpa;
+import com.zera.ms_administrative_core.infrastructure.persistence.postgres.AuditContextBinder;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.OrganizationMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class OrganizationRepositoryImplTest {
     private OrganizationJpaRepository jpa;
     @Mock
     private OrganizationMapper mapper;
+    // Novo colaborador: publica o usuario da requisicao para a trigger de auditoria.
+    @Mock
+    private AuditContextBinder auditContext;
 
     @InjectMocks
     private OrganizationRepositoryImpl repository;
