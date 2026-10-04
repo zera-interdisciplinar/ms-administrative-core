@@ -70,4 +70,18 @@ class FlywayPostgresIntegrationTest {
                 Integer.class);
         assertThat(refreshTable).isEqualTo(1);
     }
+
+    /**
+     * V10: o indice unico parcial de place_id garante que um ponto do Google so seja vinculado a
+     * uma parceira. Sem ele, a checagem da aplicacao vira a unica defesa contra corrida.
+     */
+    @Test
+    void placeIdUniqueIndexExists() {
+        Integer total = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes "
+                        + "WHERE indexname = 'ux_recycling_business_place_id' AND indexdef LIKE '%UNIQUE%'",
+                Integer.class);
+
+        assertThat(total).isEqualTo(1);
+    }
 }

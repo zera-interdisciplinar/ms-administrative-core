@@ -13,6 +13,7 @@ import com.zera.ms_administrative_core.core.domain.exception.InvitationExpiredEx
 import com.zera.ms_administrative_core.core.domain.exception.InvitationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.OrganizationNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlaceAlreadyLinkedException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlacesUnavailableException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneAlreadyRegisteredException;
 import com.zera.ms_administrative_core.core.domain.exception.TelephoneNotFoundException;
@@ -73,6 +74,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RecyclingNotFoundException.class)
     public ProblemDetail handleRecyclingNotFound(RecyclingNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    // --- 409 ---
+
+    @ExceptionHandler(RecyclingPlaceAlreadyLinkedException.class)
+    public ProblemDetail handleRecyclingPlaceAlreadyLinked(RecyclingPlaceAlreadyLinkedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     // --- 400 ---

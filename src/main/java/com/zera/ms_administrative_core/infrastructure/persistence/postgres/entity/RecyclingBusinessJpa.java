@@ -28,18 +28,22 @@ public class RecyclingBusinessJpa {
     @Column(nullable = false, name = "contact_email")
     private String contactEmail;
 
+    @Column(name = "place_id", length = 200)
+    private String placeId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public RecyclingBusinessJpa(UUID id, String name, String cnpj, String contactEmail,
+    public RecyclingBusinessJpa(UUID id, String name, String cnpj, String contactEmail, String placeId,
                                 LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
         this.cnpj = cnpj;
         this.contactEmail = contactEmail;
+        this.placeId = placeId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

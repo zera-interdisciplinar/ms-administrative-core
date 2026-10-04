@@ -4,6 +4,7 @@ import com.zera.ms_administrative_core.core.domain.entity.RecyclingPlace;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCoordinateException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlacesUnavailableException;
 import com.zera.ms_administrative_core.core.domain.valueobject.GeoCoordinate;
+import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 import com.zera.ms_administrative_core.core.repository.RecyclingPlaceFinder;
 import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.FindNearbyRecyclingPlacesImpl;
 import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.RecyclingPlaceOutput;
@@ -35,11 +36,14 @@ class FindNearbyRecyclingPlacesImplTest {
     @Mock
     private RecyclingPlaceFinder recyclingPlaceFinder;
 
+    @Mock
+    private RecyclingBusinessRepository recyclingBusinessRepository;
+
     private FindNearbyRecyclingPlacesImpl usecase;
 
     @BeforeEach
     void setUp() {
-        usecase = new FindNearbyRecyclingPlacesImpl(recyclingPlaceFinder, DEFAULT_RADIUS, MAX_RADIUS);
+        usecase = new FindNearbyRecyclingPlacesImpl(recyclingPlaceFinder, recyclingBusinessRepository, DEFAULT_RADIUS, MAX_RADIUS);
     }
 
     @Test

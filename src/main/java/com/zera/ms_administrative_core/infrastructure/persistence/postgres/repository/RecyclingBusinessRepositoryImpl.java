@@ -7,6 +7,7 @@ import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entit
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.RecyclingMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +45,16 @@ public class RecyclingBusinessRepositoryImpl implements RecyclingBusinessReposit
     @Override
     public List<RecyclingBusiness> findAll() {
         return jpa.findAll().stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<RecyclingBusiness> findByPlaceIdIn(Collection<String> placeIds) {
+        if (placeIds.isEmpty()) {
+            return List.of();
+        }
+        return jpa.findByPlaceIdIn(placeIds).stream()
                 .map(mapper::toDomain)
                 .toList();
     }
