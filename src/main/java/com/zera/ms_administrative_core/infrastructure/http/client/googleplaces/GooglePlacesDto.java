@@ -17,11 +17,16 @@ final class GooglePlacesDto {
 
     record LocationBias(Circle circle) {}
 
-    record SearchTextRequest(String textQuery, LocationBias locationBias, int maxResultCount) {}
+    record SearchTextRequest(String textQuery, LocationBias locationBias, int maxResultCount, String languageCode) {}
 
     record DisplayName(String text) {}
 
-    record PlaceDto(String id, DisplayName displayName, String formattedAddress, LatLng location) {}
+    record OpeningHours(Boolean openNow, List<String> weekdayDescriptions) {}
+
+    record EditorialSummary(String text) {}
+
+    record PlaceDto(String id, DisplayName displayName, String formattedAddress, LatLng location,
+                    OpeningHours regularOpeningHours, OpeningHours currentOpeningHours, EditorialSummary editorialSummary) {}
 
     record PlacesResponse(List<PlaceDto> places) {}
 }

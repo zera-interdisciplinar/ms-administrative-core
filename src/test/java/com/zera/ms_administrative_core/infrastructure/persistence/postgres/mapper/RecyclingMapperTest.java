@@ -25,7 +25,7 @@ class RecyclingMapperTest {
         String emailStr = "test@company.com";
         LocalDateTime now = LocalDateTime.now();
 
-        RecyclingBusinessJpa jpa = new RecyclingBusinessJpa(id, name, cnpjStr, emailStr, now, now);
+        RecyclingBusinessJpa jpa = new RecyclingBusinessJpa(id, name, cnpjStr, emailStr, null, now, now);
 
         RecyclingBusiness domain = mapper.toDomain(jpa);
 

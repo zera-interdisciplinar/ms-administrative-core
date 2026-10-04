@@ -15,6 +15,7 @@ public class RecyclingMapper {
                 jpa.getName(),
                 new Cnpj(jpa.getCnpj()),
                 new Email(jpa.getContactEmail()),
+                jpa.getPlaceId(),
                 jpa.getCreatedAt(),
                 jpa.getUpdatedAt()
         );
@@ -26,6 +27,7 @@ public class RecyclingMapper {
                 domain.getName(),
                 domain.getCnpj().value(),
                 domain.getEmail().value(),
+                domain.getPlaceId(),
                 domain.getCreatedAt(),
                 domain.getUpdatedAt()
         );
