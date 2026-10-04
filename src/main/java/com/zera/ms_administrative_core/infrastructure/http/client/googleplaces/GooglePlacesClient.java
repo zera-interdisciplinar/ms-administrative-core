@@ -7,14 +7,13 @@ import com.zera.ms_administrative_core.core.repository.RecyclingPlaceFinder;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.Circle;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.LatLng;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.LocationBias;
-import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.LocationRestriction;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.PlaceDto;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.PlacesResponse;
-import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.SearchNearbyRequest;
 import com.zera.ms_administrative_core.infrastructure.http.client.googleplaces.GooglePlacesDto.SearchTextRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -27,12 +26,14 @@ import java.util.function.Supplier;
 /**
  * Adaptador da porta {@link RecyclingPlaceFinder} para a Places API (New) do Google. Concentra a
  * chave da API, o controle de custo (mascara de campos minima + cache curto) e a cobertura de
- * busca no Brasil (tipo + termos de texto), tudo isolado do dominio.
+ * busca no Brasil (termos de texto), tudo isolado do dominio.
  */
 class GooglePlacesClient implements RecyclingPlaceFinder {
 
     private static final Logger log = LoggerFactory.getLogger(GooglePlacesClient.class);
 
+    // Mascara minima e explicita: cada campo pedido eleva o tier de cobranca da Places API (New).
+    // A tela so usa id, nome, endereco e coordenada - nada mais deve entrar aqui.
     // Mascara explicita: cada campo pedido eleva o tier de cobranca da Places API (New). Horario e
     // descricao sobem o tier para Enterprise / Enterprise + Atmosphere e valem para TODAS as chamadas
     // (inclusive as de texto), porque a mascara e unica - acompanhar a cota no painel do Google.
@@ -44,11 +45,9 @@ class GooglePlacesClient implements RecyclingPlaceFinder {
 
     private static final int MAX_RESULT_COUNT = 20;
 
-    private static final String TYPE_RECYCLING_CENTER = "recycling_center";
-
-    // includedTypes=recycling_center tem cobertura fraca no Brasil: boa parte dos locais esta
-    // cadastrada como "ferro velho", "cooperativa de reciclagem", "ecoponto" ou "descarte
-    // eletronico". Combinamos busca por tipo com searchText por esses termos e deduplicamos.
+    // Nao usamos searchNearby com includedTypes: "recycling_center" nao e um tipo aceito pela
+    // Places API (New) e a chamada inteira volta 400. Os locais de reciclagem no Brasil estao
+    // cadastrados sob nomes populares, entao a busca e feita por esses termos e deduplicada.
     private static final List<String> TEXT_SEARCH_TERMS = List.of(
             "ferro velho",
             "cooperativa de reciclagem",
@@ -78,33 +77,12 @@ class GooglePlacesClient implements RecyclingPlaceFinder {
     private List<RecyclingPlace> fetchFromGoogle(GeoCoordinate center, int radiusMeters) {
         Map<String, RecyclingPlace> merged = new LinkedHashMap<>();
 
-        callWithRetry(() -> searchByType(center, radiusMeters))
-                .forEach(place -> merged.putIfAbsent(place.placeId(), place));
-
         for (String term : TEXT_SEARCH_TERMS) {
             callWithRetry(() -> searchByText(term, center, radiusMeters))
                     .forEach(place -> merged.putIfAbsent(place.placeId(), place));
         }
 
         return List.copyOf(merged.values());
-    }
-
-    private List<RecyclingPlace> searchByType(GeoCoordinate center, int radiusMeters) {
-        SearchNearbyRequest body = new SearchNearbyRequest(
-                List.of(TYPE_RECYCLING_CENTER),
-                MAX_RESULT_COUNT,
-                new LocationRestriction(new Circle(new LatLng(center.latitude(), center.longitude()), radiusMeters)),
-                LANGUAGE_CODE);
-
-        PlacesResponse response = restClient.post()
-                .uri("/v1/places:searchNearby")
-                .header("X-Goog-Api-Key", apiKey)
-                .header("X-Goog-FieldMask", FIELD_MASK)
-                .body(body)
-                .retrieve()
-                .body(PlacesResponse.class);
-
-        return toDomainList(response);
     }
 
     private List<RecyclingPlace> searchByText(String term, GeoCoordinate center, int radiusMeters) {
@@ -153,9 +131,15 @@ class GooglePlacesClient implements RecyclingPlaceFinder {
             try {
                 return operation.get();
             } catch (RestClientException ex) {
-                lastError = ex;
                 log.warn("Chamada ao Google Places falhou (tentativa {}/{}): {}", attempt, maxAttempts,
                         ex.getMessage());
+                // 4xx (exceto 429) significa requisicao invalida: repetir devolve o mesmo erro e so
+                // atrasa a resposta ao usuario.
+                if (!isRetryable(ex)) {
+                    throw new RecyclingPlacesUnavailableException(
+                            "Nao foi possivel buscar recicladoras proximas no momento", ex);
+                }
+                lastError = ex;
                 if (attempt < maxAttempts) {
                     sleep(retryBackoff.multipliedBy(attempt));
                 }
@@ -164,6 +148,11 @@ class GooglePlacesClient implements RecyclingPlaceFinder {
 
         throw new RecyclingPlacesUnavailableException(
                 "Nao foi possivel buscar recicladoras proximas no momento", lastError);
+    }
+
+    private static boolean isRetryable(RestClientException ex) {
+        return !(ex instanceof HttpClientErrorException client)
+                || client.getStatusCode().value() == 429;
     }
 
     private void sleep(Duration duration) {

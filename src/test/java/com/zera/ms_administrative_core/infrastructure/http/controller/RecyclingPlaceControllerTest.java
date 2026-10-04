@@ -33,7 +33,9 @@ class RecyclingPlaceControllerTest {
     @Test
     @DisplayName("GET /api/v1/recycling-places - should return places ordered by distance")
     void shouldFindNearby() throws Exception {
-        RecyclingPlaceOutput place = new RecyclingPlaceOutput("place-1", "Cooperativa Recicla SP", "Rua X, 123", 1240, null, null, List.of(), null, null);
+        RecyclingPlaceOutput place =
+                new RecyclingPlaceOutput("place-1", "Cooperativa Recicla SP", "Rua X, 123", -23.551, -46.634, 1240,
+                        null, null, List.of(), null, null);
         when(findNearbyRecyclingPlaces.execute(-23.5505, -46.6333, null)).thenReturn(List.of(place));
 
         mockMvc.perform(get("/api/v1/recycling-places")
@@ -42,6 +44,8 @@ class RecyclingPlaceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].placeId").value("place-1"))
                 .andExpect(jsonPath("$[0].name").value("Cooperativa Recicla SP"))
+                .andExpect(jsonPath("$[0].lat").value(-23.551))
+                .andExpect(jsonPath("$[0].lng").value(-46.634))
                 .andExpect(jsonPath("$[0].distanceMeters").value(1240));
     }
 

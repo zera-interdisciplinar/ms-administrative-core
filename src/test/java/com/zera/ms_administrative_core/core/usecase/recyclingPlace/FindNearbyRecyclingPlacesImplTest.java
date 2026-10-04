@@ -98,6 +98,8 @@ class FindNearbyRecyclingPlacesImplTest {
 
         assertEquals(2, result.size());
         assertEquals("near", result.get(0).placeId());
+        assertEquals(-23.5510, result.get(0).lat());
+        assertEquals(-46.6335, result.get(0).lng());
         assertEquals("far", result.get(1).placeId());
         assertTrue(result.get(0).distanceMeters() < result.get(1).distanceMeters());
     }

@@ -13,16 +13,20 @@ import java.util.UUID;
  * {@code isOpen}, {@code description} e {@code openingHours} seguem o que o Google devolveu; nulos ou
  * vazios quando ele nao tem o dado.
  */
-public record RecyclingPlaceOutput(String placeId, String name, String address, long distanceMeters,
-                                   Boolean isOpen, String description, List<OpeningHoursOutput> openingHours,
-                                   UUID recyclingBusinessId, String email) {
+public record RecyclingPlaceOutput(
+        String placeId, String name, String address, double lat, double lng, long distanceMeters,
+        Boolean isOpen, String description, List<OpeningHoursOutput> openingHours,
+        UUID recyclingBusinessId, String email) {
 
     public static RecyclingPlaceOutput from(RecyclingPlace place, GeoCoordinate origin, RecyclingBusiness linked) {
+        GeoCoordinate location = place.location();
         return new RecyclingPlaceOutput(
                 place.placeId(),
                 place.name(),
                 place.address(),
-                origin.distanceMetersTo(place.location()),
+                location.latitude(),
+                location.longitude(),
+                origin.distanceMetersTo(location),
                 place.openNow(),
                 place.description(),
                 place.weekdayHours().stream().map(OpeningHoursOutput::from).toList(),
