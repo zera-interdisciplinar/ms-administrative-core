@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -162,5 +163,42 @@ class GooglePlacesClientTest {
 
     private static String placesJson(String... places) {
         return "{\"places\":[" + String.join(",", places) + "]}";
+    }
+
+    @Test
+    @DisplayName("Should leave open-now, description and opening hours empty when Google omits them")
+    void shouldLeaveOptionalFieldsEmptyWhenOmitted() {
+        String body = "{\"places\":[{\"id\":\"place-9\",\"displayName\":{\"text\":\"Sem horario\"},"
+                + "\"formattedAddress\":\"Rua X, 9\",\"location\":{\"latitude\":-23.55,\"longitude\":-46.63},"
+                + "\"regularOpeningHours\":{}}]}";
+        server.expect(requestTo(NEARBY_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches();
+
+        RecyclingPlace place = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0);
+
+        assertEquals(null, place.openNow());
+        assertEquals(null, place.description());
+        assertTrue(place.weekdayHours().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should treat a response without places as no results")
+    void shouldTreatMissingPlacesAsEmpty() {
+        server.expect(requestTo(NEARBY_URI)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches();
+
+        assertTrue(client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).isEmpty());
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should fall back to an empty name when Google omits the display name")
+    void shouldFallBackToEmptyNameWithoutDisplayName() {
+        String body = "{\"places\":[{\"id\":\"place-8\",\"formattedAddress\":\"Rua Z, 8\","
+                + "\"location\":{\"latitude\":-23.55,\"longitude\":-46.63}}]}";
+        server.expect(requestTo(NEARBY_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches();
+
+        assertEquals("", client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0).name());
     }
 }
