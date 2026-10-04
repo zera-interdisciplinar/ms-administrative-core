@@ -15,11 +15,7 @@ final class GooglePlacesDto {
 
     record Circle(LatLng center, double radius) {}
 
-    record LocationRestriction(Circle circle) {}
-
     record LocationBias(Circle circle) {}
-
-    record SearchNearbyRequest(List<String> includedTypes, int maxResultCount, LocationRestriction locationRestriction) {}
 
     record SearchTextRequest(String textQuery, LocationBias locationBias, int maxResultCount) {}
 
