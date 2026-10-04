@@ -27,7 +27,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class GooglePlacesClientTest {
 
-    private static final String FIELD_MASK = "places.id,places.displayName,places.formattedAddress,places.location";
+    private static final String FIELD_MASK = "places.id,places.displayName,places.formattedAddress,places.location,"
+            + "places.regularOpeningHours,places.currentOpeningHours,places.editorialSummary";
     private static final String NEARBY_URI = "https://places.googleapis.com/v1/places:searchNearby";
     private static final String TEXT_URI = "https://places.googleapis.com/v1/places:searchText";
     private static final GeoCoordinate SAO_PAULO = new GeoCoordinate(-23.5505, -46.6333);
@@ -68,6 +69,25 @@ class GooglePlacesClientTest {
 
         client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000);
 
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should map opening hours, open-now flag and editorial summary from the Places response")
+    void shouldMapOpeningHoursAndDescription() {
+        String body = "{\"places\":[{\"id\":\"place-1\",\"displayName\":{\"text\":\"Recicladora A\"},"
+                + "\"formattedAddress\":\"Rua A, 1\",\"location\":{\"latitude\":-23.55,\"longitude\":-46.63},"
+                + "\"currentOpeningHours\":{\"openNow\":true},"
+                + "\"regularOpeningHours\":{\"weekdayDescriptions\":[\"Segunda-feira: 8:00 - 18:00\"]},"
+                + "\"editorialSummary\":{\"text\":\"Recebe eletronicos.\"}}]}";
+        server.expect(requestTo(NEARBY_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches();
+
+        RecyclingPlace place = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0);
+
+        assertEquals(Boolean.TRUE, place.openNow());
+        assertEquals("Recebe eletronicos.", place.description());
+        assertEquals(List.of("Segunda-feira: 8:00 - 18:00"), place.weekdayHours());
         server.verify();
     }
 

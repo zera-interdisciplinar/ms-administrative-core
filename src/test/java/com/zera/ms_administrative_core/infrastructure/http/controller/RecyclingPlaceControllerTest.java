@@ -33,7 +33,7 @@ class RecyclingPlaceControllerTest {
     @Test
     @DisplayName("GET /api/v1/recycling-places - should return places ordered by distance")
     void shouldFindNearby() throws Exception {
-        RecyclingPlaceOutput place = new RecyclingPlaceOutput("place-1", "Cooperativa Recicla SP", "Rua X, 123", 1240, null, null);
+        RecyclingPlaceOutput place = new RecyclingPlaceOutput("place-1", "Cooperativa Recicla SP", "Rua X, 123", 1240, null, null, List.of(), null, null);
         when(findNearbyRecyclingPlaces.execute(-23.5505, -46.6333, null)).thenReturn(List.of(place));
 
         mockMvc.perform(get("/api/v1/recycling-places")
