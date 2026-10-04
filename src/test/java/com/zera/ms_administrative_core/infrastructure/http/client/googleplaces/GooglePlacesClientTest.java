@@ -21,14 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.ExpectedCount.times;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class GooglePlacesClientTest {
 
     private static final String FIELD_MASK = "places.id,places.displayName,places.formattedAddress,places.location";
-    private static final String NEARBY_URI = "https://places.googleapis.com/v1/places:searchNearby";
     private static final String TEXT_URI = "https://places.googleapis.com/v1/places:searchText";
     private static final GeoCoordinate SAO_PAULO = new GeoCoordinate(-23.5505, -46.6333);
 
@@ -48,8 +49,8 @@ class GooglePlacesClientTest {
                 new PlacesCache(cacheTtl, clock));
     }
 
-    private void expectEmptyTextSearches(String... termsAlreadyConsumed) {
-        for (int i = termsAlreadyConsumed.length; i < 4; i++) {
+    private void expectEmptyTextSearches(int count) {
+        for (int i = 0; i < count; i++) {
             server.expect(requestTo(TEXT_URI))
                     .andExpect(method(org.springframework.http.HttpMethod.POST))
                     .andRespond(withSuccess("{\"places\":[]}", MediaType.APPLICATION_JSON));
@@ -59,12 +60,11 @@ class GooglePlacesClientTest {
     @Test
     @DisplayName("Should send the minimal field mask on every call")
     void shouldSendFieldMaskHeader() {
-        server.expect(requestTo(NEARBY_URI))
+        server.expect(times(4), requestTo(TEXT_URI))
                 .andExpect(method(org.springframework.http.HttpMethod.POST))
                 .andExpect(header("X-Goog-FieldMask", FIELD_MASK))
                 .andExpect(header("X-Goog-Api-Key", "test-key"))
                 .andRespond(withSuccess("{\"places\":[]}", MediaType.APPLICATION_JSON));
-        expectEmptyTextSearches();
 
         client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000);
 
@@ -72,17 +72,29 @@ class GooglePlacesClientTest {
     }
 
     @Test
-    @DisplayName("Should merge results from type search and text searches, deduplicating by placeId")
+    @DisplayName("Should never call searchNearby, whose includedTypes Google rejects for recycling centers")
+    void shouldOnlyUseTextSearch() {
+        server.expect(times(4), requestTo(TEXT_URI))
+                .andRespond(withSuccess("{\"places\":[]}", MediaType.APPLICATION_JSON));
+
+        client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000);
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should merge results from the text searches, deduplicating by placeId")
     void shouldMergeAndDeduplicateResults() {
-        server.expect(requestTo(NEARBY_URI))
-                .andRespond(withSuccess(placesJson(place("place-1", "Recicladora A", "Rua A, 1", -23.55, -46.63)),
-                        MediaType.APPLICATION_JSON));
         server.expect(requestTo(TEXT_URI))
                 .andRespond(withSuccess(placesJson(
                                 place("place-1", "Recicladora A", "Rua A, 1", -23.55, -46.63),
                                 place("place-2", "Ferro Velho B", "Rua B, 2", -23.56, -46.64)),
                         MediaType.APPLICATION_JSON));
-        expectEmptyTextSearches("ferro velho");
+        server.expect(requestTo(TEXT_URI))
+                .andRespond(withSuccess(placesJson(
+                                place("place-1", "Recicladora A", "Rua A, 1", -23.55, -46.63)),
+                        MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches(2);
 
         List<RecyclingPlace> result = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000);
 
@@ -93,10 +105,10 @@ class GooglePlacesClientTest {
     @Test
     @DisplayName("Should retry with backoff and succeed after a transient failure")
     void shouldRetryAndSucceed() {
-        server.expect(requestTo(NEARBY_URI)).andRespond(withServerError());
-        server.expect(requestTo(NEARBY_URI))
+        server.expect(requestTo(TEXT_URI)).andRespond(withServerError());
+        server.expect(requestTo(TEXT_URI))
                 .andRespond(withSuccess("{\"places\":[]}", MediaType.APPLICATION_JSON));
-        expectEmptyTextSearches();
+        expectEmptyTextSearches(3);
 
         List<RecyclingPlace> result = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000);
 
@@ -107,9 +119,18 @@ class GooglePlacesClientTest {
     @Test
     @DisplayName("Should raise RecyclingPlacesUnavailableException after exhausting retries")
     void shouldFailAfterExhaustingRetries() {
-        server.expect(requestTo(NEARBY_URI)).andRespond(withServerError());
-        server.expect(requestTo(NEARBY_URI)).andRespond(withServerError());
-        server.expect(requestTo(NEARBY_URI)).andRespond(withServerError());
+        server.expect(times(3), requestTo(TEXT_URI)).andRespond(withServerError());
+
+        GooglePlacesClient client = client(3, Duration.ofHours(1));
+
+        assertThrows(RecyclingPlacesUnavailableException.class, () -> client.findNearby(SAO_PAULO, 5000));
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should not retry a 400 from Google and fail on the first attempt")
+    void shouldNotRetryBadRequest() {
+        server.expect(times(1), requestTo(TEXT_URI)).andRespond(withBadRequest());
 
         GooglePlacesClient client = client(3, Duration.ofHours(1));
 
@@ -120,9 +141,7 @@ class GooglePlacesClientTest {
     @Test
     @DisplayName("Two calls with coordinates differing only in the 4th decimal should hit Google once")
     void shouldReuseCacheForNearbyCoordinates() {
-        server.expect(requestTo(NEARBY_URI))
-                .andRespond(withSuccess("{\"places\":[]}", MediaType.APPLICATION_JSON));
-        expectEmptyTextSearches();
+        expectEmptyTextSearches(4);
 
         GooglePlacesClient client = client(3, Duration.ofHours(1));
         GeoCoordinate first = new GeoCoordinate(-23.55050, -46.63330);
