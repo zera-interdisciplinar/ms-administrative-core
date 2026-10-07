@@ -12,8 +12,9 @@
 -- legacysync le do banco do ano anterior e grava direto. IMMUTABLE porque depende so da entrada,
 -- o que permite usa-la em indice e em CHECK.
 --
--- ATENCAO: nao ha CHECK usando esta funcao nas tabelas existentes. Adicionar um exigiria que
--- TODO CNPJ ja gravado fosse valido, e o dado legado nao garante isso. Ver docs/otimizacao.md.
+-- A V18 aplica esta function como CHECK em `organization`, usando NOT VALID: um CHECK comum
+-- escanearia TODO CNPJ ja gravado no momento da migracao, e dado legado invalido derrubaria o
+-- deploy. Ver V18 para o detalhe de NOT VALID.
 -- ---------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION fn_validar_cnpj(p_cnpj TEXT)
 RETURNS BOOLEAN

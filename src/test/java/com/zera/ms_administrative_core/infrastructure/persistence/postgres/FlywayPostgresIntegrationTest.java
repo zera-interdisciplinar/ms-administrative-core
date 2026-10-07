@@ -26,7 +26,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     void allMigrationsApplyCleanlyOnRealPostgres() {
         var applied = flyway.info().applied();
 
-        assertThat(applied).hasSizeGreaterThanOrEqualTo(17);
+        assertThat(applied).hasSizeGreaterThanOrEqualTo(18);
         assertThat(applied).allMatch(m -> m.getState() == MigrationState.SUCCESS);
     }
 
@@ -190,5 +190,33 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT count(*) FROM pg_proc WHERE proname = ? AND prokind = ?",
                 Integer.class, nome, String.valueOf(tipo));
         return total != null && total >= 1;
+    }
+
+    /**
+     * V18: o CHECK de CNPJ precisa existir. Sem esta asserção, uma migração futura que o removesse
+     * passaria despercebida, e a regra de negocio voltaria a viver so no JUnit.
+     */
+    @Test
+    void cnpjCheckConstraintExists() {
+        Integer total = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint "
+                        + "WHERE conname = 'organization_cnpj_valido_check' AND contype = 'c'",
+                Integer.class);
+
+        assertThat(total).isEqualTo(1);
+    }
+
+    /**
+     * V20: o indice unico parcial de place_id garante que um ponto do Google so seja vinculado a
+     * uma parceira. Sem ele, a checagem da aplicacao vira a unica defesa contra corrida.
+     */
+    @Test
+    void placeIdUniqueIndexExists() {
+        Integer total = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes "
+                        + "WHERE indexname = 'ux_recycling_business_place_id' AND indexdef LIKE '%UNIQUE%'",
+                Integer.class);
+
+        assertThat(total).isEqualTo(1);
     }
 }

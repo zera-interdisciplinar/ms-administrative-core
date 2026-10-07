@@ -1,0 +1,17 @@
+-- V19__index_alert_occurred_at.sql
+--
+-- Indice em alert(occurred_at), sozinho, para o calendario da camada analitica.
+--
+-- POR QUE: bi.dim_tempo (V14) descobre onde comecar o calendario com
+-- MIN(occurred_at) FROM alert. Sem indice nessa coluna, isso e um Seq Scan na tabela inteira, e
+-- como dim_tempo alimenta TODAS as views de BI, esse custo e pago em cada consulta de painel e
+-- cresce linearmente com o volume de alertas. Medido na carga de bench (~133 mil alertas): 20,9 ms
+-- so para o MIN, dos quais 14,5 ms eram o scan. Com o indice, o Postgres le a ponta do indice.
+--
+-- Por que nao reaproveitar idx_alert_unit_occurred (V15): ele tem unit_id na frente, e MIN sem
+-- filtro de unidade nao consegue usar um indice cuja coluna lider e outra.
+--
+-- Custo aceito: um indice a mais a manter a cada INSERT de alerta. Foi preferido a alternativa de
+-- fixar o inicio do calendario numa data constante (que geraria milhares de dias de calendario e
+-- multiplicaria o LATERAL da vw_dau_diario).
+CREATE INDEX idx_alert_occurred_at ON alert (occurred_at);

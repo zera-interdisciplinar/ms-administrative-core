@@ -22,4 +22,11 @@ public interface AnalyticsRepository {
 
     /** Indice 0-100 de saude da unidade no periodo (function {@code fn_indice_saude_unidade}). */
     BigDecimal unitHealthIndex(UUID unidadeId, LocalDate de, LocalDate ate);
+
+    /**
+     * Quantas pessoas estao abaixo deste gestor, em TODOS os niveis (function
+     * {@code fn_tamanho_equipe}, CTE recursiva). Diferente de contar subordinados diretos, que
+     * ja existe em CountUsersByManager: aqui um coordenador conta a equipe dele inteira.
+     */
+    int teamSize(UUID gestorId);
 }

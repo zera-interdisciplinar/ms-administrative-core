@@ -18,7 +18,9 @@ BEGIN;
 INSERT INTO organization (id, name, cnpj, status, email, plan, created_at, updated_at)
 SELECT gen_random_uuid(),
        'Organizacao Bench ' || g,
-       LPAD((11222333000000 + g)::TEXT, 14, '0'),
+       -- CNPJs com digitos verificadores validos: a V18 aplica fn_validar_cnpj como CHECK, e um
+       -- CNPJ sequencial inventado seria rejeitado e derrubaria a carga inteira.
+       CASE g WHEN 1 THEN '11222333000181' WHEN 2 THEN '11444777000161' END,
        'ACTIVE',
        'org' || g || '@bench.local',
        CASE WHEN g % 2 = 0 THEN 'PREMIUM' ELSE 'BASIC' END,

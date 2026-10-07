@@ -12,11 +12,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.zera.ms_administrative_core.core.repository.AnalyticsRepository;
 
 /** Prova as functions de regra de negocio da V12. */
 @Transactional
 class BusinessFunctionsIntegrationTest extends AbstractPostgresIntegrationTest {
+
+    @Autowired
+    private AnalyticsRepository analytics;
 
     // ------------------------------------------------------------------ fn_validar_cnpj
 
@@ -159,6 +166,37 @@ class BusinessFunctionsIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT fn_indice_saude_unidade(?, ?, ?)", BigDecimal.class,
                 f.unidadeId(), LocalDate.now(), LocalDate.now().minusDays(5)))
                 .hasMessageContaining("Periodo invalido");
+    }
+
+    /**
+     * V18: o CHECK de CNPJ precisa rejeitar de verdade uma escrita nova, nao so existir no catalogo.
+     * Antes da V18, a funcao so era chamada pelo JUnit.
+     */
+    @Test
+    @DisplayName("Organizacao com CNPJ invalido deve ser rejeitada pelo banco")
+    void organizationRejectsInvalidCnpjOnWrite() {
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO organization (id, name, cnpj, status, email, plan, created_at, updated_at)
+                VALUES (?, 'Invalida', '11222333000182', 'ACTIVE', ?, 'FREE', NOW(), NOW())
+                """, UUID.randomUUID(), "inv." + UUID.randomUUID() + "@test.local"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * Caminho de producao: a API consome fn_tamanho_equipe pelo AnalyticsRepository, nao por SQL
+     * solto. Hierarquia de 3 niveis: o gestor raiz deve contar os 3 abaixo dele, nao so os diretos.
+     */
+    @Test
+    @DisplayName("fn_tamanho_equipe pelo adaptador de analytics deve contar a arvore inteira")
+    void teamSizeThroughAnalyticsAdapterCountsWholeTree() {
+        Fixture f = novaHierarquia();
+        UUID coordenador = UUID.randomUUID();
+        inserirUsuario(coordenador, f.unidadeId(), f.gestorId(), "MANAGER", "ACTIVE");
+        inserirUsuario(UUID.randomUUID(), f.unidadeId(), coordenador, "EMPLOYEE", "ACTIVE");
+        inserirUsuario(UUID.randomUUID(), f.unidadeId(), coordenador, "EMPLOYEE", "ACTIVE");
+
+        assertThat(analytics.teamSize(f.gestorId())).isEqualTo(3);
+        assertThat(analytics.teamSize(coordenador)).isEqualTo(2);
     }
 
     private Integer tamanhoEquipe(UUID gestorId) {

@@ -20,7 +20,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.zera.ms_administrative_core.core.domain.entity.Unit;
+import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.exception.UnitNotFoundException;
+import com.zera.ms_administrative_core.core.domain.exception.UserNotFoundException;
+import com.zera.ms_administrative_core.core.repository.UserRepository;
 import com.zera.ms_administrative_core.core.repository.AnalyticsRepository;
 import com.zera.ms_administrative_core.core.repository.DailyActiveUsers;
 import com.zera.ms_administrative_core.core.repository.MonthlyUnitAlerts;
@@ -29,6 +32,7 @@ import com.zera.ms_administrative_core.core.repository.UnitRepository;
 import com.zera.ms_administrative_core.core.usecase.analytics.findDailyActiveUsers.FindDailyActiveUsersImpl;
 import com.zera.ms_administrative_core.core.usecase.analytics.findMonthlyUnitAlerts.FindMonthlyUnitAlertsImpl;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitHealth.FindUnitHealthImpl;
+import com.zera.ms_administrative_core.core.usecase.analytics.findTeamSize.FindTeamSizeImpl;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitRanking.FindUnitRankingImpl;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +42,8 @@ class AnalyticsUseCasesTest {
     private AnalyticsRepository analytics;
     @Mock
     private UnitRepository units;
+    @Mock
+    private UserRepository users;
 
     private final UUID unidadeId = UUID.randomUUID();
 
@@ -193,5 +199,31 @@ class AnalyticsUseCasesTest {
 
     private Unit mockUnit() {
         return org.mockito.Mockito.mock(Unit.class);
+    }
+
+    // --- equipe do gestor ---
+
+    @Test
+    @DisplayName("Deve devolver o tamanho da equipe do gestor")
+    void shouldReturnTeamSize() {
+        UUID gestor = UUID.randomUUID();
+        when(users.findById(gestor)).thenReturn(Optional.of(org.mockito.Mockito.mock(User.class)));
+        when(analytics.teamSize(gestor)).thenReturn(4);
+
+        assertThat(new FindTeamSizeImpl(analytics, users).execute(gestor)).isEqualTo(4);
+    }
+
+    /** 404 e nao zero: zero afirmaria que o gestor existe e nao tem ninguem. */
+    @Test
+    @DisplayName("Gestor inexistente deve dar 404, nao zero")
+    void shouldFailForUnknownManager() {
+        UUID gestor = UUID.randomUUID();
+        when(users.findById(gestor)).thenReturn(Optional.empty());
+        FindTeamSizeImpl useCase = new FindTeamSizeImpl(analytics, users);
+
+        assertThatThrownBy(() -> useCase.execute(gestor))
+                .isInstanceOf(UserNotFoundException.class);
+
+        verify(analytics, never()).teamSize(gestor);
     }
 }

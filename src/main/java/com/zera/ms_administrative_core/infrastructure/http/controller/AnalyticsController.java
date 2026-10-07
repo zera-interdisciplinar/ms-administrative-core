@@ -21,6 +21,7 @@ import com.zera.ms_administrative_core.core.repository.MonthlyUnitAlerts;
 import com.zera.ms_administrative_core.core.repository.UnitRanking;
 import com.zera.ms_administrative_core.core.usecase.analytics.findDailyActiveUsers.FindDailyActiveUsers;
 import com.zera.ms_administrative_core.core.usecase.analytics.findMonthlyUnitAlerts.FindMonthlyUnitAlerts;
+import com.zera.ms_administrative_core.core.usecase.analytics.findTeamSize.FindTeamSize;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitHealth.FindUnitHealth;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitRanking.FindUnitRanking;
 import com.zera.ms_administrative_core.infrastructure.security.Authz;
@@ -43,15 +44,18 @@ public class AnalyticsController {
     private final FindUnitRanking findUnitRanking;
     private final FindDailyActiveUsers findDailyActiveUsers;
     private final FindUnitHealth findUnitHealth;
+    private final FindTeamSize findTeamSize;
 
     public AnalyticsController(FindMonthlyUnitAlerts findMonthlyUnitAlerts,
                                FindUnitRanking findUnitRanking,
                                FindDailyActiveUsers findDailyActiveUsers,
-                               FindUnitHealth findUnitHealth) {
+                               FindUnitHealth findUnitHealth,
+                               FindTeamSize findTeamSize) {
         this.findMonthlyUnitAlerts = findMonthlyUnitAlerts;
         this.findUnitRanking = findUnitRanking;
         this.findDailyActiveUsers = findDailyActiveUsers;
         this.findUnitHealth = findUnitHealth;
+        this.findTeamSize = findTeamSize;
     }
 
     /** Serie mensal de alertas da unidade, com running total, ranking e variacao MoM. */
@@ -92,6 +96,16 @@ public class AnalyticsController {
         corpo.put("de", de);
         corpo.put("ate", ate);
         corpo.put("indiceSaude", indice);
+        return ResponseEntity.ok(corpo);
+    }
+
+    /** Quantas pessoas estao abaixo deste gestor, em todos os niveis (CTE recursiva no banco). */
+    @GetMapping("/managers/{id}/team-size")
+    @PreAuthorize(Authz.MANAGER)
+    public ResponseEntity<Map<String, Object>> teamSize(@PathVariable UUID id) {
+        Map<String, Object> corpo = new HashMap<>();
+        corpo.put("gestorId", id);
+        corpo.put("tamanhoEquipe", findTeamSize.execute(id));
         return ResponseEntity.ok(corpo);
     }
 }

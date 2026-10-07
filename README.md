@@ -164,7 +164,7 @@ token de serviço com o `scope` correspondente, não um papel de usuário.
 | Recicladoras (cadastro interno) | `POST /recyclings`, `GET /recyclings`, `GET /recyclings/{id}`, `GET /recyclings/cnpj/{cnpj}`, `PATCH /recyclings/{id}/{name,email}` | Ler: qualquer autenticado. Escrever: gestor |
 | Recicladoras próximas | `GET /recycling-places?lat=&lng=&radiusMeters=` | Qualquer autenticado — proxy fino para o Google Places, sem cadastro nem CNPJ |
 | Notificações/alertas | `POST /notifications/alerts` | Uso interno, exige token de serviço com escopo `notifications:write` |
-| Analytics (BI) | `GET /analytics/units/{id}/alerts/monthly`, `GET /analytics/units/ranking`, `GET /analytics/dau`, `GET /analytics/units/{id}/health` | Gestor. Lê as views dimensionais do schema `bi` e a function de saúde da unidade |
+| Analytics (BI) | `GET /analytics/units/{id}/alerts/monthly`, `GET /analytics/units/ranking`, `GET /analytics/dau`, `GET /analytics/units/{id}/health`, `GET /analytics/managers/{id}/team-size` | Gestor. Lê as views dimensionais do schema `bi` e a function de saúde da unidade |
 | Manutenção | `POST /maintenance/alerts/close-stale`, `POST /maintenance/tokens/revoke-expired`, `POST /maintenance/dau/consolidate` | Gestor **ou** token de serviço com escopo `maintenance:write`. Aciona as procedures do banco |
 | Governança | `GET /governance/data-catalog`, `GET /governance/data-catalog/{tabela}/columns`, `GET /governance/data-catalog/drift` | Gestor. Catálogo de dados e divergência entre catálogo e schema real |
 

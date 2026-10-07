@@ -17,7 +17,7 @@ dashboard precisa ser reescrito.
 
 ### Snowflake, nao Star puro
 
-`dim_unidade` referencia `dim_organizacao` em vez de repetir plano, status e CNPJ da organizacao em
+`dim_unidade` referencia `dim_organizacao` em vez de repetir plano e status da organizacao em
 cada linha de unidade. A hierarquia organizacao → unidade ja e real no OLTP; desnormalizar criaria
 duas fontes para o mesmo atributo, e duas fontes divergem.
 
@@ -38,8 +38,8 @@ BI ve os numeros" e "o BI ve o hash de senha de todo mundo". Verificado em teste
                     ┌───────────────────────┐
                     │   bi.dim_organizacao  │
                     │ organizacao_id (PK)   │
-                    │ organizacao, cnpj     │
-                    │ plano, status, email  │
+                    │ organizacao, plano    │
+                    │ status, data_cadastro │
                     └───────────▲───────────┘
                                 │ organizacao_id        (Snowflake: a dimensao
                     ┌───────────┴───────────┐            aponta para outra dimensao)
@@ -73,7 +73,7 @@ BI ve os numeros" e "o BI ve o hash de senha de todo mundo". Verificado em teste
 | View | Grao | Observacao |
 | --- | --- | --- |
 | `bi.dim_tempo` | 1 dia | Gerada por **CTE recursiva**; o inicio acompanha o dado (ver abaixo). |
-| `bi.dim_organizacao` | 1 organizacao | Espelha `organization`. |
+| `bi.dim_organizacao` | 1 organizacao | Espelha `organization`, **sem CNPJ e e-mail**: sao dado pessoal/sensivel e nenhum grafico os agrupa. Quem precisar do CNPJ consulta o OLTP com a role adequada. |
 | `bi.dim_unidade` | 1 unidade | `DISTINCT ON` no endereco (ver abaixo). |
 | `bi.dim_usuario` | 1 usuario | Traz o nome do gestor por auto-join. |
 
@@ -208,6 +208,7 @@ Quem nao vai conectar direto no banco consome pela API (todos exigem `MANAGER`):
 | `GET /api/v1/analytics/units/ranking` | `bi.vw_ranking_unidades` |
 | `GET /api/v1/analytics/dau` | `bi.vw_dau_diario` |
 | `GET /api/v1/analytics/units/{id}/health` | `fn_indice_saude_unidade` |
+| `GET /api/v1/analytics/managers/{id}/team-size` | `fn_tamanho_equipe` (CTE recursiva, equipe inteira) |
 
 > **Pendencia de produto:** a v1 nao restringe o gestor as unidades da propria organizacao — o
 > ranking sai global. Inofensivo enquanto o produto e mono-organizacao; no momento em que houver duas

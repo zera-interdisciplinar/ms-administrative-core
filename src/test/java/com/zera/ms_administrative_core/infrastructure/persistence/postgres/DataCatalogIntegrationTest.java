@@ -87,4 +87,45 @@ class DataCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
                 .filter(c -> c.coluna().equals(nome)).findFirst()
                 .orElseThrow(() -> new AssertionError("coluna nao catalogada: " + tabela + "." + nome));
     }
+
+    /**
+     * Regressao: estas duas entradas afirmavam mascaramento que nao existia, porque as tabelas nao
+     * tem trigger de auditoria. O catalogo prometia uma protecao que nao estava la.
+     */
+    @Test
+    @DisplayName("Segredos de tabelas nao auditadas nao podem afirmar mascaramento na auditoria")
+    void shouldNotClaimMaskingForUnauditedSecrets() {
+        assertThat(coluna("invitation", "code").regraNegocio())
+                .doesNotContain("Mascarado na auditoria");
+        assertThat(coluna("refresh_token", "token_hash").regraNegocio())
+                .doesNotContain("Mascarado na auditoria");
+    }
+
+    /**
+     * A descricao do catalogo precisa listar exatamente os valores que o CHECK real aceita. Em vez
+     * de comparar com uma lista fixa, le o CHECK do banco: se alguem adicionar um valor la e nao
+     * documentar aqui, este teste quebra.
+     */
+    @Test
+    @DisplayName("audit_log.operacao deve documentar exatamente os valores aceitos pelo CHECK real")
+    void auditOperationDocumentationMatchesCheckConstraint() {
+        String definicao = jdbc.queryForObject(
+                "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                        + "WHERE conname = 'audit_log_operacao_check' "
+                        + "AND conrelid = 'audit_log'::regclass",
+                String.class);
+        String descricao = coluna("audit_log", "operacao").descricao();
+
+        for (String operacao : new String[] {"INSERT", "UPDATE", "DELETE", "TRUNCATE"}) {
+            assertThat(definicao).as("CHECK real aceita %s", operacao).contains(operacao);
+            assertThat(descricao).as("catalogo documenta %s", operacao).contains(operacao);
+        }
+    }
+
+    @Test
+    @DisplayName("CNPJ nao pode mais afirmar que nao existe CHECK, depois da V18")
+    void cnpjDescriptionReflectsCheckConstraint() {
+        assertThat(coluna("organization", "cnpj").regraNegocio())
+                .doesNotContain("nao ha CHECK");
+    }
 }

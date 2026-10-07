@@ -134,7 +134,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 -- organization
 ('organization','id','Identificador da organizacao.',NULL,'INTERNO',FALSE),
 ('organization','name','Razao social ou nome fantasia.',NULL,'INTERNO',FALSE),
-('organization','cnpj','CNPJ com 14 digitos, sem mascara.','Unico. Validavel por fn_validar_cnpj(); nao ha CHECK aplicado porque dado vindo do legado pode ser invalido.','CONFIDENCIAL',TRUE),
+('organization','cnpj','CNPJ com 14 digitos, sem mascara.','CHECK fn_validar_cnpj(cnpj) em vigor desde a V18, com NOT VALID: vale para todo INSERT/UPDATE novo, mas nao reavalia linhas antigas. Dado legado invalido pode existir ate ser auditado e validado.','CONFIDENCIAL',TRUE),
 ('organization','status','ACTIVE, INACTIVE ou SUSPENDED.','Transicoes validas definidas no enum Status do dominio.','INTERNO',FALSE),
 ('organization','email','E-mail de contato da organizacao.',NULL,'CONFIDENCIAL',TRUE),
 ('organization','plan','Plano contratado.','Virou coluna na V2, quando a tabela plan foi removida. Nao ha catalogo de planos no banco.','INTERNO',FALSE),
@@ -202,7 +202,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 ('alert','updated_at','Ultima alteracao.','Com occurred_at, da o tempo ate o fechamento no BI.','INTERNO',FALSE),
 -- invitation
 ('invitation','id','Identificador do convite.',NULL,'INTERNO',FALSE),
-('invitation','code','Codigo de 6 caracteres para resgate.','Unico apenas entre convites PENDING (indice parcial). Mascarado na auditoria: quem le o log nao consegue resgatar o convite de outra pessoa.','SECRETO',FALSE),
+('invitation','code','Codigo de 6 caracteres para resgate.','Unico apenas entre convites PENDING (indice parcial). Hoje a tabela invitation NAO tem trigger de auditoria, entao este valor nao aparece em audit_log. Se ela passar a ser auditada, este campo precisa entrar em fn_mascarar_sensiveis antes.','SECRETO',FALSE),
 ('invitation','manager_id','Gestor que convidou.',NULL,'INTERNO',FALSE),
 ('invitation','unit_id','Unidade de destino do convidado.',NULL,'INTERNO',FALSE),
 ('invitation','status','PENDING ou USED.','Nao existe EXPIRED no enum do dominio: convite vencido continua PENDING e e barrado por expires_at.','INTERNO',FALSE),
@@ -214,7 +214,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 -- refresh_token
 ('refresh_token','id','Identificador da sessao persistida.',NULL,'INTERNO',FALSE),
 ('refresh_token','user_id','Dono da sessao.','A insercao desta linha dispara o registro de DAU.','INTERNO',FALSE),
-('refresh_token','token_hash','SHA-256 do refresh token bruto.','O valor bruto so existe no cliente. Mascarado na auditoria.','SECRETO',FALSE),
+('refresh_token','token_hash','SHA-256 do refresh token bruto.','O valor bruto so existe no cliente. Hoje refresh_token NAO tem trigger de auditoria, entao este hash nao aparece em audit_log. Se ela passar a ser auditada, token_hash precisa entrar em fn_mascarar_sensiveis antes.','SECRETO',FALSE),
 ('refresh_token','expires_at','Expiracao da sessao.',NULL,'INTERNO',FALSE),
 ('refresh_token','revoked','Sessao revogada.','Revogacao invalida na hora; a linha so e removida apos a janela de retencao, para nao apagar rastro de investigacao.','INTERNO',FALSE),
 ('refresh_token','created_at','Emissao da sessao.','E o carimbo de tempo do acesso no DAU.','INTERNO',FALSE),
@@ -231,7 +231,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 -- audit_log
 ('audit_log','id','Identificador do registro de auditoria.','BIGSERIAL do pai: a sequencia e compartilhada pelas filhas, entao o id e global.','INTERNO',FALSE),
 ('audit_log','tabela','Tabela auditada (TG_TABLE_NAME).','CHECK nas filhas permite ao planner podar a heranca quando a consulta filtra por esta coluna.','INTERNO',FALSE),
-('audit_log','operacao','INSERT, UPDATE ou DELETE (TG_OP).',NULL,'INTERNO',FALSE),
+('audit_log','operacao','INSERT, UPDATE, DELETE ou TRUNCATE (TG_OP). TRUNCATE foi adicionado na V10 por ser o unico evento destrutivo que o FOR EACH ROW nao capturaria.',NULL,'INTERNO',FALSE),
 ('audit_log','registro_id','Chave primaria da linha afetada.',NULL,'INTERNO',FALSE),
 ('audit_log','dados_antigos','Linha antes da mudanca (OLD), em JSONB.','Nulo em INSERT. Mascarado.','CONFIDENCIAL',TRUE),
 ('audit_log','dados_novos','Linha depois da mudanca (NEW), em JSONB.','Nulo em DELETE. Mascarado.','CONFIDENCIAL',TRUE),

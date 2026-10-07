@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.zera.ms_administrative_core.core.repository.MaintenanceRepository.TokenCleanup;
 import com.zera.ms_administrative_core.core.usecase.analytics.findDailyActiveUsers.FindDailyActiveUsers;
 import com.zera.ms_administrative_core.core.usecase.analytics.findMonthlyUnitAlerts.FindMonthlyUnitAlerts;
+import com.zera.ms_administrative_core.core.usecase.analytics.findTeamSize.FindTeamSize;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitHealth.FindUnitHealth;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitRanking.FindUnitRanking;
 import com.zera.ms_administrative_core.core.usecase.governance.findDataCatalog.FindDataCatalog;
@@ -56,6 +57,7 @@ class AnalyticsAndMaintenanceAuthzIntegrationTest {
     @MockitoBean private FindUnitRanking findUnitRanking;
     @MockitoBean private FindDailyActiveUsers findDailyActiveUsers;
     @MockitoBean private FindUnitHealth findUnitHealth;
+    @MockitoBean private FindTeamSize findTeamSize;
     @MockitoBean private FindDataCatalog findDataCatalog;
 
     private static MockHttpServletRequestBuilder asRole(MockHttpServletRequestBuilder request,
@@ -206,6 +208,26 @@ class AnalyticsAndMaintenanceAuthzIntegrationTest {
         mockMvc.perform(asRole(get("/api/v1/governance/data-catalog"), "MANAGER"))
                 .andExpect(status().isOk());
         mockMvc.perform(asRole(get("/api/v1/governance/data-catalog/drift"), "MANAGER"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("EMPLOYEE nao ve o tamanho da equipe de outro gestor")
+    void teamSizeForbiddenForEmployee() throws Exception {
+        mockMvc.perform(asRole(get("/api/v1/analytics/managers/{id}/team-size", UUID.randomUUID()),
+                        "EMPLOYEE"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(findTeamSize);
+    }
+
+    @Test
+    @DisplayName("MANAGER ve o tamanho da equipe")
+    void teamSizeAllowedForManager() throws Exception {
+        when(findTeamSize.execute(any())).thenReturn(3);
+
+        mockMvc.perform(asRole(get("/api/v1/analytics/managers/{id}/team-size", UUID.randomUUID()),
+                        "MANAGER"))
                 .andExpect(status().isOk());
     }
 }

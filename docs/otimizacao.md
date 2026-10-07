@@ -5,7 +5,7 @@ carga de [`scripts/seed_bench.sql`](../scripts/seed_bench.sql):
 
 | Tabela | Linhas |
 | --- | --- |
-| `alert` | 118.740 |
+| `alert` | ~120 mil (varia um pouco a cada carga: a distribuicao usa `hashtext` de UUIDs aleatorios) |
 | `user_account` | 20.680 |
 | `audit_log` (todas as filhas) | ~241.000 |
 | `user_access_log` | 38.400 |
@@ -24,6 +24,8 @@ carga de [`scripts/seed_bench.sql`](../scripts/seed_bench.sql):
 | Q3 | View mensal de BI para uma unidade | 165,8 ms | 163,0 ms | — (ver Q3) |
 | Q4 | Ranking de unidades (90 dias) | 980,1 ms | 33,2 ms | **30x** |
 | Q5 | Auditoria recente de uma tabela | 48,9 ms | 0,103 ms | **475x** |
+| Q6 | Calendario da camada analitica (`MIN` usado por `dim_tempo`) | 20,9 ms | 0,88 ms | **~24x** |
+| Q6b | DAU por janela de 30 dias (`bi.vw_dau_diario`) | ~32 ms | ~25 ms | ~22% (ver Q6) |
 
 O "antes" foi medido revertendo a V15 (indices removidos, view antiga restaurada) **sobre a mesma
 carga**, nao num banco menor. Sem isso a comparacao mediria volume, nao otimizacao.
@@ -259,6 +261,71 @@ trigger, um dia, escreva a linha de uma tabela na filha de outra (coberto por te
 
 ---
 
+## Q6 — Calendario e DAU: um custo que eu mesmo introduzi, e o que sobra
+
+Este caso apareceu na revisao do PR, que pediu o EXPLAIN da view de DAU (`bi.vw_dau_diario`,
+a unica view analitica que faltava na tabela). Medir de verdade mostrou algo mais importante.
+
+**O problema que o EXPLAIN revelou:** a correcao do calendario (dim_tempo passou a comecar onde
+estao os dados, para nao descartar alertas antigos) calcula o inicio com
+`MIN(occurred_at) FROM alert`. Sem indice nessa coluna, isso e um `Seq Scan` na tabela inteira, e
+como `dim_tempo` alimenta **todas** as views de BI, esse custo era pago em toda consulta e crescia
+com o volume de alertas.
+
+Medido com o `seed_bench.sql` (~133 mil alertas), so o `MIN`:
+
+```
+-- ANTES
+Seq Scan on alert  (actual time=0.005..14.495 rows=132825)
+Execution Time: 20.866 ms
+
+-- DEPOIS (V19: CREATE INDEX idx_alert_occurred_at ON alert (occurred_at))
+Index Only Scan using idx_alert_occurred_at on alert  (actual time=0.026..0.027 rows=1)
+Execution Time: 0.882 ms
+```
+
+O indice precisa ser sobre `occurred_at` **sozinho**. `idx_alert_unit_occurred` (V15) tem `unit_id`
+na frente, e um `MIN` sem filtro de unidade nao consegue usa-lo.
+
+### Janela de 30 dias, a consulta que o endpoint faz
+
+Medicao com 3 execucoes em cada cenario, mesmos dados, so a V19 muda:
+
+| Cenario | Execucao |
+| --- | --- |
+| Sem V19, janela de 30 dias | 32,7 / 32,4 / 31,0 ms |
+| Com V19, janela de 30 dias | 28,6 / 25,0 / 24,6 ms |
+| Sem V19, view inteira | 12,9 / 12,7 / 12,4 ms |
+| Com V19, view inteira | 5,0 / 3,2 / 3,2 ms |
+
+A primeira medicao "antes" deste caso deu 46,7 ms numa execucao so. Foi um outlier, e por isso
+a tabela usa tres execucoes. Numero de uma execucao nao serve para comparar.
+
+### O que sobrou, e por que nao e resolvido por indice
+
+Mesmo com a V19, a janela de 30 dias ainda custa ~25 ms. O plano mostra o motivo: a view calcula
+**media movel de 7 dias, acumulado e LAG** com window functions sobre o **calendario inteiro**, e
+so depois o `WHERE data_id BETWEEN ...` filtra. Window functions impedem o empurrao do filtro para
+dentro da view. O `LATERAL COUNT(DISTINCT)` de usuarios unicos de 7 dias roda para cada dia do
+calendario, e nao so para os 30 pedidos.
+
+Isso cresce linearmente com o numero de dias desde o inicio do calendario. Caminhos, se o custo
+incomodar:
+
+- materializar a view e dar `REFRESH` na `sp_consolidar_dau` (a interface de consulta nao muda);
+- trocar a view por uma funcao que recebe o periodo e calcula so a janela necessaria.
+
+Nenhum dos dois foi feito, de proposito: com dois anos de dados, 25 ms atende, e otimizar antes de
+doer seria custo sem evidencia.
+
+### Custo aceito pelo indice
+
+Um indice a mais a manter em cada `INSERT` de alerta. Foi preferido a alternativa de fixar o inicio
+do calendario numa data constante, que geraria milhares de dias de calendario e multiplicaria o
+`LATERAL` da view de DAU.
+
+---
+
 ## Como reproduzir
 
 ```bash
@@ -282,7 +349,9 @@ docker exec -i zera-bench psql -U postgres -d zera \
 `ANALYZE` depois de qualquer carga grande nao e opcional: sem estatisticas atualizadas o planner
 decide no escuro e o plano medido nao e o plano de producao.
 
-## Cuidado operacional ao aplicar a V15 em producao
+## Cuidado operacional ao aplicar a V15 e a V19 em producao
+
+Vale para a V15 e para a V19 (`idx_alert_occurred_at`, sobre a tabela `alert` inteira).
 
 `CREATE INDEX` (sem `CONCURRENTLY`) toma um lock que **bloqueia escrita** na tabela enquanto o indice
 e construido. Em `alert` com poucos milhares de linhas isso e instantaneo; com dezenas de milhoes,

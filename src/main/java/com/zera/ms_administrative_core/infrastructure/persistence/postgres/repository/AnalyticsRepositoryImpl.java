@@ -111,4 +111,10 @@ public class AnalyticsRepositoryImpl implements AnalyticsRepository {
         return jdbc.queryForObject(
                 "SELECT fn_indice_saude_unidade(?, ?, ?)", BigDecimal.class, unidadeId, de, ate);
     }
+
+    @Override
+    public int teamSize(UUID gestorId) {
+        Integer total = jdbc.queryForObject("SELECT fn_tamanho_equipe(?)", Integer.class, gestorId);
+        return total == null ? 0 : total;
+    }
 }

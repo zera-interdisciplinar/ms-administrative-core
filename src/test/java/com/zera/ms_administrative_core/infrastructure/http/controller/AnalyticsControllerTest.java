@@ -25,6 +25,7 @@ import com.zera.ms_administrative_core.core.repository.MonthlyUnitAlerts;
 import com.zera.ms_administrative_core.core.repository.UnitRanking;
 import com.zera.ms_administrative_core.core.usecase.analytics.findDailyActiveUsers.FindDailyActiveUsers;
 import com.zera.ms_administrative_core.core.usecase.analytics.findMonthlyUnitAlerts.FindMonthlyUnitAlerts;
+import com.zera.ms_administrative_core.core.usecase.analytics.findTeamSize.FindTeamSize;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitHealth.FindUnitHealth;
 import com.zera.ms_administrative_core.core.usecase.analytics.findUnitRanking.FindUnitRanking;
 
@@ -38,6 +39,7 @@ class AnalyticsControllerTest {
     @MockitoBean private FindUnitRanking findUnitRanking;
     @MockitoBean private FindDailyActiveUsers findDailyActiveUsers;
     @MockitoBean private FindUnitHealth findUnitHealth;
+    @MockitoBean private FindTeamSize findTeamSize;
 
     private final UUID unidadeId = UUID.randomUUID();
 
@@ -114,5 +116,16 @@ class AnalyticsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.indiceSaude").value(64.28))
                 .andExpect(jsonPath("$.unidadeId").value(unidadeId.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /analytics/managers/{id}/team-size - deve devolver o tamanho da equipe")
+    void shouldReturnTeamSize() throws Exception {
+        when(findTeamSize.execute(unidadeId)).thenReturn(7);
+
+        mockMvc.perform(get("/api/v1/analytics/managers/{id}/team-size", unidadeId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gestorId").value(unidadeId.toString()))
+                .andExpect(jsonPath("$.tamanhoEquipe").value(7));
     }
 }
