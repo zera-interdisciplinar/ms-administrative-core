@@ -26,7 +26,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     void allMigrationsApplyCleanlyOnRealPostgres() {
         var applied = flyway.info().applied();
 
-        assertThat(applied).hasSizeGreaterThanOrEqualTo(18);
+        assertThat(applied).hasSizeGreaterThanOrEqualTo(20);
         assertThat(applied).allMatch(m -> m.getState() == MigrationState.SUCCESS);
     }
 
@@ -126,26 +126,35 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
         }
     }
 
+    /**
+     * Indices das migracoes V10 (registro), V11 (DAU), V15, V19 e V20 documentados no Confluence
+     * (pagina 5 e filhas). Sem assercao explicita, uma migracao que deixasse de aplicar passaria
+     * despercebida.
+     */
     @Test
     void optimizationIndexesExist() {
         for (String indice : new String[] {
-                "idx_alert_user_status_created", "idx_alert_unit_occurred",
+                "idx_alert_user_status_created", "idx_alert_unit_occurred", "idx_alert_occurred_at",
                 "idx_user_account_unit_role", "idx_user_account_unit_status",
-                "idx_audit_alert_data", "idx_user_access_log_usuario_dia"}) {
+                "idx_user_access_log_usuario_dia", "idx_user_access_log_dia_usuario",
+                "idx_audit_user_account_registro", "idx_audit_alert_registro",
+                "idx_audit_organization_registro",
+                "idx_audit_user_account_data", "idx_audit_alert_data", "idx_audit_organization_data",
+                "ux_recycling_business_place_id"}) {
             Integer total = jdbc.queryForObject(
                     "SELECT count(*) FROM pg_indexes WHERE indexname = ?", Integer.class, indice);
             assertThat(total).as("indice %s", indice).isEqualTo(1);
         }
     }
 
-    /** Indice redundante removido na V15: se voltar, volta o custo de escrita sem ganho de leitura. */
+    /** Indices redundantes removidos na V15: se voltarem, voltam custo de escrita sem ganho. */
     @Test
-    void redundantIndexWasDropped() {
-        Integer total = jdbc.queryForObject(
-                "SELECT count(*) FROM pg_indexes WHERE indexname = 'idx_alert_user_id'",
-                Integer.class);
-
-        assertThat(total).isZero();
+    void redundantIndexesWereDropped() {
+        for (String indice : new String[] {"idx_alert_user_id", "idx_alert_unit_id"}) {
+            Integer total = jdbc.queryForObject(
+                    "SELECT count(*) FROM pg_indexes WHERE indexname = ?", Integer.class, indice);
+            assertThat(total).as("indice redundante %s", indice).isZero();
+        }
     }
 
     @Test
