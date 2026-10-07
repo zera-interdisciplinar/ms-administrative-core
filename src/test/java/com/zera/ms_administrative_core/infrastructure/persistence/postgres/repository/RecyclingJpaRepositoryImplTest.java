@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
+
 @ExtendWith(MockitoExtension.class)
 class RecyclingJpaRepositoryImplTest {
 
@@ -104,5 +105,25 @@ class RecyclingJpaRepositoryImplTest {
         repository.delete(id);
 
         verify(jpa).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("Should map only the recycling businesses found by place id")
+    void shouldFindByPlaceIds() {
+        RecyclingBusinessJpa entity = mock(RecyclingBusinessJpa.class);
+        RecyclingBusiness domain = new RecyclingBusiness(UUID.randomUUID(), "Test", new Cnpj("11.222.333/0001-81"), new Email("test@test.com"));
+        when(jpa.findByPlaceIdIn(List.of("place-1"))).thenReturn(List.of(entity));
+        when(mapper.toDomain(entity)).thenReturn(domain);
+
+        List<RecyclingBusiness> result = repository.findByPlaceIdIn(List.of("place-1"));
+
+        assertEquals(List.of(domain), result);
+    }
+
+    @Test
+    @DisplayName("Should skip the database when no place id is given")
+    void shouldNotQueryWhenNoPlaceIds() {
+        assertTrue(repository.findByPlaceIdIn(List.of()).isEmpty());
+        verifyNoInteractions(jpa);
     }
 }

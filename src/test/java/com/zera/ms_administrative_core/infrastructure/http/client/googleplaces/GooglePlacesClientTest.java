@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.ExpectedCount.times;
@@ -29,7 +30,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class GooglePlacesClientTest {
 
-    private static final String FIELD_MASK = "places.id,places.displayName,places.formattedAddress,places.location";
+    private static final String FIELD_MASK = "places.id,places.displayName,places.formattedAddress,places.location,"
+            + "places.regularOpeningHours,places.currentOpeningHours,places.editorialSummary";
     private static final String TEXT_URI = "https://places.googleapis.com/v1/places:searchText";
     private static final GeoCoordinate SAO_PAULO = new GeoCoordinate(-23.5505, -46.6333);
 
@@ -161,5 +163,61 @@ class GooglePlacesClientTest {
 
     private static String placesJson(String... places) {
         return "{\"places\":[" + String.join(",", places) + "]}";
+    }
+
+    @Test
+    @DisplayName("Should map opening hours, open-now flag and editorial summary from the Places response")
+    void shouldMapOpeningHoursAndDescription() {
+        String body = "{\"places\":[{\"id\":\"place-1\",\"displayName\":{\"text\":\"Recicladora A\"},"
+                + "\"formattedAddress\":\"Rua A, 1\",\"location\":{\"latitude\":-23.55,\"longitude\":-46.63},"
+                + "\"currentOpeningHours\":{\"openNow\":true},"
+                + "\"regularOpeningHours\":{\"weekdayDescriptions\":[\"Segunda-feira: 8:00 - 18:00\"]},"
+                + "\"editorialSummary\":{\"text\":\"Recebe eletronicos.\"}}]}";
+        server.expect(requestTo(TEXT_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches(3);
+
+        RecyclingPlace place = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0);
+
+        assertEquals(Boolean.TRUE, place.openNow());
+        assertEquals("Recebe eletronicos.", place.description());
+        assertEquals(List.of("Segunda-feira: 8:00 - 18:00"), place.weekdayHours());
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should leave open-now, description and opening hours empty when Google omits them")
+    void shouldLeaveOptionalFieldsEmptyWhenOmitted() {
+        String body = "{\"places\":[{\"id\":\"place-9\",\"displayName\":{\"text\":\"Sem horario\"},"
+                + "\"formattedAddress\":\"Rua X, 9\",\"location\":{\"latitude\":-23.55,\"longitude\":-46.63},"
+                + "\"regularOpeningHours\":{}}]}";
+        server.expect(requestTo(TEXT_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches(3);
+
+        RecyclingPlace place = client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0);
+
+        assertEquals(null, place.openNow());
+        assertEquals(null, place.description());
+        assertTrue(place.weekdayHours().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should treat a response without places as no results")
+    void shouldTreatMissingPlacesAsEmpty() {
+        server.expect(requestTo(TEXT_URI)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches(3);
+
+        assertTrue(client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).isEmpty());
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("Should fall back to an empty name when Google omits the display name")
+    void shouldFallBackToEmptyNameWithoutDisplayName() {
+        String body = "{\"places\":[{\"id\":\"place-8\",\"formattedAddress\":\"Rua Z, 8\","
+                + "\"location\":{\"latitude\":-23.55,\"longitude\":-46.63}}]}";
+        server.expect(requestTo(TEXT_URI)).andRespond(withSuccess(body, MediaType.APPLICATION_JSON));
+        expectEmptyTextSearches(3);
+
+        assertEquals("", client(3, Duration.ofHours(1)).findNearby(SAO_PAULO, 5000).get(0).name());
     }
 }

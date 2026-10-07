@@ -14,6 +14,7 @@ import com.zera.ms_administrative_core.core.usecase.recycling.changeRecyclingEma
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindAllRecyclers;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingByCnpj;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingById;
+import com.zera.ms_administrative_core.core.usecase.recycling.linkRecyclingPlace.LinkRecyclingPlace;
 import com.zera.ms_administrative_core.core.usecase.recycling.registerRecycling.RegisterRecycling;
 import com.zera.ms_administrative_core.core.usecase.recycling.renameRecycling.RenameRecycling;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingRequest;
@@ -28,6 +29,7 @@ public class RecyclingController {
     private final FindRecyclingByCnpj findRecyclingByCnpj;
     private final RenameRecycling renameRecycling;
     private final ChangeEmail changeEmail;
+    private final LinkRecyclingPlace linkRecyclingPlace;
 
     public RecyclingController(
             RegisterRecycling registerRecycling,
@@ -35,7 +37,8 @@ public class RecyclingController {
             FindRecyclingById findRecyclingById,
             FindRecyclingByCnpj findRecyclingByCnpj,
             RenameRecycling renameRecycling,
-            ChangeEmail changeEmail) {
+            ChangeEmail changeEmail,
+            LinkRecyclingPlace linkRecyclingPlace) {
 
         this.registerRecycling = registerRecycling;
         this.findAllRecyclers = findAllRecyclers;
@@ -43,6 +46,7 @@ public class RecyclingController {
         this.findRecyclingByCnpj = findRecyclingByCnpj;
         this.renameRecycling = renameRecycling;
         this.changeEmail = changeEmail;
+        this.linkRecyclingPlace = linkRecyclingPlace;
     }
 
     @PostMapping
@@ -90,6 +94,17 @@ public class RecyclingController {
             @RequestParam String email) {
 
         changeEmail.execute(id, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Liga a ficha da parceira ao ponto do Google escolhido no mapa; e isso que o app usa para achar e-mail e telefone. */
+    @PatchMapping("/{id}/place-id")
+    @PreAuthorize(Authz.MANAGER)
+    public ResponseEntity<Void> linkPlace(
+            @PathVariable UUID id,
+            @RequestParam String placeId) {
+
+        linkRecyclingPlace.execute(id, placeId);
         return ResponseEntity.noContent().build();
     }
 }
