@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zera.ms_administrative_core.core.domain.entity.RefreshToken;
 import com.zera.ms_administrative_core.core.domain.entity.User;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
+import com.zera.ms_administrative_core.core.domain.valueobject.AccessOrigin;
 import com.zera.ms_administrative_core.core.repository.RefreshTokenRepository;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 
@@ -55,6 +56,7 @@ public class RefreshSessionImpl implements RefreshSession {
         refreshTokenRepository.save(current);
 
         return sessionTokenFactory.issueFor(
-                new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role()));
+                new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role()),
+                AccessOrigin.REFRESH);
     }
 }

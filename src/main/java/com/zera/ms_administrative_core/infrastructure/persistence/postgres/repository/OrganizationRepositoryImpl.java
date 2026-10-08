@@ -6,11 +6,13 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.OrganizationRepository;
+import com.zera.ms_administrative_core.infrastructure.persistence.postgres.AuditContextBinder;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.OrganizationJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.OrganizationMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,14 +23,20 @@ public class OrganizationRepositoryImpl implements OrganizationRepository {
 
     private final OrganizationJpaRepository jpa;
     private final OrganizationMapper mapper;
+    private final AuditContextBinder auditContext;
 
-    public OrganizationRepositoryImpl(OrganizationJpaRepository jpa, OrganizationMapper mapper) {
+    public OrganizationRepositoryImpl(OrganizationJpaRepository jpa, OrganizationMapper mapper,
+            AuditContextBinder auditContext) {
         this.jpa = jpa;
         this.mapper = mapper;
+        this.auditContext = auditContext;
     }
 
+    // Ver UserRepositoryImpl.save: o SET LOCAL da auditoria exige a mesma transacao da escrita.
     @Override
+    @Transactional
     public Organization save(Organization organization) {
+        auditContext.bindCurrentUser();
         OrganizationJpa entity = mapper.toJpa(organization);
         OrganizationJpa saved = jpa.save(entity);
         return mapper.toDomain(saved);
@@ -70,8 +78,12 @@ public class OrganizationRepositoryImpl implements OrganizationRepository {
                 .toList();
     }
 
+    // Mesmo motivo do save: sem o bind na mesma transacao, a exclusao de uma organizacao ficaria
+    // auditada sem autor -- e exclusao e exatamente o evento que se vai querer rastrear depois.
     @Override
+    @Transactional
     public void delete(UUID id) {
+        auditContext.bindCurrentUser();
         jpa.deleteById(id);
     }
 }

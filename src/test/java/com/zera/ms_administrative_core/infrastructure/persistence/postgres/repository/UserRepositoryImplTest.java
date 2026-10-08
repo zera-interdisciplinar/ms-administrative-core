@@ -7,6 +7,7 @@ import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.ManagerJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.UserJpa;
+import com.zera.ms_administrative_core.infrastructure.persistence.postgres.AuditContextBinder;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,11 +38,15 @@ class UserRepositoryImplTest {
 
     private final UserMapper mapper = new UserMapper();
 
+    // Novo colaborador: publica o usuario da requisicao para a trigger de auditoria.
+    @Mock
+    private AuditContextBinder auditContext;
+
     private UserRepositoryImpl repository;
 
     @BeforeEach
     void setUp() {
-        repository = new UserRepositoryImpl(jpa, mapper);
+        repository = new UserRepositoryImpl(jpa, mapper, auditContext);
     }
 
     @Test

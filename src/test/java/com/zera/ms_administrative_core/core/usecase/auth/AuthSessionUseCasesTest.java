@@ -9,13 +9,18 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.zera.ms_administrative_core.core.domain.entity.Manager;
 import com.zera.ms_administrative_core.core.domain.entity.RefreshToken;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
+import com.zera.ms_administrative_core.core.domain.valueobject.AccessOrigin;
 import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
+import com.zera.ms_administrative_core.core.repository.AccessContextRepository;
 import com.zera.ms_administrative_core.support.FakeAuthTokens;
 import com.zera.ms_administrative_core.support.FixedPasswordHasher;
 import com.zera.ms_administrative_core.support.InMemoryRefreshTokenRepository;
@@ -32,6 +37,7 @@ class AuthSessionUseCasesTest {
     private LogoutImpl logout;
 
     private Manager alice;
+    private final List<AccessOrigin> originsPublished = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -39,8 +45,10 @@ class AuthSessionUseCasesTest {
         refreshTokens = new InMemoryRefreshTokenRepository();
         refreshTokenGenerator = FakeAuthTokens.refreshTokenGenerator();
 
+        // Grava a origem publicada, para os testes verificarem o que o trigger de DAU veria.
+        AccessContextRepository accessContext = originsPublished::add;
         SessionTokenFactory sessionTokenFactory = new SessionTokenFactory(
-                FakeAuthTokens.accessTokenIssuer(), refreshTokenGenerator, refreshTokens);
+                FakeAuthTokens.accessTokenIssuer(), refreshTokenGenerator, refreshTokens, accessContext);
         AuthenticateUser authenticateUser = new AuthenticateUserImpl(users, new FixedPasswordHasher());
 
         login = new LoginImpl(authenticateUser, sessionTokenFactory);
@@ -147,5 +155,34 @@ class AuthSessionUseCasesTest {
         logout.execute("never-issued");
         logout.execute(null);
         assertThat(refreshTokens.all()).isEmpty();
+    }
+
+    /**
+     * O trigger de DAU so enxerga a origem que foi publicada antes do INSERT. Este teste prova que
+     * login publica LOGIN -- antes de este fix, nenhum fluxo publicava nada e tudo caia no default.
+     */
+    @Test
+    void loginPublishesLoginOriginForDauTrigger() {
+        login.execute("alice@empresa.com", "secret");
+
+        assertThat(originsPublished).containsExactly(AccessOrigin.LOGIN);
+    }
+
+    @Test
+    void refreshPublishesRefreshOriginForDauTrigger() {
+        String firstRefresh = login.execute("alice@empresa.com", "secret").refreshToken();
+        originsPublished.clear();
+
+        refreshSession.execute(firstRefresh);
+
+        assertThat(originsPublished).containsExactly(AccessOrigin.REFRESH);
+    }
+
+    @Test
+    void failedLoginPublishesNoOrigin() {
+        assertThatThrownBy(() -> login.execute("alice@empresa.com", "errada"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        assertThat(originsPublished).isEmpty();
     }
 }

@@ -25,5 +25,14 @@ public final class Authz {
      */
     public static final String SERVICE_NOTIFICATIONS = "hasAuthority('SCOPE_notifications:write')";
 
+    /**
+     * Operacoes de manutencao do banco (procedures). Aceita gestor autenticado OU token de servico
+     * com o escopo dedicado, porque o mesmo acionamento serve ao painel e a um agendador externo.
+     * O escopo e separado de {@code notifications:write} de proposito: quem pode entregar alerta
+     * nao deveria, por isso, poder fechar alerta em massa.
+     */
+    public static final String MANAGER_OR_SERVICE_MAINTENANCE =
+            "hasRole('MANAGER') or hasAuthority('SCOPE_maintenance:write')";
+
     private Authz() {}
 }

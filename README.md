@@ -17,6 +17,7 @@ e busca de recicladoras próximas via Google Places. É o serviço que emite os 
 - [Executando localmente](#executando-localmente)
 - [Configuração](#configuração)
 - [API](#api)
+- [Analítico, auditoria e governança](#analítico-auditoria-e-governança)
 - [Observabilidade](#observabilidade)
 - [Testes](#testes)
 - [Deploy](#deploy)
@@ -137,6 +138,8 @@ Secrets em produção/QA está em [`k8s/README.md`](k8s/README.md).
 | `MS_INVENTORY_CLIENT_SECRET` | Permite ao ms-inventory obter um token de serviço (`POST /auth/service-token`) e postar alertas em `/notifications/alerts` |
 | `LEGACY_SYNC_ENABLED=true` + `LEGACY_DB_URL`/`LEGACY_DB_USER`/`LEGACY_DB_PASSWORD` | Sincronização periódica com o banco do sistema legado |
 | `GOOGLE_PLACES_ENABLED=true` + `GOOGLE_PLACES_API_KEY` | Busca de recicladoras próximas via Google Places (`GET /recycling-places`); desligada, o endpoint responde 503 em vez de uma lista vazia enganosa |
+| `MAINTENANCE_ENABLED=true` | Agenda as procedures de manutenção (revogação de tokens vencidos e consolidação de DAU). Desligado por padrão porque, com mais de uma réplica, todas rodariam a mesma procedure no mesmo minuto — as procedures são idempotentes, então o resultado segue correto, mas o trabalho é duplicado. Alternativa: agendador externo chamando `POST /maintenance/*` |
+| `CLOSE_STALE_ALERTS_ENABLED=true` | Inclui o fechamento automático de alertas antigos no agendador. Separado do anterior de propósito: `alert.status` é observado pelo ms-inventory, e fechar alerta sozinho é decisão de produto |
 | `BOOTSTRAP_ADMIN_EMAIL`/`PASSWORD`/`ORG_CNPJ` (+ opcionais `_NAME`, `_ORG_NAME`, `_ORG_EMAIL`, `_ORG_PLAN`, `_UNIT_NAME`) | Cria a árvore organização → unidade → MANAGER inicial no boot, idempotente por e-mail — útil para o primeiro deploy de um ambiente sem acesso direto ao banco |
 
 ## API
@@ -161,13 +164,39 @@ token de serviço com o `scope` correspondente, não um papel de usuário.
 | Recicladoras (cadastro interno) | `POST /recyclings`, `GET /recyclings`, `GET /recyclings/{id}`, `GET /recyclings/cnpj/{cnpj}`, `PATCH /recyclings/{id}/{name,email}` | Ler: qualquer autenticado. Escrever: gestor |
 | Recicladoras próximas | `GET /recycling-places?lat=&lng=&radiusMeters=` | Qualquer autenticado — proxy fino para o Google Places, sem cadastro nem CNPJ |
 | Notificações/alertas | `POST /notifications/alerts` | Uso interno, exige token de serviço com escopo `notifications:write` |
+| Analytics (BI) | `GET /analytics/units/{id}/alerts/monthly`, `GET /analytics/units/ranking`, `GET /analytics/dau`, `GET /analytics/units/{id}/health`, `GET /analytics/managers/{id}/team-size` | Gestor. Lê as views dimensionais do schema `bi` e a function de saúde da unidade |
+| Manutenção | `POST /maintenance/alerts/close-stale`, `POST /maintenance/tokens/revoke-expired`, `POST /maintenance/dau/consolidate` | Gestor **ou** token de serviço com escopo `maintenance:write`. Aciona as procedures do banco |
+| Governança | `GET /governance/data-catalog`, `GET /governance/data-catalog/{tabela}/columns`, `GET /governance/data-catalog/drift` | Gestor. Catálogo de dados e divergência entre catálogo e schema real |
 
 Público, sem autenticação: `/actuator/health`, `/index.html`, `/api-docs`,
 `/.well-known/jwks.json`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/invitations/redeem`.
 
+## Analítico, auditoria e governança
+
+Camada implementada dentro do Postgres (migrações `V11`–`V18`), acionável pela API ou consultável
+direto no banco:
+
+| O que | Onde | Documentação |
+|---|---|---|
+| Trilha de auditoria de escrita (`INSERT`/`UPDATE`/`DELETE` em `user_account`, `alert`, `organization`), com payload `OLD`/`NEW` em JSONB, usuário de banco e usuário de aplicação | `audit_log` + tabelas filhas por herança | [catalogo-dados.md](docs/catalogo-dados.md) |
+| Registro automático de DAU — todo login vira evento de acesso por trigger em `refresh_token`, sem a aplicação pedir | `user_access_log`, `usuario_ativo_diario` | [modelagem-dimensional.md](docs/modelagem-dimensional.md) |
+| Modelagem dimensional (Snowflake) para BI: 4 dimensões, 2 fatos e 4 views analíticas com window functions | schema `bi` | [modelagem-dimensional.md](docs/modelagem-dimensional.md) |
+| Functions e procedures de regra de negócio | `fn_*`, `sp_*` | [modelagem-dimensional.md](docs/modelagem-dimensional.md) |
+| Catálogo de dados com regra de negócio e nível de acesso por coluna, confrontável com o schema real | `catalogo_tabela`, `catalogo_coluna`, `fn_catalogo_divergencia()` | [catalogo-dados.md](docs/catalogo-dados.md) |
+| Índices derivados de `EXPLAIN ANALYZE`, com medições antes/depois | `V16` | [otimizacao.md](docs/otimizacao.md) |
+| Backup, restauração, PITR e ensaio de recuperação | `scripts/backup.sh` | [backup-recuperacao.md](docs/backup-recuperacao.md) |
+
+Para ligar uma ferramenta de BI sem dar acesso a dado pessoal, use a role `zera_bi_leitor`: ela
+enxerga o schema `bi` e **não** enxerga `public` — uma view roda com os privilégios de quem a criou,
+então os números saem sem que o BI alcance hash de senha. Ver
+[modelagem-dimensional.md](docs/modelagem-dimensional.md#como-ligar-uma-ferramenta-de-bi).
+
 ## Observabilidade
 
 - **Health**: `/actuator/health`, com probes de liveness/readiness configuradas.
+- **Execução das rotinas de manutenção**: tabela `job_execucao` (quando rodou, quanto afetou, se
+  deu certo) — responde "há quanto tempo esse job não roda?" sem depender de log de aplicação.
+- **DAU**: `GET /analytics/dau` ou a view `bi.vw_dau_diario`.
 
 ## Testes
 
@@ -176,10 +205,24 @@ Público, sem autenticação: `/actuator/health`, `/index.html`, `/api-docs`,
 ./mvnw verify    # + relatório e verificação de cobertura (JaCoCo, mínimo 80%)
 ```
 
-Não depende de infraestrutura externa por padrão: os testes usam H2 em memória. O único teste que
-sobe um PostgreSQL real (`FlywayPostgresIntegrationTest`, via Testcontainers) valida que todas as
-migrações aplicam limpas e cobre objetos específicos do Postgres que o H2 não suporta (índices
-parciais); é pulado automaticamente sem Docker disponível.
+Os testes unitários usam H2 em memória e **não** aplicam as migrações (`ddl-auto=create-drop`) —
+um teste unitário passar não prova que a migração está correta.
+
+Quem prova isso é a suíte de integração, que sobe um PostgreSQL real via Testcontainers
+(um único container compartilhado por todas as classes):
+
+| Classe | Cobre |
+|---|---|
+| `FlywayPostgresIntegrationTest` | Todas as migrações aplicam; existência de functions, procedures, triggers, herança, views `bi`, índices e roles |
+| `AuditTriggerIntegrationTest` | `TG_OP`, `OLD`/`NEW`, mascaramento de senha, `CURRENT_USER`, usuário de aplicação, herança de tabelas |
+| `DauTriggerIntegrationTest` | Registro automático de acesso e contagem correta de DAU (`COUNT(DISTINCT)`) |
+| `BusinessFunctionsIntegrationTest` | `fn_validar_cnpj`, `fn_tamanho_equipe` (CTE recursiva, inclusive com ciclo), `fn_indice_saude_unidade` |
+| `BusinessProceduresIntegrationTest` | As três procedures e o adaptador que as aciona, incluindo idempotência |
+| `BiViewsIntegrationTest` | Valores esperados das window functions (running total, `LAG`, média móvel) e ausência de fan-out |
+| `DataCatalogIntegrationTest` | Catálogo em dia com o schema real |
+
+**Sem Docker esses testes são pulados em silêncio.** Rode `./mvnw verify` com Docker antes de abrir
+PR, senão a suíte passa sem exercitar nada do que está no banco.
 
 ## Deploy
 
