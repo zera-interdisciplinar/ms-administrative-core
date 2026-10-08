@@ -1,7 +1,7 @@
 # Catalogo de dados
 
 Metadados tecnicos e de negocio sobre o proprio schema, em
-[`V17`](../src/main/resources/db/migration/V17__create_data_catalog.sql).
+[`V18`](../src/main/resources/db/migration/V18__create_data_catalog.sql).
 
 ## Por que uma tabela, e nao um documento
 
@@ -36,7 +36,7 @@ Cobertura atual: **16 tabelas, 124 colunas**.
 | `SECRETO` | Credencial/segredo — nunca exportar | `user_account.password`, `refresh_token.token_hash`, `invitation.code` |
 
 O nivel nao e decorativo: e a regra que as roles da
-[`V16`](../src/main/resources/db/migration/V16__create_access_roles.sql) aplicam. **Catalogo sem role
+[`V17`](../src/main/resources/db/migration/V17__create_access_roles.sql) aplicam. **Catalogo sem role
 e documentacao; role sem catalogo e permissao sem explicacao.** Os dois juntos sao governanca.
 
 `contem_pii` responde uma pergunta operacional concreta: o que pode sair do banco num export ou num
@@ -101,7 +101,7 @@ Ao alterar o schema, **no mesmo commit**:
 
 1. Escrever a migracao (`V<n>__...sql`).
 2. Adicionar/remover as linhas correspondentes em `catalogo_tabela` / `catalogo_coluna` — numa
-   migracao nova, nao editando a V17, que ja foi aplicada.
+   migracao nova, nao editando a V18, que ja foi aplicada.
 3. Rodar `./mvnw verify` **com Docker**. `DataCatalogIntegrationTest` falha se ficou divergencia.
 
 Sem Docker o teste e **pulado em silencio** e a divergencia passa. Essa e a armadilha do projeto

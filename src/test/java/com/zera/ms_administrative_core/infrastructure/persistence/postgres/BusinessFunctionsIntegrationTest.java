@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zera.ms_administrative_core.core.repository.AnalyticsRepository;
 
-/** Prova as functions de regra de negocio da V12. */
+/** Prova as functions de regra de negocio da V13. */
 @Transactional
 class BusinessFunctionsIntegrationTest extends AbstractPostgresIntegrationTest {
 
@@ -169,8 +169,8 @@ class BusinessFunctionsIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     /**
-     * V18: o CHECK de CNPJ precisa rejeitar de verdade uma escrita nova, nao so existir no catalogo.
-     * Antes da V18, a funcao so era chamada pelo JUnit.
+     * V19: o CHECK de CNPJ precisa rejeitar de verdade uma escrita nova, nao so existir no catalogo.
+     * Antes da V19, a funcao so era chamada pelo JUnit.
      */
     @Test
     @DisplayName("Organizacao com CNPJ invalido deve ser rejeitada pelo banco")

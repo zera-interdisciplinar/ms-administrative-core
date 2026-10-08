@@ -1,4 +1,4 @@
--- V12__create_business_functions.sql
+-- V13__create_business_functions.sql
 --
 -- Functions de regra de negocio. Criterio para uma regra morar no banco e nao no dominio Java:
 -- ela precisa ser respondida em CONJUNTO (varias linhas de uma vez, para relatorio ou BI) ou
@@ -12,9 +12,9 @@
 -- legacysync le do banco do ano anterior e grava direto. IMMUTABLE porque depende so da entrada,
 -- o que permite usa-la em indice e em CHECK.
 --
--- A V18 aplica esta function como CHECK em `organization`, usando NOT VALID: um CHECK comum
+-- A V19 aplica esta function como CHECK em `organization`, usando NOT VALID: um CHECK comum
 -- escanearia TODO CNPJ ja gravado no momento da migracao, e dado legado invalido derrubaria o
--- deploy. Ver V18 para o detalhe de NOT VALID.
+-- deploy. Ver V19 para o detalhe de NOT VALID.
 -- ---------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION fn_validar_cnpj(p_cnpj TEXT)
 RETURNS BOOLEAN

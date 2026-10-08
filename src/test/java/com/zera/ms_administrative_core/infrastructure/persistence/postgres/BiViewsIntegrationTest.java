@@ -18,7 +18,7 @@ import com.zera.ms_administrative_core.core.repository.MonthlyUnitAlerts;
 import com.zera.ms_administrative_core.core.repository.UnitRanking;
 
 /**
- * Prova as views dimensionais da V14 com VALORES ESPERADOS, nao apenas "a consulta roda".
+ * Prova as views dimensionais da V15 com VALORES ESPERADOS, nao apenas "a consulta roda".
  *
  * <p>Window function sem conferencia de valor e decoracao: um {@code SUM() OVER} com a janela errada
  * devolve numero plausivel e errado, e uma assercao de "nao vazio" passaria feliz.

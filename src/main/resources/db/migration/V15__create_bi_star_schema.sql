@@ -1,4 +1,4 @@
--- V14__create_bi_star_schema.sql
+-- V15__create_bi_star_schema.sql
 --
 -- Modelagem dimensional (Snowflake) para consumo por ferramenta de BI.
 --
@@ -13,7 +13,7 @@
 -- plano/status/cnpj da organizacao em cada unidade. A hierarquia organizacao->unidade ja e real no
 -- OLTP, e desnormalizar aqui criaria duas fontes para o mesmo atributo.
 --
--- Schema separado (`bi`) porque o nivel de acesso e diferente: a role zera_bi_leitor (V16) ve `bi`
+-- Schema separado (`bi`) porque o nivel de acesso e diferente: a role zera_bi_leitor (V17) ve `bi`
 -- e nao ve `public`. Ferramenta de BI nao precisa (e nao deve) alcancar hash de senha.
 --
 -- O QUE O BI *AINDA* ENXERGA, e por que: nome de pessoa, nome de unidade e cidade continuam aqui,
@@ -79,7 +79,7 @@ COMMENT ON VIEW bi.dim_tempo IS
     'Dimensao de tempo (grao: dia), gerada por CTE recursiva de 2024-01-01 ao fim do ano corrente.';
 
 -- Sem `cnpj` e sem `email`: nenhum painel agrupa ou filtra por eles, e ambos sao dado pessoal
--- classificado como CONFIDENCIAL no catalogo (V17).
+-- classificado como CONFIDENCIAL no catalogo (V18).
 CREATE VIEW bi.dim_organizacao AS
 SELECT o.id            AS organizacao_id,
        o.name          AS organizacao,

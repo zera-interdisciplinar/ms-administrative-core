@@ -1,4 +1,4 @@
--- V11__create_access_log_and_dau.sql
+-- V12__create_access_log_and_dau.sql
 --
 -- Registro de acesso e consolidacao de DAU (Daily Active User) dentro do proprio Postgres.
 --
@@ -9,7 +9,7 @@
 -- acesso, porque nenhum caminho de autenticacao consegue emitir sessao sem gravar o token.
 --
 -- `usuario_ativo_diario` e um rollup, nao a fonte da verdade: `user_access_log` e a fonte, e o
--- rollup pode ser reconstruido a qualquer momento por sp_consolidar_dau (V13). A duplicidade
+-- rollup pode ser reconstruido a qualquer momento por sp_consolidar_dau (V14). A duplicidade
 -- existe porque DAU e consulta de dashboard: COUNT(DISTINCT) em milhoes de linhas a cada abertura
 -- de tela nao se sustenta.
 
@@ -68,7 +68,7 @@ BEGIN
     --
     -- O PRECO 1 -- CONTAGEM: sob dois acessos simultaneos do MESMO usuario no MESMO dia, ambos
     -- podem ver "primeiro do dia" e o contador fica 1 acima. E erro de metrica, nao de dado: a
-    -- fonte da verdade e `user_access_log`, e sp_consolidar_dau (V13) reconcilia o periodo por
+    -- fonte da verdade e `user_access_log`, e sp_consolidar_dau (V14) reconcilia o periodo por
     -- COUNT(DISTINCT) quando exatidao importar.
     --
     -- O PRECO 2 -- CONTENCAO: o `ON CONFLICT (dia) DO UPDATE` abaixo trava a linha DO DIA CORRENTE

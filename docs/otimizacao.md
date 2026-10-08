@@ -27,7 +27,7 @@ carga de [`scripts/seed_bench.sql`](../scripts/seed_bench.sql):
 | Q6 | Calendario da camada analitica (`MIN` usado por `dim_tempo`) | 20,9 ms | 0,88 ms | **~24x** |
 | Q6b | DAU por janela de 30 dias (`bi.vw_dau_diario`) | ~32 ms | ~25 ms | ~22% (ver Q6) |
 
-O "antes" foi medido revertendo a V15 (indices removidos, view antiga restaurada) **sobre a mesma
+O "antes" foi medido revertendo a V16 (indices removidos, view antiga restaurada) **sobre a mesma
 carga**, nao num banco menor. Sem isso a comparacao mediria volume, nao otimizacao.
 
 ---
@@ -279,31 +279,31 @@ Medido com o `seed_bench.sql` (~133 mil alertas), so o `MIN`:
 Seq Scan on alert  (actual time=0.005..14.495 rows=132825)
 Execution Time: 20.866 ms
 
--- DEPOIS (V19: CREATE INDEX idx_alert_occurred_at ON alert (occurred_at))
+-- DEPOIS (V20: CREATE INDEX idx_alert_occurred_at ON alert (occurred_at))
 Index Only Scan using idx_alert_occurred_at on alert  (actual time=0.026..0.027 rows=1)
 Execution Time: 0.882 ms
 ```
 
-O indice precisa ser sobre `occurred_at` **sozinho**. `idx_alert_unit_occurred` (V15) tem `unit_id`
+O indice precisa ser sobre `occurred_at` **sozinho**. `idx_alert_unit_occurred` (V16) tem `unit_id`
 na frente, e um `MIN` sem filtro de unidade nao consegue usa-lo.
 
 ### Janela de 30 dias, a consulta que o endpoint faz
 
-Medicao com 3 execucoes em cada cenario, mesmos dados, so a V19 muda:
+Medicao com 3 execucoes em cada cenario, mesmos dados, so a V20 muda:
 
 | Cenario | Execucao |
 | --- | --- |
-| Sem V19, janela de 30 dias | 32,7 / 32,4 / 31,0 ms |
-| Com V19, janela de 30 dias | 28,6 / 25,0 / 24,6 ms |
-| Sem V19, view inteira | 12,9 / 12,7 / 12,4 ms |
-| Com V19, view inteira | 5,0 / 3,2 / 3,2 ms |
+| Sem V20, janela de 30 dias | 32,7 / 32,4 / 31,0 ms |
+| Com V20, janela de 30 dias | 28,6 / 25,0 / 24,6 ms |
+| Sem V20, view inteira | 12,9 / 12,7 / 12,4 ms |
+| Com V20, view inteira | 5,0 / 3,2 / 3,2 ms |
 
 A primeira medicao "antes" deste caso deu 46,7 ms numa execucao so. Foi um outlier, e por isso
 a tabela usa tres execucoes. Numero de uma execucao nao serve para comparar.
 
 ### O que sobrou, e por que nao e resolvido por indice
 
-Mesmo com a V19, a janela de 30 dias ainda custa ~25 ms. O plano mostra o motivo: a view calcula
+Mesmo com a V20, a janela de 30 dias ainda custa ~25 ms. O plano mostra o motivo: a view calcula
 **media movel de 7 dias, acumulado e LAG** com window functions sobre o **calendario inteiro**, e
 so depois o `WHERE data_id BETWEEN ...` filtra. Window functions impedem o empurrao do filtro para
 dentro da view. O `LATERAL COUNT(DISTINCT)` de usuarios unicos de 7 dias roda para cada dia do
@@ -349,9 +349,9 @@ docker exec -i zera-bench psql -U postgres -d zera \
 `ANALYZE` depois de qualquer carga grande nao e opcional: sem estatisticas atualizadas o planner
 decide no escuro e o plano medido nao e o plano de producao.
 
-## Cuidado operacional ao aplicar a V15 e a V19 em producao
+## Cuidado operacional ao aplicar a V16 e a V20 em producao
 
-Vale para a V15 e para a V19 (`idx_alert_occurred_at`, sobre a tabela `alert` inteira).
+Vale para a V16 e para a V20 (`idx_alert_occurred_at`, sobre a tabela `alert` inteira).
 
 `CREATE INDEX` (sem `CONCURRENTLY`) toma um lock que **bloqueia escrita** na tabela enquanto o indice
 e construido. Em `alert` com poucos milhares de linhas isso e instantaneo; com dezenas de milhoes,

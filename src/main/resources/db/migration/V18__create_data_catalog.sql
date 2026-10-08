@@ -1,4 +1,4 @@
--- V17__create_data_catalog.sql
+-- V18__create_data_catalog.sql
 --
 -- Catalogo de dados: metadados TECNICOS E DE NEGOCIO sobre o proprio schema.
 --
@@ -7,7 +7,7 @@
 -- pode ser CONFRONTADA com o information_schema. A funcao fn_catalogo_divergencia() faz esse
 -- confronto e transforma "temos documentacao" em algo que passa ou falha num teste.
 --
--- POR QUE `nivel_acesso` VIVE AQUI: e a regra que as roles da V16 aplicam. O catalogo explica o
+-- POR QUE `nivel_acesso` VIVE AQUI: e a regra que as roles da V17 aplicam. O catalogo explica o
 -- porque da permissao; a role a executa.
 
 CREATE TABLE catalogo_tabela (
@@ -134,7 +134,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 -- organization
 ('organization','id','Identificador da organizacao.',NULL,'INTERNO',FALSE),
 ('organization','name','Razao social ou nome fantasia.',NULL,'INTERNO',FALSE),
-('organization','cnpj','CNPJ com 14 digitos, sem mascara.','CHECK fn_validar_cnpj(cnpj) em vigor desde a V18, com NOT VALID: vale para todo INSERT/UPDATE novo, mas nao reavalia linhas antigas. Dado legado invalido pode existir ate ser auditado e validado.','CONFIDENCIAL',TRUE),
+('organization','cnpj','CNPJ com 14 digitos, sem mascara.','CHECK fn_validar_cnpj(cnpj) em vigor desde a V19, com NOT VALID: vale para todo INSERT/UPDATE novo, mas nao reavalia linhas antigas. Dado legado invalido pode existir ate ser auditado e validado.','CONFIDENCIAL',TRUE),
 ('organization','status','ACTIVE, INACTIVE ou SUSPENDED.','Transicoes validas definidas no enum Status do dominio.','INTERNO',FALSE),
 ('organization','email','E-mail de contato da organizacao.',NULL,'CONFIDENCIAL',TRUE),
 ('organization','plan','Plano contratado.','Virou coluna na V2, quando a tabela plan foi removida. Nao ha catalogo de planos no banco.','INTERNO',FALSE),
@@ -186,6 +186,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 ('recycling_business','contact_email','E-mail de contato.',NULL,'CONFIDENCIAL',TRUE),
 ('recycling_business','created_at','Data/hora de criacao.',NULL,'INTERNO',FALSE),
 ('recycling_business','updated_at','Data/hora da ultima alteracao.',NULL,'INTERNO',FALSE),
+('recycling_business','place_id','Identificador do ponto no Google Places vinculado a recicladora.','Unico quando preenchido (indice parcial ux_recycling_business_place_id, V10). Pode ser persistido indefinidamente pelos Termos do Google, ao contrario de nome, endereco e coordenada.','INTERNO',FALSE),
 -- alert
 ('alert','id','Identificador do alerta.',NULL,'INTERNO',FALSE),
 ('alert','status','OPEN ou CLOSED.','Observado pelo ms-inventory. Fechamento automatico so acontece por acionamento explicito de sp_fechar_alertas_obsoletos.','RESTRITO',FALSE),
@@ -231,7 +232,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 -- audit_log
 ('audit_log','id','Identificador do registro de auditoria.','BIGSERIAL do pai: a sequencia e compartilhada pelas filhas, entao o id e global.','INTERNO',FALSE),
 ('audit_log','tabela','Tabela auditada (TG_TABLE_NAME).','CHECK nas filhas permite ao planner podar a heranca quando a consulta filtra por esta coluna.','INTERNO',FALSE),
-('audit_log','operacao','INSERT, UPDATE, DELETE ou TRUNCATE (TG_OP). TRUNCATE foi adicionado na V10 por ser o unico evento destrutivo que o FOR EACH ROW nao capturaria.',NULL,'INTERNO',FALSE),
+('audit_log','operacao','INSERT, UPDATE, DELETE ou TRUNCATE (TG_OP). TRUNCATE foi adicionado na V11 por ser o unico evento destrutivo que o FOR EACH ROW nao capturaria.',NULL,'INTERNO',FALSE),
 ('audit_log','registro_id','Chave primaria da linha afetada.',NULL,'INTERNO',FALSE),
 ('audit_log','dados_antigos','Linha antes da mudanca (OLD), em JSONB.','Nulo em INSERT. Mascarado.','CONFIDENCIAL',TRUE),
 ('audit_log','dados_novos','Linha depois da mudanca (NEW), em JSONB.','Nulo em DELETE. Mascarado.','CONFIDENCIAL',TRUE),
@@ -251,7 +252,7 @@ INSERT INTO catalogo_coluna (tabela, coluna, descricao, regra_negocio, nivel_ace
 ('catalogo_tabela','dominio','Area de negocio a que a tabela pertence.',NULL,'INTERNO',FALSE),
 ('catalogo_tabela','descricao','O que a tabela representa.',NULL,'INTERNO',FALSE),
 ('catalogo_tabela','regra_negocio','Regras e armadilhas que o schema nao expressa.',NULL,'INTERNO',FALSE),
-('catalogo_tabela','nivel_acesso','Classificacao de acesso da tabela.','Aplicada pelas roles da V16.','INTERNO',FALSE),
+('catalogo_tabela','nivel_acesso','Classificacao de acesso da tabela.','Aplicada pelas roles da V17.','INTERNO',FALSE),
 ('catalogo_tabela','origem','APLICACAO, LEGADO, DERIVADO ou INFRAESTRUTURA.',NULL,'INTERNO',FALSE),
 ('catalogo_coluna','tabela','Tabela da coluna.',NULL,'INTERNO',FALSE),
 ('catalogo_coluna','coluna','Nome da coluna.',NULL,'INTERNO',FALSE),

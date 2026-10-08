@@ -33,7 +33,7 @@ infrastructure/legacysync/                           sync opcional com o banco d
 infrastructure/scheduler/                            agendador das procedures de manutencao (off)
 ```
 
-**Camada analitica e de governanca (V10-V19).** Vive no banco, nao no Java: auditoria por trigger
+**Camada analitica e de governanca (V11-V20).** Vive no banco, nao no Java: auditoria por trigger
 com heranca de tabelas, DAU automatico por trigger em `refresh_token`, functions/procedures de
 regra de negocio, star schema em views no schema `bi`, catalogo de dados. O Java so **aciona**
 (portas `MaintenanceRepository`, `AnalyticsRepository`, `DataCatalogRepository`, adaptadores com

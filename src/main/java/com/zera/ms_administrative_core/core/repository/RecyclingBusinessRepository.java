@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.core.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,5 +13,6 @@ public interface RecyclingBusinessRepository {
     Optional<RecyclingBusiness> findById(UUID id);
     Optional<RecyclingBusiness> findByCnpj(Cnpj cnpj);
     List<RecyclingBusiness> findAll();
+    List<RecyclingBusiness> findByPlaceIdIn(Collection<String> placeIds);
     void delete(UUID id);
 }

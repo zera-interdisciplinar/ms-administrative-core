@@ -4,6 +4,10 @@ import com.zera.ms_administrative_core.core.domain.entity.RecyclingPlace;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCoordinateException;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlacesUnavailableException;
 import com.zera.ms_administrative_core.core.domain.valueobject.GeoCoordinate;
+import com.zera.ms_administrative_core.core.domain.entity.RecyclingBusiness;
+import com.zera.ms_administrative_core.core.domain.valueobject.Cnpj;
+import com.zera.ms_administrative_core.core.domain.valueobject.Email;
+import com.zera.ms_administrative_core.core.repository.RecyclingBusinessRepository;
 import com.zera.ms_administrative_core.core.repository.RecyclingPlaceFinder;
 import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.FindNearbyRecyclingPlacesImpl;
 import com.zera.ms_administrative_core.core.usecase.recyclingPlace.findNearbyRecyclingPlaces.RecyclingPlaceOutput;
@@ -16,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,11 +40,14 @@ class FindNearbyRecyclingPlacesImplTest {
     @Mock
     private RecyclingPlaceFinder recyclingPlaceFinder;
 
+    @Mock
+    private RecyclingBusinessRepository recyclingBusinessRepository;
+
     private FindNearbyRecyclingPlacesImpl usecase;
 
     @BeforeEach
     void setUp() {
-        usecase = new FindNearbyRecyclingPlacesImpl(recyclingPlaceFinder, DEFAULT_RADIUS, MAX_RADIUS);
+        usecase = new FindNearbyRecyclingPlacesImpl(recyclingPlaceFinder, recyclingBusinessRepository, DEFAULT_RADIUS, MAX_RADIUS);
     }
 
     @Test
@@ -114,5 +122,42 @@ class FindNearbyRecyclingPlacesImplTest {
         List<RecyclingPlaceOutput> result = usecase.execute(-23.5505, -46.6333, null);
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Should expose the linked recycling business when the place is linked")
+    void shouldExposeLinkedRecyclingBusiness() {
+        UUID businessId = UUID.randomUUID();
+        RecyclingBusiness business = new RecyclingBusiness(businessId, "Recicla SP",
+                new Cnpj("11.222.333/0001-81"), new Email("contato@recicla.com"));
+        business.linkPlace("linked");
+        RecyclingPlace linked = new RecyclingPlace("linked", "Linked", "addr", new GeoCoordinate(-23.5510, -46.6335));
+        RecyclingPlace unlinked = new RecyclingPlace("unlinked", "Unlinked", "addr", new GeoCoordinate(-23.5520, -46.6340));
+        when(recyclingPlaceFinder.findNearby(any(), anyInt())).thenReturn(List.of(linked, unlinked));
+        when(recyclingBusinessRepository.findByPlaceIdIn(List.of("linked", "unlinked"))).thenReturn(List.of(business));
+
+        List<RecyclingPlaceOutput> result = usecase.execute(-23.5505, -46.6333, null);
+
+        RecyclingPlaceOutput withBusiness = result.stream().filter(p -> p.placeId().equals("linked")).findFirst().orElseThrow();
+        RecyclingPlaceOutput withoutBusiness = result.stream().filter(p -> p.placeId().equals("unlinked")).findFirst().orElseThrow();
+        assertEquals(businessId, withBusiness.recyclingBusinessId());
+        assertEquals("contato@recicla.com", withBusiness.email());
+        assertEquals(null, withoutBusiness.recyclingBusinessId());
+        assertEquals(null, withoutBusiness.email());
+    }
+
+    @Test
+    @DisplayName("Should split each weekday line into days and hours, keeping lines without a separator whole")
+    void shouldSplitOpeningHours() {
+        RecyclingPlace place = new RecyclingPlace("place", "Place", "addr", new GeoCoordinate(-23.5510, -46.6335),
+                true, "Recebe eletronicos.", List.of("Monday: 8:00 AM - 6:00 PM", "Sunday"));
+        when(recyclingPlaceFinder.findNearby(any(), anyInt())).thenReturn(List.of(place));
+
+        RecyclingPlaceOutput output = usecase.execute(-23.5505, -46.6333, null).get(0);
+
+        assertEquals(Boolean.TRUE, output.isOpen());
+        assertEquals("Recebe eletronicos.", output.description());
+        assertEquals(new RecyclingPlaceOutput.OpeningHoursOutput("Monday", "8:00 AM - 6:00 PM"), output.openingHours().get(0));
+        assertEquals(new RecyclingPlaceOutput.OpeningHoursOutput("Sunday", ""), output.openingHours().get(1));
     }
 }

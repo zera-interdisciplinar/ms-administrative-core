@@ -1,4 +1,4 @@
--- V15__optimize_indexes.sql
+-- V16__optimize_indexes.sql
 --
 -- Indices e reescritas derivados de EXPLAIN (ANALYZE, BUFFERS) sobre a carga de
 -- scripts/seed_bench.sql (~119 mil alertas, ~20,7 mil usuarios, ~241 mil linhas de auditoria).

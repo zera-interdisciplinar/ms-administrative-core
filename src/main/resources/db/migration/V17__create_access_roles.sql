@@ -1,6 +1,6 @@
--- V16__create_access_roles.sql
+-- V17__create_access_roles.sql
 --
--- Niveis de acesso aplicados pelo banco. A coluna `nivel_acesso` do catalogo (V17) descreve a
+-- Niveis de acesso aplicados pelo banco. A coluna `nivel_acesso` do catalogo (V18) descreve a
 -- regra; estas roles sao o que a FAZ VALER. Catalogo sem role e documentacao; role sem catalogo e
 -- permissao sem explicacao. Os dois juntos sao governanca.
 --
@@ -31,7 +31,7 @@ $$;
 
 -- A promessa aqui e deliberadamente ESTREITA. Uma versao anterior deste comentario dizia "nunca
 -- alcanca dado pessoal", o que era FALSO: as views de `bi` expoem nome de pessoa, nome de unidade e
--- cidade -- dado pessoal pelo proprio catalogo (V17). Garantia de privacidade que promete demais e
+-- cidade -- dado pessoal pelo proprio catalogo (V18). Garantia de privacidade que promete demais e
 -- pior que garantia nenhuma, porque alguem decide com base nela.
 COMMENT ON ROLE zera_bi_leitor IS
     'Papel de leitura da camada analitica (schema bi). NAO alcanca credencial, hash de senha, CNPJ, '

@@ -1,4 +1,4 @@
--- V13__create_business_procedures.sql
+-- V14__create_business_procedures.sql
 --
 -- Procedures de manutencao. Sao PROCEDURE e nao FUNCTION porque ESCREVEM e porque o volume
 -- escrito e imprevisivel: procedure pode controlar transacao, function roda dentro da transacao
@@ -114,7 +114,7 @@ $$;
 -- ---------------------------------------------------------------------------------------------
 -- 3) Reconsolida o rollup de DAU a partir do log.
 --
--- A rede de seguranca do trigger da V11: se o trigger for desabilitado, se alguem carregar acesso
+-- A rede de seguranca do trigger da V12: se o trigger for desabilitado, se alguem carregar acesso
 -- em massa com `ALTER TABLE ... DISABLE TRIGGER`, ou se o rollup for corrompido, esta procedure
 -- reconstroi o periodo inteiro a partir de `user_access_log`, que e a fonte da verdade.
 --

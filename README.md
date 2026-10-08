@@ -173,7 +173,7 @@ Público, sem autenticação: `/actuator/health`, `/index.html`, `/api-docs`,
 
 ## Analítico, auditoria e governança
 
-Camada implementada dentro do Postgres (migrações `V10`–`V17`), acionável pela API ou consultável
+Camada implementada dentro do Postgres (migrações `V11`–`V18`), acionável pela API ou consultável
 direto no banco:
 
 | O que | Onde | Documentação |
@@ -183,7 +183,7 @@ direto no banco:
 | Modelagem dimensional (Snowflake) para BI: 4 dimensões, 2 fatos e 4 views analíticas com window functions | schema `bi` | [modelagem-dimensional.md](docs/modelagem-dimensional.md) |
 | Functions e procedures de regra de negócio | `fn_*`, `sp_*` | [modelagem-dimensional.md](docs/modelagem-dimensional.md) |
 | Catálogo de dados com regra de negócio e nível de acesso por coluna, confrontável com o schema real | `catalogo_tabela`, `catalogo_coluna`, `fn_catalogo_divergencia()` | [catalogo-dados.md](docs/catalogo-dados.md) |
-| Índices derivados de `EXPLAIN ANALYZE`, com medições antes/depois | `V15` | [otimizacao.md](docs/otimizacao.md) |
+| Índices derivados de `EXPLAIN ANALYZE`, com medições antes/depois | `V16` | [otimizacao.md](docs/otimizacao.md) |
 | Backup, restauração, PITR e ensaio de recuperação | `scripts/backup.sh` | [backup-recuperacao.md](docs/backup-recuperacao.md) |
 
 Para ligar uma ferramenta de BI sem dar acesso a dado pessoal, use a role `zera_bi_leitor`: ela

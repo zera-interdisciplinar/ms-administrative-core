@@ -1,6 +1,6 @@
 # Modelagem dimensional (camada `bi`)
 
-Schema `bi`, criado na [`V14`](../src/main/resources/db/migration/V14__create_bi_star_schema.sql).
+Schema `bi`, criado na [`V15`](../src/main/resources/db/migration/V15__create_bi_star_schema.sql).
 Tudo aqui e **view**, nao tabela.
 
 ## Decisoes e o porque
@@ -23,7 +23,7 @@ duas fontes para o mesmo atributo, e duas fontes divergem.
 
 ### Schema separado
 
-Porque o **nivel de acesso** e diferente. A role `zera_bi_leitor` ([`V16`](../src/main/resources/db/migration/V16__create_access_roles.sql))
+Porque o **nivel de acesso** e diferente. A role `zera_bi_leitor` ([`V17`](../src/main/resources/db/migration/V17__create_access_roles.sql))
 ve `bi` e nao ve `public`.
 
 Isso funciona por um detalhe do Postgres que vale entender: **uma view executa com os privilegios de
@@ -169,7 +169,7 @@ percentual sobre o total.
 `peso_por_usuario` normaliza por usuario ativo: unidade grande gera mais alerta por tamanho, nao por
 estar pior. Sem normalizar, o ranking so ordenaria unidades por numero de funcionarios.
 
-> Esta view foi reescrita na V15 por performance (980 ms → 33 ms). Ver [otimizacao.md](otimizacao.md#q4).
+> Esta view foi reescrita na V16 por performance (980 ms → 33 ms). Ver [otimizacao.md](otimizacao.md#q4).
 
 ### `bi.vw_hierarquia_equipe`
 

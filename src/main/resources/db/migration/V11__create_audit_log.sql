@@ -1,4 +1,4 @@
--- V10__create_audit_log.sql
+-- V11__create_audit_log.sql
 --
 -- Auditoria de escrita por trigger. Tres decisoes que valem registro:
 --

@@ -14,7 +14,7 @@ import com.zera.ms_administrative_core.core.repository.CatalogTable;
 import com.zera.ms_administrative_core.core.repository.DataCatalogRepository;
 
 /**
- * Prova o catalogo da V17.
+ * Prova o catalogo da V18.
  *
  * <p>O teste que importa aqui e o de DIVERGENCIA: e ele que transforma "temos documentacao" em algo
  * que quebra o build quando alguem adiciona coluna sem documentar. Sem ele, o catalogo viraria
@@ -31,7 +31,7 @@ class DataCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
         List<CatalogDrift> divergencias = catalogo.findDrift();
 
         assertThat(divergencias)
-                .as("Coluna ou tabela nova sem linha no catalogo. Atualize a V17 (ou crie uma nova "
+                .as("Coluna ou tabela nova sem linha no catalogo. Atualize a V18 (ou crie uma nova "
                         + "migracao de catalogo) no mesmo commit que altera o schema.")
                 .isEmpty();
     }
@@ -123,7 +123,7 @@ class DataCatalogIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     @Test
-    @DisplayName("CNPJ nao pode mais afirmar que nao existe CHECK, depois da V18")
+    @DisplayName("CNPJ nao pode mais afirmar que nao existe CHECK, depois da V19")
     void cnpjDescriptionReflectsCheckConstraint() {
         assertThat(coluna("organization", "cnpj").regraNegocio())
                 .doesNotContain("nao ha CHECK");

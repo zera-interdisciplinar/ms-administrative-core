@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Prova a trilha de auditoria da V10 contra Postgres real.
+ * Prova a trilha de auditoria da V11 contra Postgres real.
  *
  * <p>{@code @Transactional} nao e so isolamento: o parametro {@code zera.app_user} e
  * {@code SET LOCAL}, entao ele SO existe dentro de uma transacao. Testar a propagacao do usuario
@@ -187,7 +187,7 @@ class AuditTriggerIntegrationTest extends AbstractPostgresIntegrationTest {
                 Integer.class, f.organizacaoId().toString())).isEqualTo(1);
     }
 
-    /** O CHECK da V15 e o que permite ao planner podar filhas; tambem protege a integridade. */
+    /** O CHECK da V16 e o que permite ao planner podar filhas; tambem protege a integridade. */
     @Test
     @DisplayName("CHECK das filhas deve impedir gravar linha de outra tabela")
     void shouldRejectWrongTableInChild() {

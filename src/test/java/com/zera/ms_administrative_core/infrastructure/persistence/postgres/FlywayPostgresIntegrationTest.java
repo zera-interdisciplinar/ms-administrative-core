@@ -52,7 +52,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     /**
-     * Objetos da V10-V17. Cada um esta aqui porque o H2 dos testes unitarios nao o suporta: sem
+     * Objetos da V11-V18. Cada um esta aqui porque o H2 dos testes unitarios nao o suporta: sem
      * assercao explicita, uma migracao que deixasse de aplicar passaria despercebida.
      */
     @Test
@@ -127,7 +127,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     /**
-     * Indices das migracoes V10 (registro), V11 (DAU), V15, V19 e V20 documentados no Confluence
+     * Indices das migracoes V10 (place_id), V11 (registro), V12 (DAU), V16 e V20 documentados no Confluence
      * (pagina 5 e filhas). Sem assercao explicita, uma migracao que deixasse de aplicar passaria
      * despercebida.
      */
@@ -147,7 +147,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
         }
     }
 
-    /** Indices redundantes removidos na V15: se voltarem, voltam custo de escrita sem ganho. */
+    /** Indices redundantes removidos na V16: se voltarem, voltam custo de escrita sem ganho. */
     @Test
     void redundantIndexesWereDropped() {
         for (String indice : new String[] {"idx_alert_user_id", "idx_alert_unit_id"}) {
@@ -202,7 +202,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     /**
-     * V18: o CHECK de CNPJ precisa existir. Sem esta asserção, uma migração futura que o removesse
+     * V19: o CHECK de CNPJ precisa existir. Sem esta asserção, uma migração futura que o removesse
      * passaria despercebida, e a regra de negocio voltaria a viver so no JUnit.
      */
     @Test
@@ -216,7 +216,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     }
 
     /**
-     * V20: o indice unico parcial de place_id garante que um ponto do Google so seja vinculado a
+     * V10: o indice unico parcial de place_id garante que um ponto do Google so seja vinculado a
      * uma parceira. Sem ele, a checagem da aplicacao vira a unica defesa contra corrida.
      */
     @Test

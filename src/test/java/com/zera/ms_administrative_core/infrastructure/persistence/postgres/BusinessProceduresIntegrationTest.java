@@ -16,7 +16,7 @@ import com.zera.ms_administrative_core.core.repository.MaintenanceRepository;
 import com.zera.ms_administrative_core.core.repository.MaintenanceRepository.TokenCleanup;
 
 /**
- * Prova as procedures da V13 E o adaptador que as aciona.
+ * Prova as procedures da V14 E o adaptador que as aciona.
  *
  * <p>Vai pelo {@link MaintenanceRepository} de proposito, nao por SQL solto: o que precisa ser
  * provado inclui o {@code CallableStatement} com parametro {@code INOUT}, que e justamente a parte

@@ -18,7 +18,7 @@ BEGIN;
 INSERT INTO organization (id, name, cnpj, status, email, plan, created_at, updated_at)
 SELECT gen_random_uuid(),
        'Organizacao Bench ' || g,
-       -- CNPJs com digitos verificadores validos: a V18 aplica fn_validar_cnpj como CHECK, e um
+       -- CNPJs com digitos verificadores validos: a V19 aplica fn_validar_cnpj como CHECK, e um
        -- CNPJ sequencial inventado seria rejeitado e derrubaria a carga inteira.
        CASE g WHEN 1 THEN '11222333000181' WHEN 2 THEN '11444777000161' END,
        'ACTIVE',
@@ -149,7 +149,7 @@ WHERE u.role = 'EMPLOYEE' AND u.name LIKE 'Funcionario %de Coordenador%'
 
 COMMIT;
 
--- Acessos: inseridos via refresh_token para EXERCITAR O TRIGGER de DAU (V11), nao por INSERT
+-- Acessos: inseridos via refresh_token para EXERCITAR O TRIGGER de DAU (V12), nao por INSERT
 -- direto em user_access_log. Inserir direto no log deixaria o rollup vazio e daria a falsa
 -- impressao de que a automacao funciona.
 INSERT INTO refresh_token (id, user_id, token_hash, expires_at, revoked, created_at)

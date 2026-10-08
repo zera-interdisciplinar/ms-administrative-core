@@ -8,7 +8,7 @@ import com.zera.ms_administrative_core.core.repository.AccessContextRepository;
 
 /**
  * Publica a origem da sessao como parametro de transacao, lido pelo trigger
- * {@code fn_registrar_acesso} (V11) via {@code current_setting('zera.access_origin', true)}.
+ * {@code fn_registrar_acesso} (V12) via {@code current_setting('zera.access_origin', true)}.
  *
  * <p>{@code set_config(..., true)} vale so ate o commit, pelo mesmo motivo do binder de auditoria:
  * num pool de conexoes, um valor de sessao vazaria para a requisicao seguinte.

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Prova o registro automatico de DAU da V11.
+ * Prova o registro automatico de DAU da V12.
  *
  * <p>Todo teste aqui insere em {@code refresh_token}, NUNCA em {@code user_access_log}. Isso e
  * deliberado: escrever direto no log provaria apenas que a tabela aceita INSERT. O que precisa ser

@@ -186,7 +186,7 @@ SELECT count(*) FROM pg_views WHERE schemaname = 'bi';                          
 SELECT count(*) FROM pg_inherits;                                                -- 3
 
 -- 3. Roles: sao objetos do CLUSTER e NAO vem no pg_dump de um banco.
---    Se estiverem faltando, reaplicar a V16.
+--    Se estiverem faltando, reaplicar a V17.
 SELECT rolname FROM pg_roles WHERE rolname IN ('zera_bi_leitor', 'zera_auditor');
 
 -- 4. Catalogo x schema real: divergencia aqui indica restauracao incompleta
@@ -303,7 +303,7 @@ curta de tolerancia.
 
 ## 8. Rotinas de manutencao relacionadas
 
-As procedures da [`V13`](../src/main/resources/db/migration/V13__create_business_procedures.sql)
+As procedures da [`V14`](../src/main/resources/db/migration/V14__create_business_procedures.sql)
 mantem o banco em tamanho saudavel, o que **e** parte de backup: banco menor restaura mais rapido.
 
 | Procedure | Efeito | Acionamento |
