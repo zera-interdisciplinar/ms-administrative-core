@@ -6,11 +6,13 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.ManagerEmployeeCount;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
+import com.zera.ms_administrative_core.infrastructure.persistence.postgres.AuditContextBinder;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.entity.UserJpa;
 import com.zera.ms_administrative_core.infrastructure.persistence.postgres.mapper.UserMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,20 +23,30 @@ public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository jpa;
     private final UserMapper mapper;
+    private final AuditContextBinder auditContext;
 
-    public UserRepositoryImpl(UserJpaRepository jpa,  UserMapper mapper) {
+    public UserRepositoryImpl(UserJpaRepository jpa,  UserMapper mapper,
+            AuditContextBinder auditContext) {
         this.jpa = jpa;
         this.mapper = mapper;
+        this.auditContext = auditContext;
     }
 
+    // @Transactional nao e detalhe: a trigger de auditoria le um parametro SET LOCAL, que so
+    // alcanca a escrita se as duas coisas acontecerem na MESMA transacao. Sem a transacao, o
+    // binding usaria outra conexao do pool e a auditoria registraria autor nulo.
     @Override
+    @Transactional
     public void save(User user) {
+        auditContext.bindCurrentUser();
         UserJpa entity = mapper.toJpa(user);
         jpa.save(entity);
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
+        auditContext.bindCurrentUser();
         jpa.deleteById(id);
     }
 

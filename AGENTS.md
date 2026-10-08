@@ -30,7 +30,15 @@ infrastructure/persistence/postgres/{entity,mapper,repository}
 infrastructure/security/                             emissão/validação de JWT, service tokens
 infrastructure/bootstrap/                            seed opcional do primeiro MANAGER
 infrastructure/legacysync/                           sync opcional com o banco do ano anterior
+infrastructure/scheduler/                            agendador das procedures de manutencao (off)
 ```
+
+**Camada analitica e de governanca (V11-V20).** Vive no banco, nao no Java: auditoria por trigger
+com heranca de tabelas, DAU automatico por trigger em `refresh_token`, functions/procedures de
+regra de negocio, star schema em views no schema `bi`, catalogo de dados. O Java so **aciona**
+(portas `MaintenanceRepository`, `AnalyticsRepository`, `DataCatalogRepository`, adaptadores com
+`JdbcTemplate`). Detalhes em `docs/modelagem-dimensional.md`, `docs/otimizacao.md`,
+`docs/catalogo-dados.md` e `docs/backup-recuperacao.md`.
 
 Migrações: `src/main/resources/db/migration/V*.sql` (Flyway), aplicadas no boot. O schema real é o
 que está nas migrações — anotação JPA **não** cria constraint, porque `ddl-auto=none`.
@@ -59,11 +67,34 @@ que está nas migrações — anotação JPA **não** cria constraint, porque `d
 
 **Testes**
 - Os testes usam **H2 em memória com `ddl-auto=create-drop`**, não as migrações. Logo, um teste
-  passar **não prova** que a migração Flyway está correta. Quem cobre isso é o
-  `FlywayPostgresIntegrationTest` (Postgres real via Testcontainers, pulado sem Docker) — é o único
-  que pega índice parcial, `gen_random_uuid()` e `CHECK`, que o H2 não suporta.
+  passar **não prova** que a migração Flyway está correta. Quem cobre isso é a suíte que estende
+  `AbstractPostgresIntegrationTest` (Postgres real via Testcontainers, **pulada sem Docker**) — é
+  ela que pega índice parcial, `gen_random_uuid()`, `CHECK`, PL/pgSQL, trigger, `JSONB`, herança de
+  tabelas, window function e CTE recursiva, nada disso existindo no H2.
 - Ao adicionar migração com objeto específico de Postgres, **acrescente a asserção correspondente
-  nesse teste**, senão ninguém percebe se ela parar de aplicar.
+  ao `FlywayPostgresIntegrationTest`**, senão ninguém percebe se ela parar de aplicar.
+- **Nunca mapeie view de `bi` como `@Entity`.** O Hibernate a criaria como tabela vazia no H2 e o
+  teste passaria sem executar uma linha do SQL analítico real. Leitura de `bi` é `JdbcTemplate`.
+- O container do Postgres é **um só para toda a suíte** (`PostgresTestContainer`, padrão singleton).
+  Não use `@Testcontainers` + `@Container` numa classe-base: a extensão **para** o container ao fim
+  de cada classe, e ao reiniciá-lo o Testcontainers cria um container novo, com porta nova, enquanto
+  o contexto Spring (cacheado entre classes) continua na porta antiga. O sintoma é `Connection
+  refused` com timeout de pool de 30s por teste, e só aparece quando existe a **segunda** classe de
+  integração.
+
+**Chamar procedure do Postgres por JDBC**
+- A forma "canônica" — `CallableStatement` com `{call sp(?, ?)}` e `registerOutParameter` — **não
+  funciona**. O driver traduz a sintaxe de escape para `SELECT * FROM sp(?)`, ou seja, procura uma
+  FUNCTION e descarta os parâmetros de saída. O erro engana:
+  `ERROR: function sp_fechar_alertas_obsoletos(integer) does not exist ... You might need to add
+  explicit type casts.` Use o `CALL` nativo — `jdbc.queryForObject("CALL sp_x(?, NULL)", ...)` — que
+  devolve os `INOUT` como uma linha de resultado. Ver `MaintenanceRepositoryImpl`.
+- Pelo mesmo motivo, `jdbc.update("CALL sp_x(?, NULL)")` falha com *"A result was returned when none
+  was expected"*: `CALL` com `INOUT` **retorna linha**.
+
+**Operador `?` do JSONB em PreparedStatement**
+- `SELECT dados_novos ? 'password'` num `PreparedStatement` tem o `?` consumido como **placeholder
+  de parâmetro**, e o erro resultante não menciona JSON em nada. Use `jsonb_exists(coluna, 'chave')`.
 
 **Chaves JWT**
 - Sem `JWT_PRIVATE_KEY`/`JWT_PUBLIC_KEY`, a app gera um par RSA **efêmero a cada boot**. Sobe
@@ -87,6 +118,13 @@ que está nas migrações — anotação JPA **não** cria constraint, porque `d
   (`SCOPE_notifications:write`) — token de usuário **não** alcança essas rotas, por desenho.
 - `user_account` é a tabela (não `user`, que é palavra reservada no Postgres). Usa herança
   single-table com `role` como discriminador; `manager_id` só vale para `EMPLOYEE`.
+- **Herança single-table do JPA** (`user_account`) vs **herança de tabelas do Postgres**
+  (`audit_log` → `audit_log_*`) são coisas diferentes: a primeira é mapeamento, a segunda é física.
+  Em `audit_log`, o pai fica **sempre vazio** e cada tabela auditada grava na própria filha.
+- `audit_log.usuario_banco` (`CURRENT_USER`) responde "qual conexão", não "qual pessoa" — a
+  aplicação usa um único usuário no pool. Quem age vem do `sub` do JWT e chega ao banco por
+  `SET LOCAL zera.app_user`, gravado em `usuario_app`. Por isso os adaptadores que escrevem em
+  tabela auditada são `@Transactional`: sem a mesma transação, o `SET LOCAL` não alcança a escrita.
 
 ## Contrato com o ms-inventory
 
