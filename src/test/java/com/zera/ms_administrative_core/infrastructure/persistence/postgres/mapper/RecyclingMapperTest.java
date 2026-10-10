@@ -35,6 +35,7 @@ class RecyclingMapperTest {
         assertEquals(emailStr, domain.getEmail().value());
         assertEquals(now, domain.getCreatedAt());
         assertEquals(now, domain.getUpdatedAt());
+        assertEquals(null, domain.getPlaceId());
     }
 
     @Test
@@ -46,7 +47,7 @@ class RecyclingMapperTest {
         Email email = new Email("test@company.com");
         LocalDateTime now = LocalDateTime.now();
 
-        RecyclingBusiness domain = new RecyclingBusiness(id, name, cnpj, email, now, now);
+        RecyclingBusiness domain = new RecyclingBusiness(id, name, cnpj, email, "places/ChIJ", now, now);
 
         RecyclingBusinessJpa jpa = mapper.toJpa(domain);
 
@@ -56,5 +57,6 @@ class RecyclingMapperTest {
         assertEquals(email.value(), jpa.getContactEmail());
         assertEquals(now, jpa.getCreatedAt());
         assertEquals(now, jpa.getUpdatedAt());
+        assertEquals("places/ChIJ", jpa.getPlaceId());
     }
 }

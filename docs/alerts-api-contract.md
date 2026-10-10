@@ -2,7 +2,7 @@
 
 Documentação de contrato das rotas do `ms-administrative-core` relacionadas a **alertas**: ingestão serviço-a-serviço (ms-inventory, IA core) e emissão do token necessário para chamá-las.
 
-**Escopo HTTP hoje:** este microserviço expõe **apenas escrita** de alerta (`POST /api/v1/notifications/alerts`). Não há `GET`, `PATCH` nem `DELETE` de alertas na API — os registros ficam na tabela `alert` do PostgreSQL, mas leitura/listagem para o app mobile ainda não passa por rotas deste serviço.
+**Escopo HTTP hoje:** ingestão serviço-a-serviço (`POST /api/v1/notifications/alerts`) e **listagem do próprio usuário** (`GET /api/v1/notifications/alerts`). Não há `PATCH` nem `DELETE` — o app não fecha alerta por esta API; `CLOSED` entra na ingestão ou na manutenção (`POST /api/v1/maintenance/alerts/close-stale`).
 
 ---
 
@@ -10,8 +10,8 @@ Documentação de contrato das rotas do `ms-administrative-core` relacionadas a 
 
 | Header | Obrigatório | Descrição |
 |---|---|---|
-| `Authorization` | Sim (em `/notifications/alerts`) | `Bearer <access_token>` — deve ser **token de serviço** com escopo `notifications:write`, obtido em `POST /api/v1/auth/service-token`. |
-| `Content-Type` | Sim (corpo JSON) | `application/json` |
+| `Authorization` | Sim (em `/notifications/alerts`) | `Bearer <access_token>`. **POST** exige **token de serviço** com escopo `notifications:write` (`POST /api/v1/auth/service-token`). **GET** exige JWT autenticado; o destinatário é o `sub` do token (usuário), não um query param. |
+| `Content-Type` | Sim (corpo JSON no POST) | `application/json` |
 
 A unidade de destino **não** vem de header: mandar `unitId` no corpo do alerta.
 
@@ -19,14 +19,14 @@ A unidade de destino **não** vem de header: mandar `unitId` no corpo do alerta.
 
 Este microserviço **não** valida header `apiKey`. Se a chamada passar pelo gateway, o edge pode exigir `x-api-key` à parte.
 
-### Quem **não** acessa a rota de alerta
+### Quem acessa cada rota de alerta
 
-| Token | Resultado |
-|---|---|
-| Ausente ou inválido | `401` |
-| JWT de usuário (`MANAGER` ou `EMPLOYEE`, claim `role`) | `403` — papel de usuário não alcança rotas internas |
-| Token de serviço com escopo diferente de `notifications:write` | `403` |
-| Token de serviço com `notifications:write` | `202` (alerta aceito) |
+| Token | `POST /notifications/alerts` | `GET /notifications/alerts` |
+|---|---|---|
+| Ausente ou inválido | `401` | `401` |
+| JWT de usuário (`MANAGER` ou `EMPLOYEE`, claim `role`) | `403` — papel de usuário não alcança ingestão interna | `200` — só os alertas cujo `user_id` = `sub` |
+| Token de serviço com `notifications:write` | `202` (alerta aceito) | Tecnicamente autenticado, mas o `sub` é o cliente (`ms-inventory`), não um `user_account` — a lista sai vazia. Não usar GET com token de serviço. |
+| Token de serviço com outro escopo | `403` | Idem GET (autenticado, lista vazia / sem destinatário útil) |
 
 O token de serviço traz claim `scope` (vira `SCOPE_notifications:write` na autorização) e **não** traz `role`. O JWT de login de usuário traz `role` e **não** traz o escopo de notificação.
 
@@ -150,6 +150,62 @@ Corpo vazio. O alerta foi aceito para persistência (criação nova ou atualiza�
 
 ---
 
+## 3. `GET /api/v1/notifications/alerts` — listar alertas do usuário autenticado
+
+Rota do **app** (usuário logado). O filtro de destinatário **não** aceita `userId` na query: vem do `sub` do JWT (`Principal.getName()`). Assim o cliente não consegue listar alerta de outra pessoa.
+
+Paginação offset (`page`/`size`); resposta é **array JSON**, sem envelope de total/páginas. Ordenação: `createdAt` **descendente** (mais recente primeiro).
+
+### Request
+
+```
+GET /api/v1/notifications/alerts?status=OPEN&page=0&size=20 HTTP/1.1
+Authorization: Bearer <user_access_token>
+```
+
+| Query | Tipo | Obrigatório | Default | Descrição |
+|---|---|---|---|---|
+| `status` | `OPEN`\|`CLOSED` | Não | (todos) | Se omitido, devolve abertos e fechados. Valor desconhecido: `400`. |
+| `page` | int | Não | `0` | Página (0-based). |
+| `size` | int | Não | `20` | Tamanho da página. |
+
+```bash
+curl "https://<host>/api/v1/notifications/alerts?status=OPEN&page=0&size=20" \
+  -H "Authorization: Bearer eyJhbGciOi..."
+```
+
+### Response — `200 OK`
+
+```json
+[
+  {
+    "alertId": "11111111-1111-1111-1111-111111111111",
+    "kind": "STOCK_QUANTITY_LIMIT",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "description": "Estoque da unidade acima de 90% da capacidade configurada.",
+    "unitId": "aa11bb22-0000-0000-0000-000000000009",
+    "ruleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "eventId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "occurredAt": "2026-09-20T03:15:00",
+    "createdAt": "2026-09-20T03:15:01",
+    "updatedAt": "2026-09-20T03:15:01"
+  }
+]
+```
+
+`ruleId` / `eventId` podem ser `null` quando o POST de ingestão não mandou o par (notificação pontual). Lista vazia: `200` + `[]` (usuário sem alertas, ou página além do fim).
+
+| Status | Quando |
+|---|---|
+| `200` | Lista (possivelmente vazia). |
+| `400` | `status` que não é `OPEN`/`CLOSED`. |
+| `401` | Sem token ou token inválido. |
+
+Não há `404` nesta rota: usuário autenticado sem alertas é lista vazia, não “usuário não encontrado”.
+
+---
+
 ## Deduplicação (`eventId` + `ruleId`)
 
 - **Com deduplicação:** enviar **os dois** `eventId` e `ruleId` preenchidos. Se já existir alerta **`OPEN`** com o mesmo par, o backend **não cria outro registro** — atualiza o existente:
@@ -189,7 +245,7 @@ Após `202`, o registro em `alert` contém, entre outros: `id` (UUID gerado), `u
 
 - `occurredAt` do body prevalece sobre a hora da requisição; se vier `null`, usa-se o instante da gravação.
 - `status` enviado no body é persistido como informado (ex. `OPEN` na ingestão típica).
-- Não há push/WebSocket neste contrato: apenas persistência + log estruturado `[ALERT]` no serviço.
+- Não há push/WebSocket neste contrato: persistência + log estruturado `[ALERT]` no serviço; o app lê via `GET`.
 
 ---
 
@@ -222,5 +278,6 @@ Contrato completo de usuários: [`team-management-api-contract.md`](team-managem
 | Registrar alerta ou notificação para um usuário | `POST /notifications/alerts` com escopo `notifications:write` |
 | Evitar spam da mesma regra no mesmo evento | Repetir `POST` com o **mesmo** `ruleId` + `eventId` enquanto o alerta estiver `OPEN` |
 | Notificação única (aprovação/reprovação de item) | `POST /notifications/alerts` **sem** `ruleId`/`eventId` (ou só um deles null) |
-| Listar alertas do usuário no app | **Não disponível** neste serviço na API atual — aguardar rota de leitura ou outro BFF |
+| Listar alertas do usuário no app | `GET /notifications/alerts` com JWT de usuário (`status`, `page`, `size` opcionais) |
+| Fechar alerta pelo app | **Não disponível** — sem `PATCH`/`DELETE` |
 | Achar `userId` do gestor da unidade antes de alertar | `GET /users?role=MANAGER&unitId=` (contrato em team-management) |

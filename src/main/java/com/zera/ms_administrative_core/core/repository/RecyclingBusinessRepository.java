@@ -12,6 +12,7 @@ public interface RecyclingBusinessRepository {
     RecyclingBusiness save(RecyclingBusiness recyclingBusiness);
     Optional<RecyclingBusiness> findById(UUID id);
     Optional<RecyclingBusiness> findByCnpj(Cnpj cnpj);
+    Optional<RecyclingBusiness> findByPlaceId(String placeId);
     List<RecyclingBusiness> findAll();
     List<RecyclingBusiness> findByPlaceIdIn(Collection<String> placeIds);
     void delete(UUID id);

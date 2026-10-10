@@ -28,6 +28,10 @@ public class RecyclingBusinessJpa {
     @Column(nullable = false, name = "contact_email")
     private String contactEmail;
 
+<<<<<<< Updated upstream
+=======
+    /** Indice unico parcial no Postgres; varios nulos sao validos, por isso sem unique do JPA. */
+>>>>>>> Stashed changes
     @Column(name = "place_id", length = 200)
     private String placeId;
 
@@ -36,6 +40,11 @@ public class RecyclingBusinessJpa {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public RecyclingBusinessJpa(UUID id, String name, String cnpj, String contactEmail, String placeId,
+                                LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(id, name, cnpj, contactEmail, null, createdAt, updatedAt);
+    }
 
     public RecyclingBusinessJpa(UUID id, String name, String cnpj, String contactEmail, String placeId,
                                 LocalDateTime createdAt, LocalDateTime updatedAt) {

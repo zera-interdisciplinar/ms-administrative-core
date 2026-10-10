@@ -43,6 +43,12 @@ public class RecyclingBusinessRepositoryImpl implements RecyclingBusinessReposit
     }
 
     @Override
+    public Optional<RecyclingBusiness> findByPlaceId(String placeId) {
+        return jpa.findByPlaceId(placeId)
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public List<RecyclingBusiness> findAll() {
         return jpa.findAll().stream()
                 .map(mapper::toDomain)

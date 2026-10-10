@@ -8,6 +8,8 @@ import com.zera.ms_administrative_core.core.usecase.recycling.linkRecyclingPlace
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindAllRecyclers;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingByCnpj;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingById;
+import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingContactByPlaceId;
+import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.RecyclingContact;
 import com.zera.ms_administrative_core.core.usecase.recycling.registerRecycling.RegisterRecycling;
 import com.zera.ms_administrative_core.core.usecase.recycling.renameRecycling.RenameRecycling;
 import com.zera.ms_administrative_core.core.domain.exception.RecyclingPlaceAlreadyLinkedException;
@@ -47,6 +49,7 @@ class RecyclingControllerTest {
     @MockitoBean private FindAllRecyclers findAllRecyclers;
     @MockitoBean private FindRecyclingById findRecyclingById;
     @MockitoBean private FindRecyclingByCnpj findRecyclingByCnpj;
+    @MockitoBean private FindRecyclingContactByPlaceId findRecyclingContactByPlaceId;
     @MockitoBean private RenameRecycling renameRecycling;
     @MockitoBean private ChangeEmail changeEmail;
     @MockitoBean private LinkRecyclingPlace linkRecyclingPlace;
@@ -102,6 +105,19 @@ class RecyclingControllerTest {
         mockMvc.perform(get("/api/v1/recyclings/cnpj/{cnpj}", cnpj))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cnpj").value("11222333000181"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/recyclings/by-place-id - should return contact and not treat the path as an id")
+    void shouldFindContactByPlaceId() throws Exception {
+        when(findRecyclingContactByPlaceId.execute("places/ChIJ"))
+                .thenReturn(new RecyclingContact(id, "Test", "test@test.com", "11999998888"));
+
+        mockMvc.perform(get("/api/v1/recyclings/by-place-id").param("placeId", "places/ChIJ"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recyclingBusinessId").value(id.toString()))
+                .andExpect(jsonPath("$.email").value("test@test.com"))
+                .andExpect(jsonPath("$.phone").value("11999998888"));
     }
 
     @Test

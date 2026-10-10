@@ -11,18 +11,17 @@ public class RecyclingBusiness {
     private String name;
     private Cnpj cnpj;
     private Email email;
+<<<<<<< Updated upstream
     /** Ponto do Google Places escolhido no mapa; nulo enquanto a parceira nao foi vinculada a um ponto. */
+=======
+    /** place_id do Google. Nulo ate o vinculo; omitir no save apagaria um vinculo ja gravado. */
+>>>>>>> Stashed changes
     private String placeId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public RecyclingBusiness(UUID id, String name, Cnpj cnpj, Email email) {
-        this.id = id;
-        this.name = name;
-        this.cnpj = cnpj;
-        this.email = email;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this(id, name, cnpj, email, null, LocalDateTime.now(), LocalDateTime.now());
     }
     
     public RecyclingBusiness(UUID id, String name, Cnpj cnpj, Email email, LocalDateTime createdAt, LocalDateTime updatedAt) {
@@ -35,9 +34,17 @@ public class RecyclingBusiness {
         this.name = name;
         this.cnpj = cnpj;
         this.email = email;
+<<<<<<< Updated upstream
         this.placeId = placeId;
+=======
+        this.placeId = blankToNull(placeId);
+>>>>>>> Stashed changes
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
     // getters

@@ -14,7 +14,12 @@ import com.zera.ms_administrative_core.core.usecase.recycling.changeRecyclingEma
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindAllRecyclers;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingByCnpj;
 import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingById;
+<<<<<<< Updated upstream
 import com.zera.ms_administrative_core.core.usecase.recycling.linkRecyclingPlace.LinkRecyclingPlace;
+=======
+import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.FindRecyclingContactByPlaceId;
+import com.zera.ms_administrative_core.core.usecase.recycling.findRecycling.RecyclingContact;
+>>>>>>> Stashed changes
 import com.zera.ms_administrative_core.core.usecase.recycling.registerRecycling.RegisterRecycling;
 import com.zera.ms_administrative_core.core.usecase.recycling.renameRecycling.RenameRecycling;
 import com.zera.ms_administrative_core.infrastructure.http.request.RegisterRecyclingRequest;
@@ -27,6 +32,7 @@ public class RecyclingController {
     private final FindAllRecyclers findAllRecyclers;
     private final FindRecyclingById findRecyclingById;
     private final FindRecyclingByCnpj findRecyclingByCnpj;
+    private final FindRecyclingContactByPlaceId findRecyclingContactByPlaceId;
     private final RenameRecycling renameRecycling;
     private final ChangeEmail changeEmail;
     private final LinkRecyclingPlace linkRecyclingPlace;
@@ -36,6 +42,7 @@ public class RecyclingController {
             FindAllRecyclers findAllRecyclers,
             FindRecyclingById findRecyclingById,
             FindRecyclingByCnpj findRecyclingByCnpj,
+            FindRecyclingContactByPlaceId findRecyclingContactByPlaceId,
             RenameRecycling renameRecycling,
             ChangeEmail changeEmail,
             LinkRecyclingPlace linkRecyclingPlace) {
@@ -44,6 +51,7 @@ public class RecyclingController {
         this.findAllRecyclers = findAllRecyclers;
         this.findRecyclingById = findRecyclingById;
         this.findRecyclingByCnpj = findRecyclingByCnpj;
+        this.findRecyclingContactByPlaceId = findRecyclingContactByPlaceId;
         this.renameRecycling = renameRecycling;
         this.changeEmail = changeEmail;
         this.linkRecyclingPlace = linkRecyclingPlace;
@@ -75,6 +83,12 @@ public class RecyclingController {
     @GetMapping("/cnpj/{cnpj}")
     public ResponseEntity<RecyclingBusiness> findByCnpj(@PathVariable String cnpj) {
         return ResponseEntity.ok(findRecyclingByCnpj.execute(cnpj));
+    }
+
+    /** placeId vai na query: o id do Google pode conter barra e quebraria o path. */
+    @GetMapping("/by-place-id")
+    public ResponseEntity<RecyclingContact> findByPlaceId(@RequestParam String placeId) {
+        return ResponseEntity.ok(findRecyclingContactByPlaceId.execute(placeId));
     }
 
     @PatchMapping("/{id}/name")
