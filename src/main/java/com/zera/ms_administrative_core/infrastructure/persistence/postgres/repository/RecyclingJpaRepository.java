@@ -10,9 +10,6 @@ import java.util.UUID;
 
 interface RecyclingJpaRepository extends JpaRepository<RecyclingBusinessJpa, UUID> {
     Optional<RecyclingBusinessJpa> findByCnpj(String cnpj);
-<<<<<<< Updated upstream
     List<RecyclingBusinessJpa> findByPlaceIdIn(Collection<String> placeIds);
-=======
     Optional<RecyclingBusinessJpa> findByPlaceId(String placeId);
->>>>>>> Stashed changes
 }

@@ -11,11 +11,7 @@ public class RecyclingBusiness {
     private String name;
     private Cnpj cnpj;
     private Email email;
-<<<<<<< Updated upstream
-    /** Ponto do Google Places escolhido no mapa; nulo enquanto a parceira nao foi vinculada a um ponto. */
-=======
-    /** place_id do Google. Nulo ate o vinculo; omitir no save apagaria um vinculo ja gravado. */
->>>>>>> Stashed changes
+    /** Ponto do Google Places. Nulo ate o vinculo; omitir no save apagaria um vinculo ja gravado. */
     private String placeId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,11 +30,7 @@ public class RecyclingBusiness {
         this.name = name;
         this.cnpj = cnpj;
         this.email = email;
-<<<<<<< Updated upstream
-        this.placeId = placeId;
-=======
         this.placeId = blankToNull(placeId);
->>>>>>> Stashed changes
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
