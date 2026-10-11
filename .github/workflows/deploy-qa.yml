@@ -55,6 +55,7 @@ jobs:
 
       - name: Deploy to GKE
         run: |
+          kubectl apply -f k8s/redis-qa.yaml -n qa
           sed -i "s|IMAGE_TAG|qa-${{ github.sha }}|g" k8s/deployment-qa.yaml
           kubectl apply -f k8s/deployment-qa.yaml -n qa
           kubectl apply -f k8s/service-qa.yaml -n qa

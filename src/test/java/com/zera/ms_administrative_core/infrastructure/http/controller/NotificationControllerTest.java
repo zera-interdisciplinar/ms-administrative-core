@@ -17,8 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 import com.zera.ms_administrative_core.core.domain.entity.AlertKind;
 import com.zera.ms_administrative_core.core.domain.entity.Severity;
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
-import com.zera.ms_administrative_core.core.usecase.notification.NotifyUser;
-import com.zera.ms_administrative_core.core.usecase.notification.NotifyUserCommand;
+import com.zera.ms_administrative_core.core.usecase.notification.enqueueAlert.EnqueueAlertNotification;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.AlertOutput;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.FindAlertsForUser;
 import com.zera.ms_administrative_core.infrastructure.http.request.AlertNotificationRequest;
@@ -42,7 +41,7 @@ class NotificationControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private NotifyUser notifyUser;
+    private EnqueueAlertNotification enqueueAlertNotification;
 
     @MockitoBean
     private FindAlertsForUser findAlertsForUser;
@@ -60,7 +59,7 @@ class NotificationControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted());
 
-        verify(notifyUser).execute(request.toCommand());
+        verify(enqueueAlertNotification).execute(request.toCommand());
     }
 
     /** Todo tipo novo do ms-inventory v1 precisa ser aceito e chegar ao use case. */
@@ -78,7 +77,7 @@ class NotificationControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted());
 
-        verify(notifyUser).execute(request.toCommand());
+        verify(enqueueAlertNotification).execute(request.toCommand());
     }
 
     @Test
@@ -92,7 +91,7 @@ class NotificationControllerTest {
                         """.formatted(UUID.randomUUID(), UUID.randomUUID())))
                 .andExpect(status().isBadRequest());
 
-        org.mockito.Mockito.verifyNoInteractions(notifyUser);
+        org.mockito.Mockito.verifyNoInteractions(enqueueAlertNotification);
     }
 
     /**
@@ -115,7 +114,7 @@ class NotificationControllerTest {
                         """.formatted(UUID.randomUUID(), UUID.randomUUID())))
                 .andExpect(status().isBadRequest());
 
-        org.mockito.Mockito.verifyNoInteractions(notifyUser);
+        org.mockito.Mockito.verifyNoInteractions(enqueueAlertNotification);
     }
 
     @Test
@@ -144,7 +143,7 @@ class NotificationControllerTest {
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isAccepted());
 
-        verify(notifyUser).execute(request.toCommand());
+        verify(enqueueAlertNotification).execute(request.toCommand());
     }
 
     @Test
