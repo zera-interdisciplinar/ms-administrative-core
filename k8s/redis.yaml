@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis
+  name: redis-alerts
   namespace: production
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis
+      app: redis-alerts
   template:
     metadata:
       labels:
-        app: redis
+        app: redis-alerts
     spec:
       containers:
-      - name: redis
+      - name: redis-alerts
         image: redis:7-alpine
         ports:
         - containerPort: 6379
@@ -29,11 +29,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis
+  name: redis-alerts
   namespace: production
 spec:
   selector:
-    app: redis
+    app: redis-alerts
   ports:
     - protocol: TCP
       port: 6379

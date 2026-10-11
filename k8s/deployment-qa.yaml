@@ -55,8 +55,10 @@ spec:
         - name: DB_HOST
           value: "postgres"
         # Fila de alertas (Redis Streams, ligada por padrao). Ver k8s/redis-qa.yaml.
+        # Nome "redis-alerts", NAO "redis": esse nome ja e usado pelo ms-artificial-intelligence-core
+        # no mesmo namespace (seu proprio Deployment/Service), e colidiu com o nosso uma vez.
         - name: REDIS_HOST
-          value: "redis"
+          value: "redis-alerts"
         - name: REDIS_PORT
           value: "6379"
         - name: DB_NAME

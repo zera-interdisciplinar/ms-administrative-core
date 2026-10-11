@@ -7,10 +7,11 @@ subir saudável, e opcionais para as integrações que nascem desligadas.
 
 ## Redis (fila de alertas, obrigatório)
 
-`redis.yaml`/`redis-qa.yaml` sobem um Redis standalone (sem persistência — a fila de alertas é
-transiente por natureza, perder o que não foi confirmado num restart é aceitável). Aplicados a
-cada deploy pelos workflows `deploy-qa`/`deploy-prod` (`kubectl apply` é idempotente: reaplicar
-sem mudança não faz nada). Para subir manualmente antes do primeiro deploy, ou fora do pipeline:
+`redis.yaml`/`redis-qa.yaml` sobem um Redis standalone chamado **`redis-alerts`** (sem
+persistência — a fila de alertas é transiente por natureza, perder o que não foi confirmado num
+restart é aceitável). Aplicados a cada deploy pelos workflows `deploy-qa`/`deploy-prod` (`kubectl
+apply` é idempotente: reaplicar sem mudança não faz nada). Para subir manualmente antes do
+primeiro deploy, ou fora do pipeline:
 
 ```sh
 # QA
@@ -20,10 +21,19 @@ kubectl apply -f k8s/redis-qa.yaml -n qa
 kubectl apply -f k8s/redis.yaml -n production
 ```
 
-`deployment.yaml`/`deployment-qa.yaml` já apontam `REDIS_HOST=redis` e `REDIS_PORT=6379` para o
-Service acima — não é Secret, é valor fixo (nome do Service dentro do mesmo namespace). Sem o
-Redis no ar, a fila fica ligada por padrão (`zera.alerts.queue.enabled=true`) e o
+`deployment.yaml`/`deployment-qa.yaml` já apontam `REDIS_HOST=redis-alerts` e `REDIS_PORT=6379`
+para o Service acima — não é Secret, é valor fixo (nome do Service dentro do mesmo namespace).
+Sem o Redis no ar, a fila fica ligada por padrão (`zera.alerts.queue.enabled=true`) e o
 `POST /api/v1/notifications/alerts` passa a falhar ao tentar enfileirar.
+
+**Por que `redis-alerts` e não `redis`:** o namespace `qa`/`production` é compartilhado entre os
+microsserviços, e o `ms-artificial-intelligence-core` já tem seu próprio Deployment/Service
+chamado `redis` (com `redis-stack-server` e PVC, para checkpoint do LangGraph). Na primeira versão
+deste manifest usamos o mesmo nome por engano, e o `kubectl apply` do nosso deploy sobrescreveu o
+deles — o deploy deste serviço trocou a imagem e removeu o volume do Redis do AI core, quebrando-o
+(o PVC `redis-pvc` deles não foi afetado, só o Deployment/Service; reaplicar o `redis.yaml`/`redis-
+qa.yaml` deles restaura o estado correto). **Nunca reuse um nome de Deployment/Service/PVC sem
+primeiro checar os manifests dos outros serviços no mesmo namespace.**
 
 ## 0. `postgres-secrets` (obrigatório)
 
