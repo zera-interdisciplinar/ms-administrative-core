@@ -5,6 +5,26 @@ Manifests aplicados pelos workflows `deploy-qa` (namespace `qa`) e `deploy-prod`
 precisa de Secrets criados manualmente (uma vez) — obrigatórios para o pod
 subir saudável, e opcionais para as integrações que nascem desligadas.
 
+## Redis (fila de alertas, obrigatório)
+
+`redis.yaml`/`redis-qa.yaml` sobem um Redis standalone (sem persistência — a fila de alertas é
+transiente por natureza, perder o que não foi confirmado num restart é aceitável). Não são
+aplicados pelos workflows de deploy, então precisam ser aplicados manualmente, uma vez por
+ambiente:
+
+```sh
+# QA
+kubectl apply -f k8s/redis-qa.yaml -n qa
+
+# Produção
+kubectl apply -f k8s/redis.yaml -n production
+```
+
+`deployment.yaml`/`deployment-qa.yaml` já apontam `REDIS_HOST=redis` e `REDIS_PORT=6379` para o
+Service acima — não é Secret, é valor fixo (nome do Service dentro do mesmo namespace). Sem o
+Redis no ar, a fila fica ligada por padrão (`zera.alerts.queue.enabled=true`) e o
+`POST /api/v1/notifications/alerts` passa a falhar ao tentar enfileirar.
+
 ## 0. `postgres-secrets` (obrigatório)
 
 Credenciais do Postgres, consumidas tanto por `postgres-qa.yaml`/`postgres.yaml` (o próprio

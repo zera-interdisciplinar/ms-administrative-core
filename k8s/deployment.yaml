@@ -54,6 +54,11 @@ spec:
         env:
         - name: DB_HOST
           value: "postgres"
+        # Fila de alertas (Redis Streams, ligada por padrao). Ver k8s/redis.yaml.
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
         - name: DB_NAME
           valueFrom:
             secretKeyRef:
