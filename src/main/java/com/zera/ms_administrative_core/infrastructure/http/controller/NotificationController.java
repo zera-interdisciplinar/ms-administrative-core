@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
-import com.zera.ms_administrative_core.core.usecase.notification.NotifyUser;
+import com.zera.ms_administrative_core.core.usecase.notification.enqueueAlert.EnqueueAlertNotification;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.AlertOutput;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.FindAlertsForUser;
 import com.zera.ms_administrative_core.infrastructure.security.Authz;
@@ -25,22 +25,28 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/v1/notifications")
 public class NotificationController {
-    private final NotifyUser notifyUser;
+    private final EnqueueAlertNotification enqueueAlertNotification;
     private final FindAlertsForUser findAlertsForUser;
 
-    public NotificationController(NotifyUser notifyUser, FindAlertsForUser findAlertsForUser) {
-        this.notifyUser = notifyUser;
+    public NotificationController(EnqueueAlertNotification enqueueAlertNotification,
+                                   FindAlertsForUser findAlertsForUser) {
+        this.enqueueAlertNotification = enqueueAlertNotification;
         this.findAlertsForUser = findAlertsForUser;
     }
 
     /**
      * Chamada de servico-para-servico (ms-inventory, IA core). Exige o escopo dedicado: token de
      * usuario nao traz {@code scope} e nao alcanca esta rota.
+     *
+     * <p>So enfileira (Redis Stream) e devolve 202 na hora; quem valida o usuario, deduplica e
+     * grava o alerta e o worker que consome a fila (ver {@code infrastructure/queue/redis}), nao
+     * esta requisicao. Isso evita que uma lentidao pontual do Postgres vire timeout pro
+     * ms-inventory.
      */
     @PostMapping("/alerts")
     @PreAuthorize(Authz.SERVICE_NOTIFICATIONS)
     public ResponseEntity<Void> receiveAlert(@RequestBody @Valid AlertNotificationRequest request) {
-        notifyUser.execute(request.toCommand());
+        enqueueAlertNotification.execute(request.toCommand());
         return ResponseEntity.accepted().build();
     }
 
