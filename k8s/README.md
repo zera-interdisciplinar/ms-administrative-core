@@ -8,9 +8,9 @@ subir saudável, e opcionais para as integrações que nascem desligadas.
 ## Redis (fila de alertas, obrigatório)
 
 `redis.yaml`/`redis-qa.yaml` sobem um Redis standalone (sem persistência — a fila de alertas é
-transiente por natureza, perder o que não foi confirmado num restart é aceitável). Não são
-aplicados pelos workflows de deploy, então precisam ser aplicados manualmente, uma vez por
-ambiente:
+transiente por natureza, perder o que não foi confirmado num restart é aceitável). Aplicados a
+cada deploy pelos workflows `deploy-qa`/`deploy-prod` (`kubectl apply` é idempotente: reaplicar
+sem mudança não faz nada). Para subir manualmente antes do primeiro deploy, ou fora do pipeline:
 
 ```sh
 # QA
