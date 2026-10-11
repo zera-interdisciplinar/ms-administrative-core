@@ -61,6 +61,14 @@ jobs:
           kubectl apply -f k8s/service-qa.yaml -n qa
           kubectl rollout status deployment/ms-administrative-core -n qa --timeout=180s
 
+      - name: Seed de volume sintetico (QA)
+        run: |
+          # $POSTGRES_USER/$POSTGRES_DB precisam ser expandidos DENTRO do pod (sh -c), nao pelo
+          # shell do runner -- ele nao tem essas variaveis, so o container do Postgres tem.
+          kubectl exec -i -n qa deploy/postgres -- \
+            sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f -' \
+            < scripts/seed_qa.sql
+
       - name: Annotate Deployment
         run: |
           kubectl annotate deployment ms-administrative-core \
