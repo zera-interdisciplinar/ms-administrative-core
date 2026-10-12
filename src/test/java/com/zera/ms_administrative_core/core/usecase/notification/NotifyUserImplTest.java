@@ -307,4 +307,31 @@ class NotifyUserImplTest {
         verify(pushNotificationGateway).sendToTokens(
                 org.mockito.ArgumentMatchers.eq(java.util.List.of("token-abc")), any());
     }
+
+    @Test
+    @DisplayName("Falha no envio do push nao pode impedir o alerta de ser salvo")
+    void pushFailureMustNotAffectAlertPersistence() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        com.zera.ms_administrative_core.core.domain.entity.DeviceToken deviceToken =
+                new com.zera.ms_administrative_core.core.domain.entity.DeviceToken(
+                        UUID.randomUUID(), userId, "token-abc",
+                        com.zera.ms_administrative_core.core.domain.valueobject.DevicePlatform.ANDROID,
+                        LocalDateTime.now(), LocalDateTime.now());
+        when(deviceTokenRepository.findByUserId(userId)).thenReturn(java.util.List.of(deviceToken));
+        org.mockito.Mockito.doThrow(new RuntimeException("FCM indisponivel"))
+                .when(pushNotificationGateway).sendToTokens(any(), any());
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                UUID.randomUUID(), UUID.randomUUID(), userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> useCase.execute(command));
+
+        verify(alertRepository).save(any());
+    }
 }
