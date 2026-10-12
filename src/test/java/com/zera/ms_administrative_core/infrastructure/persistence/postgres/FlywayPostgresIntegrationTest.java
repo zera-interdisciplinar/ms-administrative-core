@@ -26,7 +26,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     void allMigrationsApplyCleanlyOnRealPostgres() {
         var applied = flyway.info().applied();
 
-        assertThat(applied).hasSizeGreaterThanOrEqualTo(20);
+        assertThat(applied).hasSizeGreaterThanOrEqualTo(22);
         assertThat(applied).allMatch(m -> m.getState() == MigrationState.SUCCESS);
     }
 
@@ -227,5 +227,27 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
                 Integer.class);
 
         assertThat(total).isEqualTo(1);
+    }
+
+    /**
+     * V21: device_token para push FCM. O UNIQUE em token (nao em user_id) e o que impede que um
+     * device reinstalado/com outro login duplique a linha em vez de mover o token de usuario.
+     */
+    @Test
+    void deviceTokenTableAndConstraintsExist() {
+        Integer table = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.tables WHERE table_name = 'device_token'",
+                Integer.class);
+        assertThat(table).isEqualTo(1);
+
+        Integer uniqueConstraint = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE conname = 'device_token_token_unique' AND contype = 'u'",
+                Integer.class);
+        assertThat(uniqueConstraint).isEqualTo(1);
+
+        Integer fkConstraint = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE conname = 'device_token_user_id_foreign' AND contype = 'f'",
+                Integer.class);
+        assertThat(fkConstraint).isEqualTo(1);
     }
 }
