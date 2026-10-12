@@ -144,3 +144,26 @@ A chave é gerada no Console do GCP (Places API, New), restrita por IP do cluste
 do servidor, não do app do usuário). Custo por chamada — ver `zera.places.cache-ttl` em
 `application.properties` para o TTL do cache que reduz chamadas repetidas (6h por padrão; nome,
 endereço e coordenada não podem ser cacheados além de 30 dias pelos Termos de Uso do Google).
+
+## 4. `fcm-credentials` (opcional — push notification de alerta)
+
+`NotifyUserImpl` manda push via FCM além de gravar o alerta (best-effort: falha no FCM nunca
+derruba o alerta). O deployment já manda `FCM_ENABLED=true`, e a chave é `optional: true`: sem o
+Secret (ou com ele vazio), o `FcmConfig` cai no `NoopPushNotificationGateway` em vez de crash loop
+no boot — mesmo padrão do Google Places.
+
+A credencial é o JSON **inteiro** da service account do Firebase (Console do Firebase →
+Configurações do projeto → Contas de serviço → Gerar nova chave privada), não uma chave simples
+como as demais integrações — por isso `--from-file`, não `--from-literal`.
+
+```sh
+kubectl create secret generic fcm-credentials -n qa \
+  --from-file=credentials.json=<caminho-do-json-da-service-account>
+
+kubectl create secret generic fcm-credentials -n production \
+  --from-file=credentials.json=<caminho-do-json-da-service-account>
+```
+
+Recomendado usar **um projeto Firebase para dev/qa e outro para produção**, para não misturar
+push de teste com o de usuário real. Rotação: gere uma nova chave no Console do Firebase, revogue
+a antiga, atualize o Secret e faça `kubectl rollout restart`.
