@@ -178,6 +178,7 @@ Alertas **`CLOSED`** com o mesmo par não bloqueiam um novo `OPEN` (o índice s�
 | `PREDICTED_FAILURE` | Data prevista de quebra se aproximando (predição) | Idem. |
 | `ITEM_APPROVED` | Cadastro de item aprovado pelo gestor | Destino: quem cadastrou o item; dedup opcional. |
 | `ITEM_REJECTED` | Cadastro reprovado pelo gestor | Motivo na `description`; destino: quem cadastrou. |
+| `ITEM_PENDING_APPROVAL` | Colaborador cadastrou item (e modelo, se novo) pendente de aprovação | Destino: gestor da unidade (`GET /users?role=MANAGER&unitId=`); aprovar/reprovar o item decide o modelo junto, um único alerta cobre os dois; dedup opcional. |
 
 Qualquer valor fora desta lista (ex. `"kind":"NAO_EXISTE"`) resulta em **`400`** antes de chegar ao use case.
 
@@ -210,7 +211,7 @@ Contrato completo de usuários: [`team-management-api-contract.md`](team-managem
 
 - **`Severity`**: `LOW`, `MEDIUM`, `HIGH` (ordem de escalonamento na deduplicação).
 - **`AlertStatus`**: `OPEN`, `CLOSED`.
-- **`AlertKind`**: ver tabela acima (`STORAGE`, `TIME`, …, `ITEM_REJECTED`).
+- **`AlertKind`**: ver tabela acima (`STORAGE`, `TIME`, …, `ITEM_PENDING_APPROVAL`).
 
 ---
 
