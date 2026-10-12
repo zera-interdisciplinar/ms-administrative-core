@@ -11,6 +11,10 @@
 -- Uso:
 --   psql -U postgres -d zera -f scripts/seed_bench.sql
 --   ANALYZE;   -- obrigatorio: sem estatisticas atualizadas o planner decide no escuro
+--
+-- Para QA (deploy automatico a cada push na branch qa), use scripts/seed_qa.sql: mesma estrutura,
+-- escala ~50x menor e idempotente, porque ali o volume e so para ter dado parecido com produção,
+-- nao para benchmark de plano de consulta.
 
 BEGIN;
 
