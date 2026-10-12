@@ -200,8 +200,10 @@ O ms-inventory **não** recebe o `userId` do gestor pelo alerta em todos os flux
 
 ```
 GET /api/v1/users?role=MANAGER&unitId=<unitId>
-Authorization: Bearer <token de usuário ou conforme política do caller>
+Authorization: Bearer <token de serviço com escopo users:read, ou token de usuário MANAGER>
 ```
+
+Token de serviço aqui **precisa** do escopo `users:read` — `hasRole('MANAGER')` sozinho rejeita token de serviço com `403`, porque ele não traz `role`. Cliente padrão (`ms-inventory`) já vem com `notifications:write,users:read` configurado.
 
 Contrato completo de usuários: [`team-management-api-contract.md`](team-management-api-contract.md). Para alertas dirigidos ao **operador**, usar o `userId` de quem executou a ação (ex. autor do cadastro de item).
 

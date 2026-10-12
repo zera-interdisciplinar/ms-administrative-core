@@ -15,7 +15,8 @@ Token ausente/inválido: `401`.
 
 | Autorização | Rotas (neste contrato) |
 |---|---|
-| `MANAGER` | `GET /users`, `GET /users/count-by-manager`, `POST /invitations`, `GET /invitations/pending`, `PATCH /users/{id}/rename`, telefone (`POST/PATCH/DELETE` em `/telephone`) |
+| `MANAGER` | `GET /users/count-by-manager`, `POST /invitations`, `GET /invitations/pending`, `PATCH /users/{id}/rename`, telefone (`POST/PATCH/DELETE` em `/telephone`) |
+| `MANAGER` ou serviço com escopo `users:read` | `GET /users` — o ms-inventory usa esta rota com token de serviço (`clientId=ms-inventory`) pra achar o gestor da unidade antes de postar um alerta; ver [`alerts-api-contract.md`](alerts-api-contract.md). |
 | `SELF_OR_MANAGER` | `GET /users/{id}`, `PATCH /users/{id}/email`, `PATCH /users/{id}/image` — gestor edita funcionário; funcionário edita a própria conta se `id` = `sub` do JWT |
 | Autenticado (qualquer role) | `GET /telephone/user?userId=` (leitura) |
 
@@ -31,7 +32,10 @@ Não há envelope de paginação (`totalElements`/`totalPages`) em `GET /api/v1/
 
 ## 1. `GET /api/v1/users` — listar/contar funcionários (card + `EmployeesScreen`)
 
-Endpoint único cobre lista e filtros. Rota exige `MANAGER`.
+Endpoint único cobre lista e filtros. Rota exige `MANAGER` **ou** token de serviço com escopo
+`users:read` (ex. `ms-inventory`, que a usa para achar o gestor da unidade antes de postar um
+alerta — com token de serviço simples, sem esse escopo, `hasRole('MANAGER')` devolveria `403`
+porque esse token não traz `role`).
 
 ### Request
 

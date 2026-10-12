@@ -50,6 +50,11 @@ class RbacIntegrationTest {
                 .jwt(builder -> builder.subject(UUID.randomUUID().toString())));
     }
 
+    private static MockHttpServletRequestBuilder withScope(MockHttpServletRequestBuilder request, String scope) {
+        return request.with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_" + scope))
+                .jwt(builder -> builder.subject("ms-inventory").claim("scope", scope)));
+    }
+
     // --- rota MANAGER-only: PATCH /users/{id}/suspend ---
 
     @Test
@@ -92,6 +97,22 @@ class RbacIntegrationTest {
     void listUsersAllowedForManager() throws Exception {
         mockMvc.perform(asRole(get("/api/v1/users"), "MANAGER"))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * O ms-inventory usa esta rota com token de servico (sem role) para achar o gestor da unidade
+     * antes de postar um alerta -- ver AdminCoreClient#managerOf no ms-inventory.
+     */
+    @Test
+    void listUsersAllowedForServiceTokenWithUsersReadScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users"), "users:read"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listUsersForbiddenForServiceTokenWithTheWrongScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users"), "notifications:write"))
+                .andExpect(status().isForbidden());
     }
 
     // --- leitura por id: GET /users/{id} e SELF_OR_MANAGER ---
