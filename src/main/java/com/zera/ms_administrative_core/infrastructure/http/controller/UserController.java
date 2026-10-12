@@ -139,7 +139,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize(Authz.MANAGER)
+    @PreAuthorize(Authz.MANAGER_OR_SERVICE_USERS_READ)
     public ResponseEntity<List<UserOutput>> findAll(
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) Status status,
