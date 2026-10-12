@@ -196,16 +196,34 @@ Após `202`, o registro em `alert` contém, entre outros: `id` (UUID gerado), `u
 
 ## Rota auxiliar (fora de `/notifications`) — resolver destinatário
 
-O ms-inventory **não** recebe o `userId` do gestor pelo alerta em todos os fluxos; costuma descobrir o gestor da unidade antes de postar:
+O ms-inventory **não** recebe o `userId` do gestor pelo alerta em todos os fluxos; descobre o
+destinatário antes de postar, por um de dois caminhos — **não são intercambiáveis**:
+
+**1. Gestor de um funcionário específico** (`ITEM_PENDING_APPROVAL`): o alerta é sobre o cadastro
+de um funcionário, então o destinatário é o `managerId` *dele*, não "um gestor qualquer da
+unidade" — uma unidade pode ter mais de um `MANAGER`, e pegar o primeiro que a listagem devolver
+pode mandar o alerta pro gestor errado.
+
+```
+GET /api/v1/users/<id-do-funcionario-que-cadastrou>
+Authorization: Bearer <token de serviço com escopo users:read, ou token de usuário MANAGER/o próprio usuário>
+```
+
+Ler o campo `managerId` da resposta e usar como `userId` do alerta.
+
+**2. Qualquer gestor da unidade** (motor de regras — garantia, estoque, etc., onde não há um
+funcionário específico associado ao problema):
 
 ```
 GET /api/v1/users?role=MANAGER&unitId=<unitId>
 Authorization: Bearer <token de serviço com escopo users:read, ou token de usuário MANAGER>
 ```
 
-Token de serviço aqui **precisa** do escopo `users:read` — `hasRole('MANAGER')` sozinho rejeita token de serviço com `403`, porque ele não traz `role`. Cliente padrão (`ms-inventory`) já vem com `notifications:write,users:read` configurado.
+Token de serviço em ambas **precisa** do escopo `users:read` — `hasRole('MANAGER')` sozinho rejeita
+token de serviço com `403`, porque ele não traz `role`. Cliente padrão (`ms-inventory`) já vem com
+`notifications:write,users:read` configurado.
 
-Contrato completo de usuários: [`team-management-api-contract.md`](team-management-api-contract.md). Para alertas dirigidos ao **operador**, usar o `userId` de quem executou a ação (ex. autor do cadastro de item).
+Contrato completo de usuários: [`team-management-api-contract.md`](team-management-api-contract.md).
 
 ---
 

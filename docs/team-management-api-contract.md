@@ -17,7 +17,8 @@ Token ausente/inválido: `401`.
 |---|---|
 | `MANAGER` | `GET /users/count-by-manager`, `POST /invitations`, `GET /invitations/pending`, `PATCH /users/{id}/rename`, telefone (`POST/PATCH/DELETE` em `/telephone`) |
 | `MANAGER` ou serviço com escopo `users:read` | `GET /users` — o ms-inventory usa esta rota com token de serviço (`clientId=ms-inventory`) pra achar o gestor da unidade antes de postar um alerta; ver [`alerts-api-contract.md`](alerts-api-contract.md). |
-| `SELF_OR_MANAGER` | `GET /users/{id}`, `PATCH /users/{id}/email`, `PATCH /users/{id}/image` — gestor edita funcionário; funcionário edita a própria conta se `id` = `sub` do JWT |
+| `SELF_OR_MANAGER` | `PATCH /users/{id}/email`, `PATCH /users/{id}/image` — gestor edita funcionário; funcionário edita a própria conta se `id` = `sub` do JWT |
+| `SELF_OR_MANAGER` ou serviço com escopo `users:read` | `GET /users/{id}` — além do uso acima, o ms-inventory usa esta rota com o `id` do funcionário que cadastrou um item pra ler o `managerId` real dele e notificar o gestor certo (não "um gestor qualquer da unidade"); ver [`alerts-api-contract.md`](alerts-api-contract.md). |
 | Autenticado (qualquer role) | `GET /telephone/user?userId=` (leitura) |
 
 Ator autenticado sem permissão na rota: `403`.
