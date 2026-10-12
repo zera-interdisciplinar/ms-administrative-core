@@ -24,6 +24,8 @@ import com.zera.ms_administrative_core.core.domain.valueobject.Email;
 import com.zera.ms_administrative_core.core.domain.valueobject.HashedPassword;
 import com.zera.ms_administrative_core.core.domain.valueobject.Status;
 import com.zera.ms_administrative_core.core.repository.AlertRepository;
+import com.zera.ms_administrative_core.core.repository.DeviceTokenRepository;
+import com.zera.ms_administrative_core.core.repository.PushNotificationGateway;
 import com.zera.ms_administrative_core.core.repository.UserRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -42,11 +44,19 @@ class NotifyUserImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private DeviceTokenRepository deviceTokenRepository;
+
+    @Mock
+    private PushNotificationGateway pushNotificationGateway;
+
     private NotifyUserImpl useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new NotifyUserImpl(alertRepository, userRepository);
+        org.mockito.Mockito.lenient().when(deviceTokenRepository.findByUserId(any()))
+                .thenReturn(java.util.List.of());
+        useCase = new NotifyUserImpl(alertRepository, userRepository, deviceTokenRepository, pushNotificationGateway);
     }
 
     @Test
@@ -156,7 +166,7 @@ class NotifyUserImplTest {
                 .thenReturn(java.util.Optional.of(org.mockito.Mockito.mock(
                         com.zera.ms_administrative_core.core.domain.entity.User.class)));
 
-        new NotifyUserImpl(alertRepository, userRepository).execute(new NotifyUserCommand(
+        new NotifyUserImpl(alertRepository, userRepository, deviceTokenRepository, pushNotificationGateway).execute(new NotifyUserCommand(
                 null, null, userId, java.util.UUID.randomUUID(), "garantia vencendo",
                 com.zera.ms_administrative_core.core.domain.entity.Severity.MEDIUM,
                 com.zera.ms_administrative_core.core.domain.entity.AlertKind.WARRANTY_EXPIRATION,
@@ -181,7 +191,7 @@ class NotifyUserImplTest {
                 .thenReturn(java.util.Optional.of(org.mockito.Mockito.mock(
                         com.zera.ms_administrative_core.core.domain.entity.User.class)));
 
-        new NotifyUserImpl(alertRepository, userRepository).execute(new NotifyUserCommand(
+        new NotifyUserImpl(alertRepository, userRepository, deviceTokenRepository, pushNotificationGateway).execute(new NotifyUserCommand(
                 null, null, userId, java.util.UUID.randomUUID(), "item aprovado",
                 com.zera.ms_administrative_core.core.domain.entity.Severity.LOW,
                 com.zera.ms_administrative_core.core.domain.entity.AlertKind.ITEM_APPROVED,
@@ -192,5 +202,136 @@ class NotifyUserImplTest {
                         com.zera.ms_administrative_core.core.domain.entity.Alert.class);
         org.mockito.Mockito.verify(alertRepository).save(salvo.capture());
         org.junit.jupiter.api.Assertions.assertNotNull(salvo.getValue().getOccurredAt());
+    }
+
+    @Test
+    @DisplayName("Deve disparar push quando o alerta e novo e o usuario tem device token")
+    void shouldSendPushForNewAlertWhenUserHasDeviceToken() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        com.zera.ms_administrative_core.core.domain.entity.DeviceToken deviceToken =
+                new com.zera.ms_administrative_core.core.domain.entity.DeviceToken(
+                        UUID.randomUUID(), userId, "token-abc",
+                        com.zera.ms_administrative_core.core.domain.valueobject.DevicePlatform.ANDROID,
+                        LocalDateTime.now(), LocalDateTime.now());
+        when(deviceTokenRepository.findByUserId(userId)).thenReturn(java.util.List.of(deviceToken));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                UUID.randomUUID(), UUID.randomUUID(), userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        org.mockito.ArgumentCaptor<com.zera.ms_administrative_core.core.domain.valueobject.PushMessage> captor =
+                org.mockito.ArgumentCaptor.forClass(
+                        com.zera.ms_administrative_core.core.domain.valueobject.PushMessage.class);
+        verify(pushNotificationGateway).sendToTokens(
+                org.mockito.ArgumentMatchers.eq(java.util.List.of("token-abc")), captor.capture());
+        assertEquals("storage almost full", captor.getValue().body());
+    }
+
+    @Test
+    @DisplayName("Nao deve disparar push quando o usuario nao tem device token cadastrado")
+    void shouldNotSendPushWithoutDeviceToken() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                UUID.randomUUID(), UUID.randomUUID(), userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        verify(pushNotificationGateway, never()).sendToTokens(any(), any());
+    }
+
+    @Test
+    @DisplayName("Nao deve disparar push num touch sem escalada de severidade")
+    void shouldNotSendPushOnPlainTouch() {
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        Alert existing = new Alert(AlertKind.STORAGE, Severity.HIGH, "storage almost full", userId, ruleId, eventId,
+                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        when(alertRepository.findOpenByRuleIdAndEventId(ruleId, eventId)).thenReturn(Optional.of(existing));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                eventId, ruleId, userId, UUID.randomUUID(),
+                "storage almost full", Severity.LOW, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        verify(pushNotificationGateway, never()).sendToTokens(any(), any());
+    }
+
+    @Test
+    @DisplayName("Deve disparar push quando a severidade e escalada num alerta existente")
+    void shouldSendPushOnSeverityEscalation() {
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        Alert existing = new Alert(AlertKind.STORAGE, Severity.LOW, "storage almost full", userId, ruleId, eventId,
+                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        when(alertRepository.findOpenByRuleIdAndEventId(ruleId, eventId)).thenReturn(Optional.of(existing));
+
+        com.zera.ms_administrative_core.core.domain.entity.DeviceToken deviceToken =
+                new com.zera.ms_administrative_core.core.domain.entity.DeviceToken(
+                        UUID.randomUUID(), userId, "token-abc",
+                        com.zera.ms_administrative_core.core.domain.valueobject.DevicePlatform.IOS,
+                        LocalDateTime.now(), LocalDateTime.now());
+        when(deviceTokenRepository.findByUserId(userId)).thenReturn(java.util.List.of(deviceToken));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                eventId, ruleId, userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        verify(pushNotificationGateway).sendToTokens(
+                org.mockito.ArgumentMatchers.eq(java.util.List.of("token-abc")), any());
+    }
+
+    @Test
+    @DisplayName("Falha no envio do push nao pode impedir o alerta de ser salvo")
+    void pushFailureMustNotAffectAlertPersistence() {
+        UUID userId = UUID.randomUUID();
+        User user = UserFactory.create(Role.EMPLOYEE, userId, "Bob", new Email("bob@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        com.zera.ms_administrative_core.core.domain.entity.DeviceToken deviceToken =
+                new com.zera.ms_administrative_core.core.domain.entity.DeviceToken(
+                        UUID.randomUUID(), userId, "token-abc",
+                        com.zera.ms_administrative_core.core.domain.valueobject.DevicePlatform.ANDROID,
+                        LocalDateTime.now(), LocalDateTime.now());
+        when(deviceTokenRepository.findByUserId(userId)).thenReturn(java.util.List.of(deviceToken));
+        org.mockito.Mockito.doThrow(new RuntimeException("FCM indisponivel"))
+                .when(pushNotificationGateway).sendToTokens(any(), any());
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                UUID.randomUUID(), UUID.randomUUID(), userId, UUID.randomUUID(),
+                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> useCase.execute(command));
+
+        verify(alertRepository).save(any());
     }
 }
