@@ -50,6 +50,11 @@ class RbacIntegrationTest {
                 .jwt(builder -> builder.subject(UUID.randomUUID().toString())));
     }
 
+    private static MockHttpServletRequestBuilder withScope(MockHttpServletRequestBuilder request, String scope) {
+        return request.with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_" + scope))
+                .jwt(builder -> builder.subject("ms-inventory").claim("scope", scope)));
+    }
+
     // --- rota MANAGER-only: PATCH /users/{id}/suspend ---
 
     @Test
@@ -94,6 +99,22 @@ class RbacIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    /**
+     * O ms-inventory usa esta rota com token de servico (sem role) no motor de regras antigo pra
+     * achar um gestor qualquer da unidade -- ver AdminCoreAlertGateway/AdminCoreClient#managerOf.
+     */
+    @Test
+    void listUsersAllowedForServiceTokenWithUsersReadScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users"), "users:read"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void listUsersForbiddenForServiceTokenWithTheWrongScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users"), "notifications:write"))
+                .andExpect(status().isForbidden());
+    }
+
     // --- leitura por id: GET /users/{id} e SELF_OR_MANAGER ---
 
     @Test
@@ -116,6 +137,22 @@ class RbacIntegrationTest {
         mockMvc.perform(get("/api/v1/users/{id}", UUID.randomUUID())
                         .with(jwt().jwt(b -> b.subject(UUID.randomUUID().toString()))
                                 .authorities(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
+     * O ms-inventory le o {@code managerId} do funcionario que cadastrou o item, pra notificar o
+     * gestor certo dele (nao "um gestor qualquer da unidade") -- ver AdminCoreClient#managerOfEmployee.
+     */
+    @Test
+    void getUserByIdAllowedForServiceTokenWithUsersReadScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users/{id}", UUID.randomUUID()), "users:read"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getUserByIdForbiddenForServiceTokenWithTheWrongScope() throws Exception {
+        mockMvc.perform(withScope(get("/api/v1/users/{id}", UUID.randomUUID()), "notifications:write"))
                 .andExpect(status().isForbidden());
     }
 

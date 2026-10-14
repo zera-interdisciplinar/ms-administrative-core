@@ -29,5 +29,11 @@ public enum AlertKind {
     /** Cadastro de item aprovado pelo gestor; vai para quem cadastrou. */
     ITEM_APPROVED,
     /** Cadastro de item reprovado pelo gestor, com o motivo na descricao. */
-    ITEM_REJECTED
+    ITEM_REJECTED,
+    /**
+     * Item (e o modelo vinculado a ele, quando tambem novo) cadastrado por um colaborador e
+     * aguardando aprovacao; vai para o gestor da unidade. Aprovar/reprovar o item aprova/reprova o
+     * modelo junto, entao um unico alerta cobre os dois.
+     */
+    ITEM_PENDING_APPROVAL
 }
