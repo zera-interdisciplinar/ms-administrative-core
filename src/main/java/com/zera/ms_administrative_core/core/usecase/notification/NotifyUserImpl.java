@@ -109,7 +109,7 @@ public class NotifyUserImpl implements NotifyUser {
             }
 
             PushMessage message = new PushMessage(
-                    "Novo alerta: " + alert.getKind(),
+                    alert.getKind().displayTitle(),
                     alert.getDescription(),
                     Map.of(
                             "alertId", alert.getId().toString(),
