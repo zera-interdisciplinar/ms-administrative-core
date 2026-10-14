@@ -5,6 +5,7 @@ import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseEx
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCepException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCnpjException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidPasswordResetTokenException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidStatusTransitionException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidTelephoneNumberException;
@@ -139,6 +140,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ProblemDetail handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPasswordResetTokenException.class)
+    public ProblemDetail handleInvalidPasswordResetToken(InvalidPasswordResetTokenException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)

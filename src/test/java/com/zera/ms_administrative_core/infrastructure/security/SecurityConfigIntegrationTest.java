@@ -53,6 +53,24 @@ class SecurityConfigIntegrationTest {
     }
 
     @Test
+    void passwordResetRequestEndpointIsPublic() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/password-reset/request")
+                        .contentType("application/json")
+                        .content("{\"email\":\"a@b.com\"}"))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void passwordResetConfirmEndpointIsPublic() throws Exception {
+        // Token inexistente -> 400, nao 401: prova que a rota nao exige autenticacao para ser
+        // alcancada (se exigisse, a resposta seria 401 antes mesmo do use case rodar).
+        mockMvc.perform(post("/api/v1/auth/password-reset/confirm")
+                        .contentType("application/json")
+                        .content("{\"token\":\"bad\",\"newPassword\":\"x\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void protectedEndpointRejectsAnonymousRequest() throws Exception {
         mockMvc.perform(get("/api/v1/users")).andExpect(status().isUnauthorized());
     }

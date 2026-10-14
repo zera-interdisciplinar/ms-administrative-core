@@ -19,11 +19,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.UUID;
 
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCredentialsException;
+import com.zera.ms_administrative_core.core.domain.exception.InvalidPasswordResetTokenException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidRefreshTokenException;
 import com.zera.ms_administrative_core.core.usecase.auth.Login;
 import com.zera.ms_administrative_core.core.usecase.auth.Logout;
 import com.zera.ms_administrative_core.core.usecase.auth.RefreshSession;
 import com.zera.ms_administrative_core.core.usecase.auth.TokenPair;
+import com.zera.ms_administrative_core.core.usecase.auth.passwordReset.ConfirmPasswordReset;
+import com.zera.ms_administrative_core.core.usecase.auth.passwordReset.RequestPasswordReset;
 
 @WebMvcTest(AuthController.class)
 class AuthControllerTest {
@@ -39,6 +42,8 @@ class AuthControllerTest {
     private com.zera.ms_administrative_core.core.usecase.auth.IssueServiceToken issueServiceToken;
     @MockitoBean private RefreshSession refreshSession;
     @MockitoBean private Logout logout;
+    @MockitoBean private RequestPasswordReset requestPasswordReset;
+    @MockitoBean private ConfirmPasswordReset confirmPasswordReset;
 
     @Test
     @DisplayName("POST /auth/login - 200 com o par de tokens")
@@ -163,6 +168,56 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/service-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"clientId\":\"  \"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /auth/password-reset/request - 202 e delega para o use case")
+    void requestPasswordResetReturnsAccepted() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/password-reset/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"alice@empresa.com\"}"))
+                .andExpect(status().isAccepted());
+        verify(requestPasswordReset).execute("alice@empresa.com");
+    }
+
+    @Test
+    @DisplayName("POST /auth/password-reset/request - 400 quando e-mail invalido")
+    void requestPasswordResetValidatesBody() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/password-reset/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"not-an-email\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /auth/password-reset/confirm - 204 e delega para o use case")
+    void confirmPasswordResetReturnsNoContent() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/password-reset/confirm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"raw-token\",\"newPassword\":\"new-secret\"}"))
+                .andExpect(status().isNoContent());
+        verify(confirmPasswordReset).execute("raw-token", "new-secret");
+    }
+
+    @Test
+    @DisplayName("POST /auth/password-reset/confirm - 400 quando token invalido ou expirado")
+    void confirmPasswordResetRejectsInvalidToken() throws Exception {
+        doThrow(new InvalidPasswordResetTokenException())
+                .when(confirmPasswordReset).execute(any(), any());
+
+        mockMvc.perform(post(BASE_URL + "/password-reset/confirm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"bad\",\"newPassword\":\"new-secret\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /auth/password-reset/confirm - 400 quando falta campo")
+    void confirmPasswordResetValidatesBody() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/password-reset/confirm")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"raw-token\"}"))
                 .andExpect(status().isBadRequest());
     }
 }
