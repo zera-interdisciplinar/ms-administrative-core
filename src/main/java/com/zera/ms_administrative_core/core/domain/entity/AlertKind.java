@@ -35,5 +35,27 @@ public enum AlertKind {
      * aguardando aprovacao; vai para o gestor da unidade. Aprovar/reprovar o item aprova/reprova o
      * modelo junto, entao um unico alerta cobre os dois.
      */
-    ITEM_PENDING_APPROVAL
+    ITEM_PENDING_APPROVAL;
+
+    /**
+     * Titulo amigavel para push/UI. O nome bruto do enum nao deve chegar ao usuario final --
+     * o switch sem default obriga quem adicionar um valor novo a passar por aqui.
+     */
+    public String displayTitle() {
+        return switch (this) {
+            case STORAGE -> "Limite de armazenamento atingido";
+            case TIME -> "Prazo se aproximando";
+            case WARRANTY_EXPIRATION -> "Garantia perto de vencer";
+            case LIFESPAN_EXPIRATION -> "Vida util do item perto de acabar";
+            case USAGE_INTENSITY_LIMIT -> "Uso acima do limite configurado";
+            case STOCK_QUANTITY_LIMIT -> "Estoque da unidade no limite";
+            case TIME_IN_STOCK_LIMIT -> "Item parado no estoque ha tempo demais";
+            case STALE_ITEM -> "Item sem movimentacao";
+            case RECYCLABLE_TO_LANDFILL -> "Material reciclavel descartado como lixo comum";
+            case PREDICTED_FAILURE -> "Quebra prevista em breve";
+            case ITEM_APPROVED -> "Seu item foi aprovado";
+            case ITEM_REJECTED -> "Seu item foi reprovado";
+            case ITEM_PENDING_APPROVAL -> "Item aguardando sua aprovacao";
+        };
+    }
 }
