@@ -63,6 +63,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/service-token",
+                                "/api/v1/auth/password-reset/request",
+                                "/api/v1/auth/password-reset/confirm",
                                 "/api/v1/invitations/redeem").permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET).permitAll()
                         .anyRequest().authenticated())
