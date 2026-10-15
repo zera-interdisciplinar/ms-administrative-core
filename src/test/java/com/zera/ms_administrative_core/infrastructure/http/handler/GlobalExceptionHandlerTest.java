@@ -306,6 +306,19 @@ class GlobalExceptionHandlerTest {
         assertEquals(ex.getMessage(), result.getDetail());
     }
 
+    // --- InvalidPasswordResetTokenException ---
+
+    @Test
+    @DisplayName("Should return 400 when InvalidPasswordResetTokenException is thrown")
+    void shouldReturn400OnInvalidPasswordResetToken() {
+        InvalidPasswordResetTokenException ex = new InvalidPasswordResetTokenException();
+
+        ProblemDetail result = handler.handleInvalidPasswordResetToken(ex);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
     // --- InvalidCepException ---
 
     @Test

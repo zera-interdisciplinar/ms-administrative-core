@@ -104,3 +104,17 @@ spec:
               name: google-places
               key: api-key
               optional: true
+        # Recuperacao de senha (Resend). optional: true pelo mesmo motivo do Google Places: sem o
+        # secret o pod sobe normal, so a chamada ao Resend falha (logada, nunca derruba o fluxo).
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resend
+              key: api-key
+              optional: true
+        - name: RESEND_FROM_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: resend
+              key: from-email
+              optional: true

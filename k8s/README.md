@@ -167,3 +167,26 @@ kubectl create secret generic fcm-credentials -n production \
 Recomendado usar **um projeto Firebase para dev/qa e outro para produção**, para não misturar
 push de teste com o de usuário real. Rotação: gere uma nova chave no Console do Firebase, revogue
 a antiga, atualize o Secret e faça `kubectl rollout restart`.
+
+## 5. `resend` (recuperação de senha)
+
+`POST /api/v1/auth/password-reset/request` envia o e-mail via [Resend](https://resend.com). Ao
+contrário das integrações acima, esta **não tem fallback**: sem o Secret, o pod sobe (a chave e o
+remetente são `optional: true` por padrão vazio), mas a chamada ao Resend falha para todo pedido
+de recuperação — só é logada, nunca derruba o fluxo (ver `ResendMailGateway`), então o sintoma é
+"ninguém recebe o e-mail", sem erro visível na API.
+
+```sh
+kubectl create secret generic resend -n qa \
+  --from-literal=api-key='<chave-da-api-do-resend>' \
+  --from-literal=from-email='<remetente-verificado@dominio>'
+
+kubectl create secret generic resend -n production \
+  --from-literal=api-key='<chave-da-api-do-resend>' \
+  --from-literal=from-email='<remetente-verificado@dominio>'
+```
+
+`from-email` precisa ser um remetente de **domínio verificado** no Resend (ou `onboarding@resend.dev`
+só para teste). O link enviado no e-mail é um deep link (`zera://reset-password?token=...`), não
+uma URL http — a tela de redefinição existe só no app mobile; ver `zera.mail.reset.deep-link-base`
+em `application.properties` se o esquema do app mudar.
