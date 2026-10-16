@@ -94,7 +94,15 @@ public class LegacySyncService {
     }
 
     private void syncManager(LegacyReader.Gestor row) {
-        Email email = new Email(row.email());
+        UUID id = LegacyIds.manager(row.codigo());
+        Optional<User> existing = userRepository.findById(id);
+        // nome e e-mail sao editaveis pelo mobile: edicao local mais nova que a do legado nao pode ser
+        // revertida na rodada seguinte. Qualquer touch() do usuario conta (ate ativar/desativar), o que
+        // so erra para o lado seguro: preserva o local ate o legado ser editado de novo.
+        boolean localWins = existing.isPresent()
+                && localIsNewer(existing.get().getUpdatedAt(), row.atualizadoEm());
+
+        Email email = localWins ? existing.get().getEmail() : new Email(row.email());
         if (row.codUnidade() == null) {
             throw new SkipRow("gestor sem unidade");
         }
@@ -107,32 +115,51 @@ public class LegacySyncService {
             throw new SkipRow("senha do legado nao esta em bcrypt");
         }
 
-        UUID id = LegacyIds.manager(row.codigo());
-        userRepository.findByEmail(email)
-                .filter(other -> !other.getUserId().equals(id))
-                .ifPresent(other -> {
-                    throw new SkipRow("email ja usado por outro usuario");
-                });
+        if (!localWins) {
+            userRepository.findByEmail(email)
+                    .filter(other -> !other.getUserId().equals(id))
+                    .ifPresent(other -> {
+                        throw new SkipRow("email ja usado por outro usuario");
+                    });
+        }
 
+        String name = localWins ? existing.get().getName() : row.nome();
+        // com o local vencendo, o updated_at local precisa sobreviver: gravar o do legado faria a
+        // proxima rodada achar o legado "mais novo" e desfazer a edicao
+        LocalDateTime updatedAt = localWins ? existing.get().getUpdatedAt() : toLocal(row.atualizadoEm());
         // o legado nao tem status de gestor: ACTIVE so na criacao
-        Status status = userRepository.findById(id).map(User::getStatus).orElse(Status.ACTIVE);
-        userRepository.save(new Manager(id, row.nome(), email, new HashedPassword(row.senha()),
-                status, unitId, toLocal(row.criadoEm()), toLocal(row.atualizadoEm())));
+        Status status = existing.map(User::getStatus).orElse(Status.ACTIVE);
+        // o legado nao tem foto: sem copiar o valor atual, o merge a zeraria a cada rodada
+        String imageUrl = existing.map(User::getImageUrl).orElse(null);
+        userRepository.save(new Manager(id, name, email, new HashedPassword(row.senha()),
+                status, unitId, toLocal(row.criadoEm()), updatedAt, imageUrl));
     }
 
     private void syncTelephone(LegacyReader.Gestor row) {
-        TelephoneNumber number = new TelephoneNumber(row.telefone());
         UUID userId = LegacyIds.manager(row.codigo());
+        Optional<Telephone> existing = telephoneRepository.findByUserId(userId);
+        // o telefone tem updated_at proprio (alterar o numero nao toca o usuario), mas o legado so
+        // tem o atualizado_em do gestor: e contra ele que a edicao local e comparada
+        boolean localWins = existing.isPresent()
+                && localIsNewer(existing.get().getUpdatedAt(), row.atualizadoEm());
+
+        TelephoneNumber number = localWins ? existing.get().getNumber() : new TelephoneNumber(row.telefone());
         // telefone de usuario carrega organizacao e unidade, como no cadastro pela API
         UUID unitId = LegacyIds.unit(row.codUnidade());
         Unit unit = unitRepository.findById(unitId).orElseThrow(() -> new SkipRow("unidade pai ausente"));
 
-        Optional<Telephone> existing = telephoneRepository.findByUserId(userId);
         UUID id = existing.map(Telephone::getTelephoneId).orElse(LegacyIds.managerTelephone(row.codigo()));
         LocalDateTime createdAt = existing.map(Telephone::getCreatedAt).orElse(toLocal(row.criadoEm()));
+        LocalDateTime updatedAt = localWins ? existing.get().getUpdatedAt() : toLocal(row.atualizadoEm());
 
         telephoneRepository.save(new Telephone(id, number, userId, unit.getOrganizationId(), unitId,
-                createdAt, toLocal(row.atualizadoEm())));
+                createdAt, updatedAt));
+    }
+
+    // Empate vai para o legado (apos uma rodada os dois lados ficam iguais). Sem atualizado_em no
+    // legado nao ha como provar que ele e mais novo, entao o dado local existente e preservado.
+    private static boolean localIsNewer(LocalDateTime localUpdatedAt, OffsetDateTime legacyUpdatedAt) {
+        return legacyUpdatedAt == null || localUpdatedAt.isAfter(toLocal(legacyUpdatedAt));
     }
 
     private static Plan planOf(String plano) {

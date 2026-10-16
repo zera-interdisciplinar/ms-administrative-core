@@ -98,6 +98,31 @@ O legado não tem status nem plano na tabela `organizacao`. O sync usa **a assin
 - As ações locais de ativar, desativar, suspender e trocar plano em organizações vindas do legado são sobrescritas na rodada seguinte (o legado é a fonte da verdade).
 - Se a organização for ignorada (plano desconhecido, CNPJ ou e-mail inválido), as unidades e os gestores dela também são ignorados enquanto ela não existir no banco novo (pai ausente).
 
+## Edicao local do gestor (nome, e-mail, telefone)
+
+O app mobile edita nome, e-mail e telefone do gestor pela API. Para o sync nao desfazer essas
+edicoes, a rodada compara o `updated_at` local com o `gestor.atualizado_em` do legado, **por
+registro**, e quem editou por ultimo vence:
+
+| Situacao | Nome e e-mail (`user_account`) | Numero (`telephone`) |
+| --- | --- | --- |
+| `updated_at` local **maior** que `atualizado_em` do legado | preserva o local | preserva o local |
+| `updated_at` local menor ou **igual** | legado sobrescreve | legado sobrescreve |
+| `atualizado_em` do legado **nulo** e registro local existente | preserva o local | preserva o local |
+
+- Quando o local vence, o `updated_at` local tambem e preservado. Gravar o do legado faria a
+  rodada seguinte achar o legado "mais novo" e desfazer a edicao.
+- Senha e unidade continuam vindo sempre do legado. `status` e `image_url` nunca vem do legado
+  (o legado nao tem esses campos), entao nunca sao sobrescritos.
+- **Depende do legado atualizar `gestor.atualizado_em` a cada edicao.** Se um `UPDATE` no legado
+  nao tocar a coluna, essa mudanca nunca vence uma edicao local mais antiga.
+- Qualquer alteracao do usuario que chame `touch()` (ativar, desativar, trocar senha, foto) tambem
+  empurra o `updated_at` local. O efeito e conservador: nome e e-mail locais ficam protegidos ate o
+  legado ser editado de novo.
+- Apagar o telefone pela API nao e respeitado: sem registro local, a rodada seguinte o recria a
+  partir do legado.
+- Organizacao e unidade **nao** tem essa protecao: continuam sendo sobrescritas pelo legado.
+
 ## O que se espera do banco legado
 
 Contrato que o legado precisa cumprir para o sync funcionar como esperado. O que não for cumprido não derruba a rodada: a linha é ignorada e o log mostra o tipo e o código do registro.
