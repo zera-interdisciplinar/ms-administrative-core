@@ -128,3 +128,24 @@ spec:
               name: resend
               key: from-email
               optional: true
+        # Sync periodico com o banco legado (LegacySyncConfig). Diferente dos secrets de integracao
+        # acima, SEM optional: com LEGACY_SYNC_ENABLED=true e URL vazia o bean do pool falha
+        # ("jdbcUrl is required") e a aplicacao nao sobe. Faltando o secret, o pod para em
+        # CreateContainerConfigError, que aponta o secret certo, em vez de um crash loop obscuro.
+        - name: LEGACY_SYNC_ENABLED
+          value: "true"
+        - name: LEGACY_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: url
+        - name: LEGACY_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: user
+        - name: LEGACY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: password
