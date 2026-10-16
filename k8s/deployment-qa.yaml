@@ -127,4 +127,25 @@ spec:
             secretKeyRef:
               name: resend
               key: from-email
+              optional: true        # Sync periodico com o banco legado (LegacySyncConfig). optional: true pelo mesmo motivo do
+        # Google Places: sem o secret o pod sobe normal e o job so falha (logado) a cada rodada.
+        - name: LEGACY_SYNC_ENABLED
+          value: "true"
+        - name: LEGACY_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: url
+              optional: true
+        - name: LEGACY_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: user
+              optional: true
+        - name: LEGACY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: password
               optional: true

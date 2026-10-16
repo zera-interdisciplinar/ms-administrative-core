@@ -190,3 +190,24 @@ kubectl create secret generic resend -n production \
 só para teste). O link enviado no e-mail é um deep link (`zera://reset-password?token=...`), não
 uma URL http — a tela de redefinição existe só no app mobile; ver `zera.mail.reset.deep-link-base`
 em `application.properties` se o esquema do app mudar.
+
+## 6. `legacy-db` (opcional — sync com o banco do sistema legado)
+
+Só o deployment de **QA** liga o sync (`LEGACY_SYNC_ENABLED=true`); produção segue desligada até o
+sync ser validado em QA. O job lê organização, unidade e gestor do banco legado a cada 5 minutos
+(`LEGACY_SYNC_INTERVAL`) e grava no banco do serviço; regras e limites em
+`docs/legacy-db-field-mapping.md`. As três chaves são `optional: true`: sem o Secret o pod sobe
+normal, e o sintoma é só `Legacy sync falhou` no log a cada rodada, sem efeito na API.
+
+```sh
+kubectl create secret generic legacy-db -n qa \
+  --from-literal=url='jdbc:postgresql://<host>:5432/<banco>?sslmode=require' \
+  --from-literal=user='<usuario-somente-leitura>' \
+  --from-literal=password='<senha>'
+```
+
+O pod precisa alcançar o host do legado (libere o IP de saída do cluster no firewall dele). O
+serviço só **lê** o legado, então use um usuário com `SELECT` em `organizacao`, `unidade`, `gestor`,
+`assinatura` e `plano`. Depois de criar ou trocar o Secret: `kubectl rollout restart
+deployment/ms-administrative-core -n qa`. Para conferir:
+`kubectl logs -n qa deploy/ms-administrative-core | grep "Legacy sync"`.
