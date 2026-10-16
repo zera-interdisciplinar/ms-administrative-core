@@ -134,6 +134,13 @@ class LegacySyncServiceTest {
                 status, LegacyIds.unit(5), now, now);
     }
 
+    /** Local manager edited at {@code updatedAt}, with a name/email/photo that differ from the legacy row. */
+    private static Manager localManagerEditedAt(int codigo, LocalDateTime updatedAt) {
+        return new Manager(LegacyIds.manager(codigo), "Nome local", new Email("local@b.com"),
+                new HashedPassword(HASH), Status.ACTIVE, LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt,
+                "https://img/foto.png");
+    }
+
     private void givenReader(List<Organizacao> organizacoes, List<Unidade> unidades, List<Gestor> gestores) {
         lenient().when(reader.organizacoes()).thenReturn(organizacoes);
         lenient().when(reader.unidades()).thenReturn(unidades);
@@ -541,6 +548,128 @@ class LegacySyncServiceTest {
         assertThat(saved.getUserId()).isEqualTo(LegacyIds.manager(1));
         assertThat(saved.getStatus()).isEqualTo(existingStatus);
         assertThat(report).isEqualTo(new SyncReport(1, 0));
+    }
+
+    @Test
+    @DisplayName("Should keep name, email and photo of a manager edited locally after the legacy update")
+    void shouldPreserveLocalManagerEditsNewerThanLegacy() {
+        LocalDateTime localEdit = expected(UPDATED).plusHours(1);
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, localEdit)));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        User saved = capturedUser();
+        assertThat(saved.getName()).isEqualTo("Nome local");
+        assertThat(saved.getEmail()).isEqualTo(new Email("local@b.com"));
+        assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
+        // o updated_at local sobrevive, senao a proxima rodada acharia o legado mais novo
+        assertThat(saved.getUpdatedAt()).isEqualTo(localEdit);
+        assertThat(saved.getPassword().hash()).isEqualTo(HASH);
+        assertThat(saved.getUnitId()).isEqualTo(LegacyIds.unit(5));
+        assertThat(report).isEqualTo(new SyncReport(1, 0));
+    }
+
+    @Test
+    @DisplayName("Should overwrite name and email when the legacy row is newer than the local edit")
+    void shouldOverwriteManagerWhenLegacyIsNewer() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        service.syncAll();
+
+        User saved = capturedUser();
+        assertThat(saved.getName()).isEqualTo("Gestor 1");
+        assertThat(saved.getEmail()).isEqualTo(new Email("legado@b.com"));
+        assertThat(saved.getUpdatedAt()).isEqualTo(expected(UPDATED));
+        // a foto nao existe no legado: nunca e sobrescrita, vença quem vencer
+        assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
+    }
+
+    @Test
+    @DisplayName("Should let the legacy win a tie, which is the state right after a sync")
+    void shouldLetLegacyWinOnTie() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED))));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        service.syncAll();
+
+        assertThat(capturedUser().getName()).isEqualTo("Gestor 1");
+    }
+
+    @Test
+    @DisplayName("Should keep the local manager data when the legacy row has no atualizado_em")
+    void shouldPreserveLocalManagerWhenLegacyHasNoTimestamp() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusYears(1))));
+        givenGestores(new Gestor(1, "Gestor 1", "legado@b.com", HASH, null, 5, CREATED, null));
+
+        service.syncAll();
+
+        User saved = capturedUser();
+        assertThat(saved.getName()).isEqualTo("Nome local");
+        assertThat(saved.getEmail()).isEqualTo(new Email("local@b.com"));
+    }
+
+    @Test
+    @DisplayName("Should not check the legacy email for conflicts when the local email is kept")
+    void shouldIgnoreLegacyEmailWhenLocalWins() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        // e-mail invalido no legado nao pode travar a sincronia de senha/unidade enquanto o local vale
+        givenGestores(gestor(1, "not-an-email", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedUser().getEmail()).isEqualTo(new Email("local@b.com"));
+        assertThat(report).isEqualTo(new SyncReport(1, 0));
+        verify(userRepository, never()).findByEmail(any());
+    }
+
+    @Test
+    @DisplayName("Should keep the local phone number edited after the legacy update")
+    void shouldPreserveLocalTelephoneNewerThanLegacy() {
+        UUID existingId = UUID.randomUUID();
+        LocalDateTime localEdit = expected(UPDATED).plusHours(1);
+        givenLocalUnit(5);
+        when(telephoneRepository.findByUserId(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(new Telephone(existingId, new TelephoneNumber("1133334444"),
+                        LegacyIds.manager(1), LegacyIds.organization(1), LegacyIds.unit(5),
+                        localEdit.minusDays(1), localEdit)));
+        givenGestores(gestor(1, "a@b.com", HASH, "11999998888", 5));
+
+        SyncReport report = service.syncAll();
+
+        Telephone saved = capturedTelephone();
+        assertThat(saved.getTelephoneId()).isEqualTo(existingId);
+        assertThat(saved.getNumber()).isEqualTo(new TelephoneNumber("1133334444"));
+        assertThat(saved.getUpdatedAt()).isEqualTo(localEdit);
+        assertThat(report).isEqualTo(new SyncReport(2, 0));
+    }
+
+    @Test
+    @DisplayName("Should keep the local phone when the legacy row has no atualizado_em, even if the legacy phone is invalid")
+    void shouldPreserveLocalTelephoneWhenLegacyHasNoTimestamp() {
+        LocalDateTime localEdit = expected(UPDATED).minusYears(1);
+        givenLocalUnit(5);
+        when(telephoneRepository.findByUserId(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(new Telephone(UUID.randomUUID(), new TelephoneNumber("1133334444"),
+                        LegacyIds.manager(1), LegacyIds.organization(1), LegacyIds.unit(5),
+                        localEdit, localEdit)));
+        givenGestores(new Gestor(1, "Gestor 1", "a@b.com", HASH, "123", 5, CREATED, null));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedTelephone().getNumber()).isEqualTo(new TelephoneNumber("1133334444"));
+        assertThat(report).isEqualTo(new SyncReport(2, 0));
     }
 
     @Test
