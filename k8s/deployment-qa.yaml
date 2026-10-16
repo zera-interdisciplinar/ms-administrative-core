@@ -32,6 +32,16 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
+        # A subida leva ~2 min com o limite de 0,5 CPU (medido: 133s em 2026-10-16). Sem este
+        # startupProbe a liveness comecava aos 90s e matava o pod aos ~130s, poucos segundos antes
+        # de o Tomcat abrir a porta: reinicio em loop, 0/1 Ready, sem erro algum no log da aplicacao.
+        # Ate ele passar, liveness e readiness ficam desligadas; teto de 10s x 30 = 300s.
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 30
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
