@@ -191,13 +191,16 @@ só para teste). O link enviado no e-mail é um deep link (`zera://reset-passwor
 uma URL http — a tela de redefinição existe só no app mobile; ver `zera.mail.reset.deep-link-base`
 em `application.properties` se o esquema do app mudar.
 
-## 6. `legacy-db` (opcional — sync com o banco do sistema legado)
+## 6. `legacy-db` (obrigatório em QA — sync com o banco do sistema legado)
 
 Só o deployment de **QA** liga o sync (`LEGACY_SYNC_ENABLED=true`); produção segue desligada até o
 sync ser validado em QA. O job lê organização, unidade e gestor do banco legado a cada 5 minutos
 (`LEGACY_SYNC_INTERVAL`) e grava no banco do serviço; regras e limites em
-`docs/legacy-db-field-mapping.md`. As três chaves são `optional: true`: sem o Secret o pod sobe
-normal, e o sintoma é só `Legacy sync falhou` no log a cada rodada, sem efeito na API.
+`docs/legacy-db-field-mapping.md`. **Crie o Secret antes do deploy de QA.** Ao contrário dos outros
+Secrets de integração, as chaves não são `optional`: com o sync ligado e a URL vazia a aplicação
+nem sobe (`jdbcUrl is required`), então o pod novo fica em `CreateContainerConfigError`, o rollout
+estoura o timeout e o pod antigo segue atendendo. Legado fora do ar, por outro lado, não impede a
+subida (só gera `Legacy sync falhou` no log a cada rodada).
 
 ```sh
 kubectl create secret generic legacy-db -n qa \
