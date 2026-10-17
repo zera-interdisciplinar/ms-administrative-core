@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.infrastructure.legacysync;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -13,16 +14,23 @@ public class LegacySyncJob {
     private static final Logger log = LoggerFactory.getLogger(LegacySyncJob.class);
 
     private final LegacySyncService service;
+    private final SyncLock lock;
 
-    public LegacySyncJob(LegacySyncService service) {
+    public LegacySyncJob(LegacySyncService service, SyncLock lock) {
         this.service = service;
+        this.lock = lock;
     }
 
     @Scheduled(fixedDelayString = "${legacy-sync.interval}", initialDelayString = "${legacy-sync.initial-delay}")
     public void run() {
         long start = System.nanoTime();
         try {
-            SyncReport report = service.syncAll();
+            Optional<SyncReport> result = lock.tryRun(service::syncAll);
+            if (result.isEmpty()) {
+                log.debug("Legacy sync: outro pod esta sincronizando; rodada pulada");
+                return;
+            }
+            SyncReport report = result.get();
             // a duracao e o dado que diz se o intervalo configurado ainda cabe no volume de dados
             log.info("Legacy sync concluido: {} gravados, {} ignorados, {} enviados ao legado em {}ms",
                     report.saved(), report.skipped(), report.pushed(), elapsedMillis(start));

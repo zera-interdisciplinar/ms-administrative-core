@@ -1,5 +1,7 @@
 package com.zera.ms_administrative_core.infrastructure.legacysync;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -49,8 +51,15 @@ class LegacySyncConfig {
         return new LegacySyncService(reader, writer, organizations, units, users, telephones);
     }
 
+    // Trava no banco PRINCIPAL (o DataSource unico do Spring Boot), nao no do legado: e ele que
+    // todas as replicas compartilham.
     @Bean
-    LegacySyncJob legacySyncJob(LegacySyncService service) {
-        return new LegacySyncJob(service);
+    SyncLock syncLock(DataSource dataSource) {
+        return new PostgresAdvisorySyncLock(dataSource);
+    }
+
+    @Bean
+    LegacySyncJob legacySyncJob(LegacySyncService service, SyncLock lock) {
+        return new LegacySyncJob(service, lock);
     }
 }
