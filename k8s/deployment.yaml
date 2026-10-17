@@ -93,6 +93,29 @@ spec:
             secretKeyRef:
               name: zera-service-clients
               key: ms-inventory
+        # Sync periodico com o banco legado (LegacySyncConfig). SEM optional, de proposito: com o sync
+        # ligado e a URL vazia o bean do pool falha ("jdbcUrl is required") e a aplicacao nao sobe.
+        # Faltando o secret, o pod para em CreateContainerConfigError, que aponta o secret certo.
+        # Crie o secret legacy-db no namespace production ANTES de subir este deployment (k8s/README.md).
+        - name: LEGACY_SYNC_ENABLED
+          value: "true"
+        - name: LEGACY_SYNC_INTERVAL
+          value: "PT1M"
+        - name: LEGACY_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: url
+        - name: LEGACY_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: user
+        - name: LEGACY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: password
         # Recicladoras proximas (Google Places). optional: true para o pod nao entrar em
         # crash loop se o secret ainda nao existir — sem a chave, o endpoint responde 503
         # em vez de subir, ver GooglePlacesConfig.
