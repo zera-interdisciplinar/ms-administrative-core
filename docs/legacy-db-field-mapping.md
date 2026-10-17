@@ -98,6 +98,80 @@ O legado não tem status nem plano na tabela `organizacao`. O sync usa **a assin
 - As ações locais de ativar, desativar, suspender e trocar plano em organizações vindas do legado são sobrescritas na rodada seguinte (o legado é a fonte da verdade).
 - Se a organização for ignorada (plano desconhecido, CNPJ ou e-mail inválido), as unidades e os gestores dela também são ignorados enquanto ela não existir no banco novo (pai ausente).
 
+## Edicao local do gestor (nome, e-mail, senha, telefone)
+
+O app mobile edita nome, e-mail e telefone do gestor pela API, e a senha pode ser trocada pela API ou pela recuperacao por e-mail. Para o sync nao desfazer essas
+edicoes, a rodada compara o `updated_at` local com o `gestor.atualizado_em` do legado, **por
+registro**, e quem editou por ultimo vence:
+
+| Situacao | Nome, e-mail e senha (`user_account`) | Numero (`telephone`) |
+| --- | --- | --- |
+| `updated_at` local **maior** que `atualizado_em` do legado | preserva o local | preserva o local |
+| `updated_at` local menor ou **igual** | legado sobrescreve | legado sobrescreve |
+| `atualizado_em` do legado **nulo** e registro local existente | preserva o local | preserva o local |
+
+- Quando o local vence, o `updated_at` local tambem e preservado. Gravar o do legado faria a
+  rodada seguinte achar o legado "mais novo" e desfazer a edicao.
+- A unidade continua vindo sempre do legado. Com o local vencendo, o hash do legado nem precisa ser bcrypt valido. `status` e `image_url` nunca vem do legado
+  (o legado nao tem esses campos), entao nunca sao sobrescritos.
+- **Depende do legado atualizar `gestor.atualizado_em` a cada edicao.** Se um `UPDATE` no legado
+  nao tocar a coluna, essa mudanca nunca vence uma edicao local mais antiga.
+- Qualquer alteracao do usuario que chame `touch()` (ativar, desativar, trocar senha, foto) tambem
+  empurra o `updated_at` local. O efeito e conservador: nome, e-mail e senha locais ficam protegidos
+  ate o legado ser editado de novo.
+- **A comparacao e por registro, nao por campo.** Se um campo e editado aqui e outro, depois, no
+  legado, o `atualizado_em` do legado fica maior e ele sobrescreve o registro inteiro, inclusive o
+  campo editado aqui (o legado nunca recebeu esse valor). Nao ha como separar por campo sem guardar
+  o ultimo valor sincronizado.
+- Apagar o telefone pela API nao e respeitado: sem registro local, a rodada seguinte o recria a
+  partir do legado.
+- Organizacao e unidade **nao** tem essa protecao: continuam sendo sobrescritas pelo legado.
+
+## Escrita no legado (gestor)
+
+O sync tambem **escreve** no legado, sob a mesma flag (`legacy-sync.enabled`): nao existe flag separada.
+Onde ele ja preserva uma edicao local por ser mais nova que o `gestor.atualizado_em`, ele devolve essa
+edicao ao legado. Sem isso o legado seguiria com o valor antigo e voltaria a ganhar assim que alguem o
+editasse la (e uma edicao do campo y no legado desfazia o campo x editado aqui).
+
+- **Colunas:** `nome`, `email`, `senha` e `telefone` de `gestor`, mais `atualizado_em`. Nada mais.
+- **So o que difere:** uma coluna so e escrita se o valor local for diferente do que o legado tem
+  (e-mail comparado sem maiuscula/espacos, telefone so pelos digitos). Ativar, desativar ou trocar a
+  foto empurra o `updated_at` local mas nao muda nenhuma dessas colunas, entao nao escreve.
+- **`atualizado_em`:** passa a ser o `updated_at` local (o maior entre usuario e telefone, quando os dois
+  mudaram). Na rodada seguinte o empate cai no legado, com valores ja iguais, e a escrita nao se repete.
+- **Escrita condicional:** `UPDATE ... WHERE codigo = ? AND atualizado_em = <valor lido na rodada>`. Se o
+  legado foi editado entre a leitura e a escrita, nenhuma linha muda, a rodada loga o aviso e na seguinte
+  o legado vence.
+- **Falha nao derruba a rodada:** o valor local ja esta salvo e a escrita e refeita na rodada seguinte.
+  O log traz so a classe da excecao e o `SQLState` (a mensagem de violacao de unicidade traz o e-mail).
+- **Telefone:** o legado guarda `varchar(11)`, e aqui o numero ja e salvo so com digitos.
+- **Nao escreve:** gestor criado so aqui (nao existe no legado), exclusao (telefone apagado, gestor
+  removido), organizacao e unidade.
+- **Permissao:** o usuario do legado precisa de `UPDATE (nome, email, senha, telefone, atualizado_em)` em
+  `gestor`, alem do `SELECT` nas cinco tabelas. O pool nao e mais `readOnly`: o `GRANT` e a garantia.
+- **Um legado, dois ambientes:** com um unico banco legado para QA e producao, **so um deles deve ter o
+  sync ligado**. Os dois ligados escrevem na mesma fonte, e uma edicao de teste feita em QA chegaria a
+  producao.
+
+## Varias replicas do servico
+
+Cada rodada so executa em **um pod por vez**. O `LegacySyncJob` pede um *advisory lock de transacao* do
+Postgres (`pg_try_advisory_xact_lock`) no banco do proprio servico, que todas as replicas compartilham;
+quem nao o obtem pula a rodada (log em `DEBUG`) e tenta de novo no intervalo seguinte.
+
+- **Sem tabela, migracao nem `GRANT`:** o lock vive na memoria do servidor, e `pg_try_advisory_xact_lock`
+  e funcao de sistema liberada a qualquer papel.
+- **De transacao, nao de sessao:** o Hikari devolve a conexao ao pool em vez de fecha-la, entao um lock
+  de sessao cujo `unlock` falhasse ficaria preso para sempre. O de transacao morre no commit/rollback e,
+  se o pod cair, junto com a conexao.
+- **Custo:** a rodada segura uma conexao do pool principal enquanto roda (sem segurar linha nem snapshot).
+- **Limite:** a rodada mais lenta e limitada pelos timeouts do pool do legado; um pod travado nao prende o
+  lock indefinidamente.
+- **O que continua valendo:** o lock vive no banco de cada ambiente, entao QA e producao nao se
+  coordenam (ver "Um legado, dois ambientes" acima). E a janela de edicao perdida entre a API e o sync
+  diminui (uma rodada por vez), mas so some com `@Version` nas entidades.
+
 ## O que se espera do banco legado
 
 Contrato que o legado precisa cumprir para o sync funcionar como esperado. O que não for cumprido não derruba a rodada: a linha é ignorada e o log mostra o tipo e o código do registro.

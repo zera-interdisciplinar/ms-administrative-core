@@ -2,7 +2,11 @@ package com.zera.ms_administrative_core.infrastructure.legacysync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
@@ -35,6 +39,22 @@ class LegacySyncWiringTest {
         assertThat(context.getBeansOfType(LegacySyncJob.class)).hasSize(1);
         assertThat(context.getBeansOfType(LegacySyncService.class)).hasSize(1);
         assertThat(context.getBeansOfType(LegacyReader.class)).hasSize(1);
+        assertThat(context.getBeansOfType(LegacyWriter.class)).hasSize(1);
+        assertThat(context.getBeansOfType(SyncLock.class)).hasSize(1);
+    }
+
+    // O src/test/resources/application.properties sombreia o de producao, entao o contexto de teste
+    // nunca enxerga esta propriedade: o unico jeito de guarda-la e ler o arquivo de producao.
+    @Test
+    @DisplayName("Should configure more than one scheduler thread so a slow sync does not starve other jobs")
+    void shouldConfigureMoreThanOneSchedulerThread() throws Exception {
+        Properties production = new Properties();
+        try (Reader reader = Files.newBufferedReader(Path.of("src/main/resources/application.properties"))) {
+            production.load(reader);
+        }
+
+        assertThat(Integer.parseInt(production.getProperty("spring.task.scheduling.pool.size")))
+                .isGreaterThanOrEqualTo(2);
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.zera.ms_administrative_core.infrastructure.legacysync;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +22,7 @@ class LegacySyncConfig {
 
     // Nao expor o DataSource do legado como bean: isso desligaria o DataSource principal do Spring Boot.
     @Bean
-    LegacyReader legacyReader(@Value("${legacy-sync.db.url}") String url,
+    JdbcLegacyGateway legacyGateway(@Value("${legacy-sync.db.url}") String url,
             @Value("${legacy-sync.db.user}") String user,
             @Value("${legacy-sync.db.password}") String password) {
         HikariConfig config = new HikariConfig();
@@ -29,23 +31,35 @@ class LegacySyncConfig {
         config.setUsername(user);
         config.setPassword(password);
         config.setMaximumPoolSize(2);
-        config.setReadOnly(true);
+        // sem readOnly: o mesmo pool tambem escreve no legado (edicao local de gestor). A garantia de
+        // que so se toca nas colunas certas esta no GRANT do usuario do legado, nao nesta flag.
+        // o padrao (30s) deixa uma rodada com legado fora do ar presa meio minuto; 15s ainda cobre
+        // um connectTimeout de 10s mais o handshake SSL
+        config.setConnectionTimeout(15_000);
         // sem isso, um legado que descarta pacotes trava a unica thread do agendador (em segundos)
         config.addDataSourceProperty("connectTimeout", "10");
         config.addDataSourceProperty("socketTimeout", "60");
         // legado fora do ar nao pode impedir o servico de subir
         config.setInitializationFailTimeout(-1);
-        return new JdbcLegacyReader(new HikariDataSource(config));
+        return new JdbcLegacyGateway(new HikariDataSource(config));
     }
 
     @Bean
-    LegacySyncService legacySyncService(LegacyReader reader, OrganizationRepository organizations,
-            UnitRepository units, UserRepository users, TelephoneRepository telephones) {
-        return new LegacySyncService(reader, organizations, units, users, telephones);
+    LegacySyncService legacySyncService(LegacyReader reader, LegacyWriter writer,
+            OrganizationRepository organizations, UnitRepository units, UserRepository users,
+            TelephoneRepository telephones) {
+        return new LegacySyncService(reader, writer, organizations, units, users, telephones);
+    }
+
+    // Trava no banco PRINCIPAL (o DataSource unico do Spring Boot), nao no do legado: e ele que
+    // todas as replicas compartilham.
+    @Bean
+    SyncLock syncLock(DataSource dataSource) {
+        return new PostgresAdvisorySyncLock(dataSource);
     }
 
     @Bean
-    LegacySyncJob legacySyncJob(LegacySyncService service) {
-        return new LegacySyncJob(service);
+    LegacySyncJob legacySyncJob(LegacySyncService service, SyncLock lock) {
+        return new LegacySyncJob(service, lock);
     }
 }
