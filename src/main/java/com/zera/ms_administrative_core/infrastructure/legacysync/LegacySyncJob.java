@@ -24,8 +24,8 @@ public class LegacySyncJob {
         try {
             SyncReport report = service.syncAll();
             // a duracao e o dado que diz se o intervalo configurado ainda cabe no volume de dados
-            log.info("Legacy sync concluido: {} gravados, {} ignorados em {}ms",
-                    report.saved(), report.skipped(), elapsedMillis(start));
+            log.info("Legacy sync concluido: {} gravados, {} ignorados, {} enviados ao legado em {}ms",
+                    report.saved(), report.skipped(), report.pushed(), elapsedMillis(start));
         } catch (CannotGetJdbcConnectionException e) {
             // legado fora do ar e um estado esperado e se repete a cada rodada: o stack de ~40 linhas
             // so esconde a unica linha util, a causa raiz (timeout, DNS, senha, SSL...)
