@@ -61,6 +61,7 @@ class LegacySyncServiceTest {
     private static final String CNPJ = "11222333000181";
     private static final String MASKED_CNPJ = "11.222.333/0001-81";
     private static final String HASH = "$2a$10$" + "a".repeat(53);
+    private static final String LOCAL_HASH = "$2a$10$" + "b".repeat(53);
 
     private static final OffsetDateTime CREATED = OffsetDateTime.of(2023, 5, 17, 10, 20, 30, 123_000_000,
             ZoneOffset.ofHours(-3));
@@ -137,7 +138,7 @@ class LegacySyncServiceTest {
     /** Local manager edited at {@code updatedAt}, with a name/email/photo that differ from the legacy row. */
     private static Manager localManagerEditedAt(int codigo, LocalDateTime updatedAt) {
         return new Manager(LegacyIds.manager(codigo), "Nome local", new Email("local@b.com"),
-                new HashedPassword(HASH), Status.ACTIVE, LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt,
+                new HashedPassword(LOCAL_HASH), Status.ACTIVE, LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt,
                 "https://img/foto.png");
     }
 
@@ -567,13 +568,13 @@ class LegacySyncServiceTest {
         assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
         // o updated_at local sobrevive, senao a proxima rodada acharia o legado mais novo
         assertThat(saved.getUpdatedAt()).isEqualTo(localEdit);
-        assertThat(saved.getPassword().hash()).isEqualTo(HASH);
+        assertThat(saved.getPassword().hash()).isEqualTo(LOCAL_HASH);
         assertThat(saved.getUnitId()).isEqualTo(LegacyIds.unit(5));
         assertThat(report).isEqualTo(new SyncReport(1, 0));
     }
 
     @Test
-    @DisplayName("Should overwrite name and email when the legacy row is newer than the local edit")
+    @DisplayName("Should overwrite name, email and password when the legacy row is newer than the local edit")
     void shouldOverwriteManagerWhenLegacyIsNewer() {
         givenLocalUnit(5);
         when(userRepository.findById(LegacyIds.manager(1)))
@@ -585,6 +586,7 @@ class LegacySyncServiceTest {
         User saved = capturedUser();
         assertThat(saved.getName()).isEqualTo("Gestor 1");
         assertThat(saved.getEmail()).isEqualTo(new Email("legado@b.com"));
+        assertThat(saved.getPassword().hash()).isEqualTo(HASH);
         assertThat(saved.getUpdatedAt()).isEqualTo(expected(UPDATED));
         // a foto nao existe no legado: nunca e sobrescrita, vença quem vencer
         assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
@@ -632,6 +634,34 @@ class LegacySyncServiceTest {
         assertThat(capturedUser().getEmail()).isEqualTo(new Email("local@b.com"));
         assertThat(report).isEqualTo(new SyncReport(1, 0));
         verify(userRepository, never()).findByEmail(any());
+    }
+
+    @Test
+    @DisplayName("Should keep the local password when it is newer, even if the legacy hash is not bcrypt")
+    void shouldPreserveLocalPasswordEvenIfLegacyHashIsNotBcrypt() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", "plaintext", null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedUser().getPassword().hash()).isEqualTo(LOCAL_HASH);
+        assertThat(report).isEqualTo(new SyncReport(1, 0));
+    }
+
+    @Test
+    @DisplayName("Should skip an existing manager whose legacy row is newer and has a non-bcrypt password")
+    void shouldSkipExistingManagerWhenLegacyWinsWithNonBcryptPassword() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", "plaintext", null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(report).isEqualTo(new SyncReport(0, 1));
+        verifyNoSavesExcept(false, false, false, false);
     }
 
     @Test

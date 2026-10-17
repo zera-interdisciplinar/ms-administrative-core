@@ -96,7 +96,7 @@ public class LegacySyncService {
     private void syncManager(LegacyReader.Gestor row) {
         UUID id = LegacyIds.manager(row.codigo());
         Optional<User> existing = userRepository.findById(id);
-        // nome e e-mail sao editaveis pelo mobile: edicao local mais nova que a do legado nao pode ser
+        // nome, e-mail e senha podem ser editados localmente: edicao local mais nova que a do legado nao pode ser
         // revertida na rodada seguinte. Qualquer touch() do usuario conta (ate ativar/desativar), o que
         // so erra para o lado seguro: preserva o local ate o legado ser editado de novo.
         boolean localWins = existing.isPresent()
@@ -110,8 +110,9 @@ public class LegacySyncService {
         if (unitRepository.findById(unitId).isEmpty()) {
             throw new SkipRow("unidade pai ausente");
         }
-        // protege a coluna de hash caso o legado ainda tenha senha em texto puro
-        if (!looksLikeBcrypt(row.senha())) {
+        // protege a coluna de hash caso o legado ainda tenha senha em texto puro; com o local
+        // vencendo o hash legado nao e usado, entao nao precisa ser valido
+        if (!localWins && !looksLikeBcrypt(row.senha())) {
             throw new SkipRow("senha do legado nao esta em bcrypt");
         }
 
@@ -131,7 +132,10 @@ public class LegacySyncService {
         Status status = existing.map(User::getStatus).orElse(Status.ACTIVE);
         // o legado nao tem foto: sem copiar o valor atual, o merge a zeraria a cada rodada
         String imageUrl = existing.map(User::getImageUrl).orElse(null);
-        userRepository.save(new Manager(id, name, email, new HashedPassword(row.senha()),
+        // troca de senha (API ou recuperacao por e-mail) faz touch() no usuario, entao segue a mesma
+        // regra de nome/e-mail; sem isso o hash do legado desfazia a troca na rodada seguinte
+        HashedPassword password = localWins ? existing.get().getPassword() : new HashedPassword(row.senha());
+        userRepository.save(new Manager(id, name, email, password,
                 status, unitId, toLocal(row.criadoEm()), updatedAt, imageUrl));
     }
 
