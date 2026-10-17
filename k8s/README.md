@@ -167,3 +167,51 @@ kubectl create secret generic fcm-credentials -n production \
 Recomendado usar **um projeto Firebase para dev/qa e outro para produção**, para não misturar
 push de teste com o de usuário real. Rotação: gere uma nova chave no Console do Firebase, revogue
 a antiga, atualize o Secret e faça `kubectl rollout restart`.
+
+## 5. `resend` (recuperação de senha)
+
+`POST /api/v1/auth/password-reset/request` envia o e-mail via [Resend](https://resend.com). Ao
+contrário das integrações acima, esta **não tem fallback**: sem o Secret, o pod sobe (a chave e o
+remetente são `optional: true` por padrão vazio), mas a chamada ao Resend falha para todo pedido
+de recuperação — só é logada, nunca derruba o fluxo (ver `ResendMailGateway`), então o sintoma é
+"ninguém recebe o e-mail", sem erro visível na API.
+
+```sh
+kubectl create secret generic resend -n qa \
+  --from-literal=api-key='<chave-da-api-do-resend>' \
+  --from-literal=from-email='<remetente-verificado@dominio>'
+
+kubectl create secret generic resend -n production \
+  --from-literal=api-key='<chave-da-api-do-resend>' \
+  --from-literal=from-email='<remetente-verificado@dominio>'
+```
+
+`from-email` precisa ser um remetente de **domínio verificado** no Resend (ou `onboarding@resend.dev`
+só para teste). O link enviado no e-mail é um deep link (`zera://reset-password?token=...`), não
+uma URL http — a tela de redefinição existe só no app mobile; ver `zera.mail.reset.deep-link-base`
+em `application.properties` se o esquema do app mudar.
+
+## 6. `legacy-db` (obrigatório em QA — sync com o banco do sistema legado)
+
+Os deployments de **QA** e de **produção** ligam o sync (`LEGACY_SYNC_ENABLED=true`). O namespace de
+produção está desligado hoje; antes de religá-lo, valide o sync em QA, crie o Secret abaixo também em
+`-n production` (com um usuário somente leitura) e confira que o deployment tem `startupProbe`. O job lê organização, unidade e gestor do banco legado a cada 1 minuto
+(`LEGACY_SYNC_INTERVAL`, padrão 1 minuto) e grava no banco do serviço; regras e limites em
+`docs/legacy-db-field-mapping.md`. **Crie o Secret antes do deploy de QA.** Ao contrário dos outros
+Secrets de integração, as chaves não são `optional`: com o sync ligado e a URL vazia a aplicação
+nem sobe (`jdbcUrl is required`), então o pod novo fica em `CreateContainerConfigError`, o rollout
+estoura o timeout e o pod antigo segue atendendo. Legado fora do ar, por outro lado, não impede a
+subida (só gera `Legacy sync falhou` no log a cada rodada).
+
+```sh
+kubectl create secret generic legacy-db -n qa \
+  --from-literal=url='jdbc:postgresql://<host>:5432/<banco>?sslmode=require' \
+  --from-literal=user='<usuario-somente-leitura>' \
+  --from-literal=password='<senha>'
+```
+
+O pod precisa alcançar o host do legado (libere o IP de saída do cluster no firewall dele). O
+serviço só **lê** o legado, então use um usuário com `SELECT` em `organizacao`, `unidade`, `gestor`,
+`assinatura` e `plano`. Depois de criar ou trocar o Secret: `kubectl rollout restart
+deployment/ms-administrative-core -n qa`. Para conferir:
+`kubectl logs -n qa deploy/ms-administrative-core | grep "Legacy sync"`.

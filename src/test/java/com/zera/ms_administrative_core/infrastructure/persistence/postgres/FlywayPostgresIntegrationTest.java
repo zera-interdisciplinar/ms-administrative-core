@@ -26,7 +26,7 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     void allMigrationsApplyCleanlyOnRealPostgres() {
         var applied = flyway.info().applied();
 
-        assertThat(applied).hasSizeGreaterThanOrEqualTo(22);
+        assertThat(applied).hasSizeGreaterThanOrEqualTo(24);
         assertThat(applied).allMatch(m -> m.getState() == MigrationState.SUCCESS);
     }
 
@@ -247,6 +247,28 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
 
         Integer fkConstraint = jdbc.queryForObject(
                 "SELECT count(*) FROM pg_constraint WHERE conname = 'device_token_user_id_foreign' AND contype = 'f'",
+                Integer.class);
+        assertThat(fkConstraint).isEqualTo(1);
+    }
+
+    /**
+     * V23: token opaco de recuperacao de senha. UNIQUE em token_hash (nao em user_id) porque um
+     * usuario pode pedir recuperacao mais de uma vez; cada pedido e uma linha propria.
+     */
+    @Test
+    void passwordResetTokenTableAndConstraintsExist() {
+        Integer table = jdbc.queryForObject(
+                "SELECT count(*) FROM information_schema.tables WHERE table_name = 'password_reset_token'",
+                Integer.class);
+        assertThat(table).isEqualTo(1);
+
+        Integer uniqueConstraint = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE conname = 'password_reset_token_token_hash_unique' AND contype = 'u'",
+                Integer.class);
+        assertThat(uniqueConstraint).isEqualTo(1);
+
+        Integer fkConstraint = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_constraint WHERE conname = 'password_reset_token_user_id_foreign' AND contype = 'f'",
                 Integer.class);
         assertThat(fkConstraint).isEqualTo(1);
     }

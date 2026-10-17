@@ -30,6 +30,9 @@ class LegacySyncConfig {
         config.setPassword(password);
         config.setMaximumPoolSize(2);
         config.setReadOnly(true);
+        // o padrao (30s) deixa uma rodada com legado fora do ar presa meio minuto; 15s ainda cobre
+        // um connectTimeout de 10s mais o handshake SSL
+        config.setConnectionTimeout(15_000);
         // sem isso, um legado que descarta pacotes trava a unica thread do agendador (em segundos)
         config.addDataSourceProperty("connectTimeout", "10");
         config.addDataSourceProperty("socketTimeout", "60");
