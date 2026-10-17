@@ -1,10 +1,14 @@
 package com.zera.ms_administrative_core.infrastructure.legacysync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.net.SocketTimeoutException;
 import java.sql.SQLTransientConnectionException;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,13 +31,28 @@ class LegacySyncJobTest {
     @Mock
     private LegacySyncService service;
 
+    // lock que sempre concede; o de verdade e testado em PostgresAdvisorySyncLockTest
+    private final SyncLock acquired = new SyncLock() {
+        @Override
+        public <T> Optional<T> tryRun(Supplier<T> work) {
+            return Optional.of(work.get());
+        }
+    };
+
+    private final SyncLock busy = new SyncLock() {
+        @Override
+        public <T> Optional<T> tryRun(Supplier<T> work) {
+            return Optional.empty();
+        }
+    };
+
     private LegacySyncJob job;
     private ListAppender<ILoggingEvent> appender;
     private Logger logger;
 
     @BeforeEach
     void setUp() {
-        job = new LegacySyncJob(service);
+        job = new LegacySyncJob(service, acquired);
         logger = (Logger) LoggerFactory.getLogger(LegacySyncJob.class);
         appender = new ListAppender<>();
         appender.start();
@@ -90,5 +109,24 @@ class LegacySyncJobTest {
             assertThat(event.getFormattedMessage()).startsWith("Legacy sync falhou em ");
             assertThat(event.getThrowableProxy().getMessage()).isEqualTo("boom");
         });
+    }
+
+    @Test
+    @DisplayName("Should skip the round without touching the service when another pod holds the lock")
+    void shouldSkipRoundWhenAnotherPodIsSyncing() {
+        new LegacySyncJob(service, busy).run();
+
+        verifyNoInteractions(service);
+        assertThat(appender.list).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should run the round when this pod gets the lock")
+    void shouldRunRoundWhenLockIsAcquired() {
+        when(service.syncAll()).thenReturn(new SyncReport(0, 0, 0));
+
+        job.run();
+
+        assertThat(appender.list).hasSize(1);
     }
 }

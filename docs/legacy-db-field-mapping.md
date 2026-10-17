@@ -154,6 +154,24 @@ editasse la (e uma edicao do campo y no legado desfazia o campo x editado aqui).
   sync ligado**. Os dois ligados escrevem na mesma fonte, e uma edicao de teste feita em QA chegaria a
   producao.
 
+## Varias replicas do servico
+
+Cada rodada so executa em **um pod por vez**. O `LegacySyncJob` pede um *advisory lock de transacao* do
+Postgres (`pg_try_advisory_xact_lock`) no banco do proprio servico, que todas as replicas compartilham;
+quem nao o obtem pula a rodada (log em `DEBUG`) e tenta de novo no intervalo seguinte.
+
+- **Sem tabela, migracao nem `GRANT`:** o lock vive na memoria do servidor, e `pg_try_advisory_xact_lock`
+  e funcao de sistema liberada a qualquer papel.
+- **De transacao, nao de sessao:** o Hikari devolve a conexao ao pool em vez de fecha-la, entao um lock
+  de sessao cujo `unlock` falhasse ficaria preso para sempre. O de transacao morre no commit/rollback e,
+  se o pod cair, junto com a conexao.
+- **Custo:** a rodada segura uma conexao do pool principal enquanto roda (sem segurar linha nem snapshot).
+- **Limite:** a rodada mais lenta e limitada pelos timeouts do pool do legado; um pod travado nao prende o
+  lock indefinidamente.
+- **O que continua valendo:** o lock vive no banco de cada ambiente, entao QA e producao nao se
+  coordenam (ver "Um legado, dois ambientes" acima). E a janela de edicao perdida entre a API e o sync
+  diminui (uma rodada por vez), mas so some com `@Version` nas entidades.
+
 ## O que se espera do banco legado
 
 Contrato que o legado precisa cumprir para o sync funcionar como esperado. O que não for cumprido não derruba a rodada: a linha é ignorada e o log mostra o tipo e o código do registro.
