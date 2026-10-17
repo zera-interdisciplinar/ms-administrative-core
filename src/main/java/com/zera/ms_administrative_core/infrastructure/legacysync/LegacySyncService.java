@@ -1,16 +1,21 @@
 package com.zera.ms_administrative_core.infrastructure.legacysync;
 
+import java.sql.SQLException;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.NestedExceptionUtils;
 
 import com.zera.ms_administrative_core.core.domain.entity.Manager;
 import com.zera.ms_administrative_core.core.domain.entity.Organization;
@@ -33,15 +38,17 @@ public class LegacySyncService {
     private static final Logger log = LoggerFactory.getLogger(LegacySyncService.class);
 
     private final LegacyReader reader;
+    private final LegacyWriter writer;
     private final OrganizationRepository organizationRepository;
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     private final TelephoneRepository telephoneRepository;
 
-    public LegacySyncService(LegacyReader reader, OrganizationRepository organizationRepository,
-            UnitRepository unitRepository, UserRepository userRepository,
-            TelephoneRepository telephoneRepository) {
+    public LegacySyncService(LegacyReader reader, LegacyWriter writer,
+            OrganizationRepository organizationRepository, UnitRepository unitRepository,
+            UserRepository userRepository, TelephoneRepository telephoneRepository) {
         this.reader = reader;
+        this.writer = writer;
         this.organizationRepository = organizationRepository;
         this.unitRepository = unitRepository;
         this.userRepository = userRepository;
@@ -62,9 +69,77 @@ public class LegacySyncService {
             if (managerSaved && row.telefone() != null && !row.telefone().isBlank()) {
                 run(counter, "telefone", row.codigo(), () -> syncTelephone(row));
             }
+            if (managerSaved) {
+                pushToLegacy(counter, row);
+            }
         }
 
-        return new SyncReport(counter.saved, counter.skipped);
+        return new SyncReport(counter.saved, counter.skipped, counter.pushed);
+    }
+
+    /**
+     * Devolve ao legado o que foi editado aqui depois da ultima edicao la. E a metade de escrita da
+     * regra "quem editou por ultimo vence": a rodada ja preservou o valor local, e sem este passo o
+     * legado seguiria com o valor antigo e voltaria a ganhar assim que alguem o editasse.
+     *
+     * <p>So vai uma coluna cujo valor local difere do legado, entao tocar o gestor sem mudar nada
+     * (ativar, desativar, foto) nao escreve. Falha aqui nunca derruba a rodada: o valor local ja
+     * esta salvo e a escrita e refeita na rodada seguinte.
+     */
+    private void pushToLegacy(Counter counter, LegacyReader.Gestor row) {
+        try {
+            UUID userId = LegacyIds.manager(row.codigo());
+            Optional<User> user = userRepository.findById(userId);
+            Optional<Telephone> phone = telephoneRepository.findByUserId(userId);
+            boolean userNewer = user.isPresent() && localIsNewer(user.get().getUpdatedAt(), row.atualizadoEm());
+            boolean phoneNewer = phone.isPresent() && localIsNewer(phone.get().getUpdatedAt(), row.atualizadoEm());
+
+            String nome = userNewer && !user.get().getName().equals(row.nome()) ? user.get().getName() : null;
+            String email = userNewer && !sameEmail(user.get().getEmail(), row.email())
+                    ? user.get().getEmail().value() : null;
+            String senha = userNewer && !user.get().getPassword().hash().equals(row.senha())
+                    ? user.get().getPassword().hash() : null;
+            String telefone = phoneNewer && !phone.get().getNumber().value().equals(digitsOf(row.telefone()))
+                    ? phone.get().getNumber().value() : null;
+
+            LegacyWriter.GestorChanges changes = new LegacyWriter.GestorChanges(nome, email, senha, telefone);
+            if (changes.isEmpty()) {
+                return;
+            }
+
+            // atualizado_em passa a ser o do local: na rodada seguinte o empate cai no legado, com
+            // valores ja iguais, e a escrita nao se repete
+            LocalDateTime newest = Stream.of(
+                    nome != null || email != null || senha != null ? user.get().getUpdatedAt() : null,
+                    telefone != null ? phone.get().getUpdatedAt() : null)
+                    .filter(Objects::nonNull)
+                    .max(Comparator.naturalOrder())
+                    .orElseThrow();
+            OffsetDateTime newUpdatedAt = newest.atZone(ZoneId.systemDefault()).toOffsetDateTime();
+
+            if (writer.updateGestor(row.codigo(), changes, newUpdatedAt, row.atualizadoEm())) {
+                counter.pushed++;
+                log.info("Legacy sync: gestor codigo={} atualizado no legado ({})", row.codigo(),
+                        String.join(", ", changes.columns()));
+            } else {
+                log.warn("Legacy sync: gestor codigo={} mudou no legado desde a leitura; escrita descartada",
+                        row.codigo());
+            }
+        } catch (RuntimeException e) {
+            // so a classe e o SQLState: a mensagem de violacao de unicidade traz o e-mail
+            Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+            String state = root instanceof SQLException sql ? " SQLState=" + sql.getSQLState() : "";
+            log.warn("Legacy sync: gestor codigo={} nao pode ser enviado ao legado: {}{}", row.codigo(),
+                    root.getClass().getSimpleName(), state);
+        }
+    }
+
+    private static boolean sameEmail(Email local, String legacy) {
+        return legacy != null && local.value().equals(legacy.trim().toLowerCase(Locale.ROOT));
+    }
+
+    private static String digitsOf(String telefone) {
+        return telefone == null ? "" : telefone.replaceAll("\\D", "");
     }
 
     private void syncOrganization(LegacyReader.Organizacao row) {
@@ -96,7 +171,7 @@ public class LegacySyncService {
     private void syncManager(LegacyReader.Gestor row) {
         UUID id = LegacyIds.manager(row.codigo());
         Optional<User> existing = userRepository.findById(id);
-        // nome e e-mail sao editaveis pelo mobile: edicao local mais nova que a do legado nao pode ser
+        // nome, e-mail e senha podem ser editados localmente: edicao local mais nova que a do legado nao pode ser
         // revertida na rodada seguinte. Qualquer touch() do usuario conta (ate ativar/desativar), o que
         // so erra para o lado seguro: preserva o local ate o legado ser editado de novo.
         boolean localWins = existing.isPresent()
@@ -110,8 +185,9 @@ public class LegacySyncService {
         if (unitRepository.findById(unitId).isEmpty()) {
             throw new SkipRow("unidade pai ausente");
         }
-        // protege a coluna de hash caso o legado ainda tenha senha em texto puro
-        if (!looksLikeBcrypt(row.senha())) {
+        // protege a coluna de hash caso o legado ainda tenha senha em texto puro; com o local
+        // vencendo o hash legado nao e usado, entao nao precisa ser valido
+        if (!localWins && !looksLikeBcrypt(row.senha())) {
             throw new SkipRow("senha do legado nao esta em bcrypt");
         }
 
@@ -131,7 +207,10 @@ public class LegacySyncService {
         Status status = existing.map(User::getStatus).orElse(Status.ACTIVE);
         // o legado nao tem foto: sem copiar o valor atual, o merge a zeraria a cada rodada
         String imageUrl = existing.map(User::getImageUrl).orElse(null);
-        userRepository.save(new Manager(id, name, email, new HashedPassword(row.senha()),
+        // troca de senha (API ou recuperacao por e-mail) faz touch() no usuario, entao segue a mesma
+        // regra de nome/e-mail; sem isso o hash do legado desfazia a troca na rodada seguinte
+        HashedPassword password = localWins ? existing.get().getPassword() : new HashedPassword(row.senha());
+        userRepository.save(new Manager(id, name, email, password,
                 status, unitId, toLocal(row.criadoEm()), updatedAt, imageUrl));
     }
 
@@ -211,6 +290,7 @@ public class LegacySyncService {
     private static final class Counter {
         int saved;
         int skipped;
+        int pushed;
     }
 
     private static final class SkipRow extends RuntimeException {

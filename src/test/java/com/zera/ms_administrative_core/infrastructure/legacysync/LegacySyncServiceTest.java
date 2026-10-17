@@ -46,7 +46,9 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -61,6 +63,7 @@ class LegacySyncServiceTest {
     private static final String CNPJ = "11222333000181";
     private static final String MASKED_CNPJ = "11.222.333/0001-81";
     private static final String HASH = "$2a$10$" + "a".repeat(53);
+    private static final String LOCAL_HASH = "$2a$10$" + "b".repeat(53);
 
     private static final OffsetDateTime CREATED = OffsetDateTime.of(2023, 5, 17, 10, 20, 30, 123_000_000,
             ZoneOffset.ofHours(-3));
@@ -69,6 +72,8 @@ class LegacySyncServiceTest {
 
     @Mock
     private LegacyReader reader;
+    @Mock
+    private LegacyWriter writer;
     @Mock
     private OrganizationRepository organizationRepository;
     @Mock
@@ -82,13 +87,14 @@ class LegacySyncServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new LegacySyncService(reader, organizationRepository, unitRepository, userRepository,
+        service = new LegacySyncService(reader, writer, organizationRepository, unitRepository, userRepository,
                 telephoneRepository);
         // the ports that return the saved entity: echo back the argument, whether or not the service uses it
         lenient().when(organizationRepository.save(any(Organization.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(telephoneRepository.save(any(Telephone.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(writer.updateGestor(anyInt(), any(), any(), any())).thenReturn(true);
     }
 
     // ------------------------------------------------------------------
@@ -137,7 +143,7 @@ class LegacySyncServiceTest {
     /** Local manager edited at {@code updatedAt}, with a name/email/photo that differ from the legacy row. */
     private static Manager localManagerEditedAt(int codigo, LocalDateTime updatedAt) {
         return new Manager(LegacyIds.manager(codigo), "Nome local", new Email("local@b.com"),
-                new HashedPassword(HASH), Status.ACTIVE, LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt,
+                new HashedPassword(LOCAL_HASH), Status.ACTIVE, LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt,
                 "https://img/foto.png");
     }
 
@@ -547,7 +553,7 @@ class LegacySyncServiceTest {
         User saved = capturedUser();
         assertThat(saved.getUserId()).isEqualTo(LegacyIds.manager(1));
         assertThat(saved.getStatus()).isEqualTo(existingStatus);
-        assertThat(report).isEqualTo(new SyncReport(1, 0));
+        assertThat(report).isEqualTo(new SyncReport(1, 0, 1));
     }
 
     @Test
@@ -567,13 +573,13 @@ class LegacySyncServiceTest {
         assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
         // o updated_at local sobrevive, senao a proxima rodada acharia o legado mais novo
         assertThat(saved.getUpdatedAt()).isEqualTo(localEdit);
-        assertThat(saved.getPassword().hash()).isEqualTo(HASH);
+        assertThat(saved.getPassword().hash()).isEqualTo(LOCAL_HASH);
         assertThat(saved.getUnitId()).isEqualTo(LegacyIds.unit(5));
-        assertThat(report).isEqualTo(new SyncReport(1, 0));
+        assertThat(report).isEqualTo(new SyncReport(1, 0, 1));
     }
 
     @Test
-    @DisplayName("Should overwrite name and email when the legacy row is newer than the local edit")
+    @DisplayName("Should overwrite name, email and password when the legacy row is newer than the local edit")
     void shouldOverwriteManagerWhenLegacyIsNewer() {
         givenLocalUnit(5);
         when(userRepository.findById(LegacyIds.manager(1)))
@@ -585,6 +591,7 @@ class LegacySyncServiceTest {
         User saved = capturedUser();
         assertThat(saved.getName()).isEqualTo("Gestor 1");
         assertThat(saved.getEmail()).isEqualTo(new Email("legado@b.com"));
+        assertThat(saved.getPassword().hash()).isEqualTo(HASH);
         assertThat(saved.getUpdatedAt()).isEqualTo(expected(UPDATED));
         // a foto nao existe no legado: nunca e sobrescrita, vença quem vencer
         assertThat(saved.getImageUrl()).isEqualTo("https://img/foto.png");
@@ -630,8 +637,36 @@ class LegacySyncServiceTest {
         SyncReport report = service.syncAll();
 
         assertThat(capturedUser().getEmail()).isEqualTo(new Email("local@b.com"));
-        assertThat(report).isEqualTo(new SyncReport(1, 0));
+        assertThat(report).isEqualTo(new SyncReport(1, 0, 1));
         verify(userRepository, never()).findByEmail(any());
+    }
+
+    @Test
+    @DisplayName("Should keep the local password when it is newer, even if the legacy hash is not bcrypt")
+    void shouldPreserveLocalPasswordEvenIfLegacyHashIsNotBcrypt() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", "plaintext", null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedUser().getPassword().hash()).isEqualTo(LOCAL_HASH);
+        assertThat(report).isEqualTo(new SyncReport(1, 0, 1));
+    }
+
+    @Test
+    @DisplayName("Should skip an existing manager whose legacy row is newer and has a non-bcrypt password")
+    void shouldSkipExistingManagerWhenLegacyWinsWithNonBcryptPassword() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", "plaintext", null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(report).isEqualTo(new SyncReport(0, 1));
+        verifyNoSavesExcept(false, false, false, false);
     }
 
     @Test
@@ -652,7 +687,7 @@ class LegacySyncServiceTest {
         assertThat(saved.getTelephoneId()).isEqualTo(existingId);
         assertThat(saved.getNumber()).isEqualTo(new TelephoneNumber("1133334444"));
         assertThat(saved.getUpdatedAt()).isEqualTo(localEdit);
-        assertThat(report).isEqualTo(new SyncReport(2, 0));
+        assertThat(report).isEqualTo(new SyncReport(2, 0, 1));
     }
 
     @Test
@@ -669,7 +704,7 @@ class LegacySyncServiceTest {
         SyncReport report = service.syncAll();
 
         assertThat(capturedTelephone().getNumber()).isEqualTo(new TelephoneNumber("1133334444"));
-        assertThat(report).isEqualTo(new SyncReport(2, 0));
+        assertThat(report).isEqualTo(new SyncReport(2, 0, 1));
     }
 
     @Test
@@ -788,6 +823,204 @@ class LegacySyncServiceTest {
         verify(userRepository, never()).save(any());
         verify(telephoneRepository, never()).save(any());
         assertThat(report).isEqualTo(new SyncReport(0, 1));
+    }
+
+    // ------------------------------------------------------------------
+    // write-back: edicao local mais nova que a do legado volta para ele
+    // ------------------------------------------------------------------
+
+    private LegacyWriter.GestorChanges capturedChanges() {
+        ArgumentCaptor<LegacyWriter.GestorChanges> captor = ArgumentCaptor.forClass(LegacyWriter.GestorChanges.class);
+        verify(writer).updateGestor(anyInt(), captor.capture(), any(), any());
+        return captor.getValue();
+    }
+
+    private static Telephone localPhone(int codigo, String number, LocalDateTime updatedAt) {
+        return new Telephone(UUID.randomUUID(), new TelephoneNumber(number), LegacyIds.manager(codigo),
+                LegacyIds.organization(1), LegacyIds.unit(5), updatedAt.minusDays(30), updatedAt);
+    }
+
+    @Test
+    @DisplayName("Should push name, email and password to the legacy when the local edit is newer")
+    void shouldPushLocalEditsToLegacy() {
+        LocalDateTime localEdit = expected(UPDATED).plusHours(1);
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, localEdit)));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedChanges()).isEqualTo(
+                new LegacyWriter.GestorChanges("Nome local", "local@b.com", LOCAL_HASH, null));
+        // atualizado_em do legado passa a ser o do local, e a escrita e condicionada ao valor lido
+        verify(writer).updateGestor(1,
+                new LegacyWriter.GestorChanges("Nome local", "local@b.com", LOCAL_HASH, null),
+                localEdit.atZone(ZoneId.systemDefault()).toOffsetDateTime(), UPDATED);
+        assertThat(report.pushed()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should push only the columns whose local value differs from the legacy")
+    void shouldPushOnlyDifferingColumns() {
+        LocalDateTime localEdit = expected(UPDATED).plusHours(1);
+        givenLocalUnit(5);
+        // mesmo nome, e-mail e senha do legado; so o e-mail muda
+        Manager local = new Manager(LegacyIds.manager(1), "Gestor 1", new Email("novo@b.com"),
+                new HashedPassword(HASH), Status.ACTIVE, LegacyIds.unit(5), localEdit.minusDays(1), localEdit);
+        when(userRepository.findById(LegacyIds.manager(1))).thenReturn(Optional.of(local));
+        givenGestores(gestor(1, "g1@b.com", HASH, null, 5));
+
+        service.syncAll();
+
+        assertThat(capturedChanges())
+                .isEqualTo(new LegacyWriter.GestorChanges(null, "novo@b.com", null, null));
+    }
+
+    @Test
+    @DisplayName("Should not write to the legacy when the local touch changed nothing, e.g. an activation")
+    void shouldNotPushWhenValuesAreEqual() {
+        givenLocalUnit(5);
+        Manager local = new Manager(LegacyIds.manager(1), "Gestor 1", new Email("g1@b.com"),
+                new HashedPassword(HASH), Status.INACTIVE, LegacyIds.unit(5), LocalDateTime.now().minusDays(1),
+                LocalDateTime.now());
+        when(userRepository.findById(LegacyIds.manager(1))).thenReturn(Optional.of(local));
+        givenGestores(gestor(1, "G1@B.com ", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        verify(writer, never()).updateGestor(anyInt(), any(), any(), any());
+        assertThat(report.pushed()).isZero();
+    }
+
+    @Test
+    @DisplayName("Should not write to the legacy when the legacy row is newer")
+    void shouldNotPushWhenLegacyIsNewer() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusHours(1))));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        verify(writer, never()).updateGestor(anyInt(), any(), any(), any());
+        assertThat(report.pushed()).isZero();
+    }
+
+    @Test
+    @DisplayName("Should never write to the legacy for a manager that was just created from it")
+    void shouldNotPushNewManager() {
+        givenLocalUnit(5);
+        givenGestores(validGestor(1));
+
+        service.syncAll();
+
+        verify(writer, never()).updateGestor(anyInt(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should push a phone number edited locally, in digits, even if the legacy has none")
+    void shouldPushLocalPhoneToLegacy() {
+        LocalDateTime phoneEdit = expected(UPDATED).plusHours(2);
+        givenLocalUnit(5);
+        when(telephoneRepository.findByUserId(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localPhone(1, "11999998888", phoneEdit)));
+        givenGestores(gestor(1, "a@b.com", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(capturedChanges()).isEqualTo(new LegacyWriter.GestorChanges(null, null, null, "11999998888"));
+        verify(writer).updateGestor(1, new LegacyWriter.GestorChanges(null, null, null, "11999998888"),
+                phoneEdit.atZone(ZoneId.systemDefault()).toOffsetDateTime(), UPDATED);
+        assertThat(report.pushed()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Should compare the legacy phone by its digits, so a formatted equal number is not pushed")
+    void shouldNotPushPhoneThatDiffersOnlyByFormat() {
+        givenLocalUnit(5);
+        when(telephoneRepository.findByUserId(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localPhone(1, "11999998888", expected(UPDATED).plusHours(2))));
+        givenGestores(gestor(1, "a@b.com", HASH, "(11) 99999-8888", 5));
+
+        service.syncAll();
+
+        verify(writer, never()).updateGestor(anyInt(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should stamp the legacy with the newest of the user and phone edits")
+    void shouldUseNewestLocalTimestamp() {
+        LocalDateTime userEdit = expected(UPDATED).plusHours(1);
+        LocalDateTime phoneEdit = expected(UPDATED).plusHours(3);
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, userEdit)));
+        when(telephoneRepository.findByUserId(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localPhone(1, "11999998888", phoneEdit)));
+        givenGestores(gestor(1, "legado@b.com", HASH, "11000000000", 5));
+
+        service.syncAll();
+
+        verify(writer).updateGestor(eq(1), any(), eq(phoneEdit.atZone(ZoneId.systemDefault()).toOffsetDateTime()),
+                eq(UPDATED));
+    }
+
+    @Test
+    @DisplayName("Should push when the legacy row has no atualizado_em, expecting it to still be null")
+    void shouldPushWhenLegacyHasNoTimestamp() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).minusYears(1))));
+        givenGestores(new Gestor(1, "Gestor 1", "legado@b.com", HASH, null, 5, CREATED, null));
+
+        service.syncAll();
+
+        verify(writer).updateGestor(eq(1), any(), any(), eq(null));
+    }
+
+    @Test
+    @DisplayName("Should not count a write the legacy discarded because its row changed meanwhile")
+    void shouldNotCountDiscardedPush() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        when(writer.updateGestor(anyInt(), any(), any(), any())).thenReturn(false);
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5));
+
+        SyncReport report = service.syncAll();
+
+        assertThat(report).isEqualTo(new SyncReport(1, 0, 0));
+    }
+
+    @Test
+    @DisplayName("Should keep the local data and the rest of the run when writing to the legacy fails")
+    void shouldSurviveWriteFailure() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        when(writer.updateGestor(eq(1), any(), any(), any()))
+                .thenThrow(new RuntimeException("duplicate key value violates unique constraint (email)=(a@b.com)"));
+        givenGestores(gestor(1, "legado@b.com", HASH, null, 5), validGestor(2));
+
+        SyncReport report = service.syncAll();
+
+        verify(userRepository, times(2)).save(any(User.class));
+        assertThat(report).isEqualTo(new SyncReport(2, 0, 0));
+    }
+
+    @Test
+    @DisplayName("Should not write to the legacy for a manager that was skipped")
+    void shouldNotPushSkippedManager() {
+        givenLocalUnit(5);
+        when(userRepository.findById(LegacyIds.manager(1)))
+                .thenReturn(Optional.of(localManagerEditedAt(1, expected(UPDATED).plusHours(1))));
+        // sem unidade: o gestor e ignorado antes de qualquer gravacao
+        givenGestores(gestor(1, "legado@b.com", HASH, null, null));
+
+        service.syncAll();
+
+        verify(writer, never()).updateGestor(anyInt(), any(), any(), any());
     }
 
     // ------------------------------------------------------------------
