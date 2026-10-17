@@ -48,14 +48,14 @@ class LegacySyncJobTest {
     @Test
     @DisplayName("Should log the report together with the round duration")
     void shouldLogDurationOnSuccess() {
-        when(service.syncAll()).thenReturn(new SyncReport(7, 2));
+        when(service.syncAll()).thenReturn(new SyncReport(7, 2, 3));
 
         job.run();
 
         assertThat(appender.list).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.INFO);
             assertThat(event.getFormattedMessage())
-                    .matches("Legacy sync concluido: 7 gravados, 2 ignorados em \\d+ms");
+                    .matches("Legacy sync concluido: 7 gravados, 2 ignorados, 3 enviados ao legado em \\d+ms");
         });
     }
 

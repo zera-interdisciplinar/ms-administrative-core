@@ -39,6 +39,7 @@ class LegacySyncWiringTest {
         assertThat(context.getBeansOfType(LegacySyncJob.class)).hasSize(1);
         assertThat(context.getBeansOfType(LegacySyncService.class)).hasSize(1);
         assertThat(context.getBeansOfType(LegacyReader.class)).hasSize(1);
+        assertThat(context.getBeansOfType(LegacyWriter.class)).hasSize(1);
     }
 
     // O src/test/resources/application.properties sombreia o de producao, entao o contexto de teste
