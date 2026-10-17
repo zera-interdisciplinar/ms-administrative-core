@@ -144,8 +144,9 @@ spec:
         # CreateContainerConfigError, que aponta o secret certo, em vez de um crash loop obscuro.
         - name: LEGACY_SYNC_ENABLED
           value: "true"
-        # 1 min (padrao 5): encurta a janela em que a edicao feita nos dois sistemas e reconciliada.
-        # O custo e proporcional ao volume de dados; a duracao de cada rodada sai no log.
+        # Explicito de proposito (igual ao padrao do codigo): encurta a janela em que a edicao feita
+        # nos dois sistemas e reconciliada. O custo e proporcional ao volume de dados; a duracao de
+        # cada rodada sai no log.
         - name: LEGACY_SYNC_INTERVAL
           value: "PT1M"
         - name: LEGACY_DB_URL
