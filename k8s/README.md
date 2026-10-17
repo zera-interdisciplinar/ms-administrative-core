@@ -193,8 +193,9 @@ em `application.properties` se o esquema do app mudar.
 
 ## 6. `legacy-db` (obrigatório em QA — sync com o banco do sistema legado)
 
-Só o deployment de **QA** liga o sync (`LEGACY_SYNC_ENABLED=true`); produção segue desligada até o
-sync ser validado em QA. O job lê organização, unidade e gestor do banco legado a cada 1 minuto
+Os deployments de **QA** e de **produção** ligam o sync (`LEGACY_SYNC_ENABLED=true`). O namespace de
+produção está desligado hoje; antes de religá-lo, valide o sync em QA, crie o Secret abaixo também em
+`-n production` (com um usuário somente leitura) e confira que o deployment tem `startupProbe`. O job lê organização, unidade e gestor do banco legado a cada 1 minuto
 (`LEGACY_SYNC_INTERVAL`, padrão 1 minuto) e grava no banco do serviço; regras e limites em
 `docs/legacy-db-field-mapping.md`. **Crie o Secret antes do deploy de QA.** Ao contrário dos outros
 Secrets de integração, as chaves não são `optional`: com o sync ligado e a URL vazia a aplicação
