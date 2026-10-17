@@ -98,13 +98,13 @@ O legado não tem status nem plano na tabela `organizacao`. O sync usa **a assin
 - As ações locais de ativar, desativar, suspender e trocar plano em organizações vindas do legado são sobrescritas na rodada seguinte (o legado é a fonte da verdade).
 - Se a organização for ignorada (plano desconhecido, CNPJ ou e-mail inválido), as unidades e os gestores dela também são ignorados enquanto ela não existir no banco novo (pai ausente).
 
-## Edicao local do gestor (nome, e-mail, telefone)
+## Edicao local do gestor (nome, e-mail, senha, telefone)
 
-O app mobile edita nome, e-mail e telefone do gestor pela API. Para o sync nao desfazer essas
+O app mobile edita nome, e-mail e telefone do gestor pela API, e a senha pode ser trocada pela API ou pela recuperacao por e-mail. Para o sync nao desfazer essas
 edicoes, a rodada compara o `updated_at` local com o `gestor.atualizado_em` do legado, **por
 registro**, e quem editou por ultimo vence:
 
-| Situacao | Nome e e-mail (`user_account`) | Numero (`telephone`) |
+| Situacao | Nome, e-mail e senha (`user_account`) | Numero (`telephone`) |
 | --- | --- | --- |
 | `updated_at` local **maior** que `atualizado_em` do legado | preserva o local | preserva o local |
 | `updated_at` local menor ou **igual** | legado sobrescreve | legado sobrescreve |
@@ -112,13 +112,17 @@ registro**, e quem editou por ultimo vence:
 
 - Quando o local vence, o `updated_at` local tambem e preservado. Gravar o do legado faria a
   rodada seguinte achar o legado "mais novo" e desfazer a edicao.
-- Senha e unidade continuam vindo sempre do legado. `status` e `image_url` nunca vem do legado
+- A unidade continua vindo sempre do legado. Com o local vencendo, o hash do legado nem precisa ser bcrypt valido. `status` e `image_url` nunca vem do legado
   (o legado nao tem esses campos), entao nunca sao sobrescritos.
 - **Depende do legado atualizar `gestor.atualizado_em` a cada edicao.** Se um `UPDATE` no legado
   nao tocar a coluna, essa mudanca nunca vence uma edicao local mais antiga.
 - Qualquer alteracao do usuario que chame `touch()` (ativar, desativar, trocar senha, foto) tambem
-  empurra o `updated_at` local. O efeito e conservador: nome e e-mail locais ficam protegidos ate o
-  legado ser editado de novo.
+  empurra o `updated_at` local. O efeito e conservador: nome, e-mail e senha locais ficam protegidos
+  ate o legado ser editado de novo.
+- **A comparacao e por registro, nao por campo.** Se um campo e editado aqui e outro, depois, no
+  legado, o `atualizado_em` do legado fica maior e ele sobrescreve o registro inteiro, inclusive o
+  campo editado aqui (o legado nunca recebeu esse valor). Nao ha como separar por campo sem guardar
+  o ultimo valor sincronizado.
 - Apagar o telefone pela API nao e respeitado: sem registro local, a rodada seguinte o recria a
   partir do legado.
 - Organizacao e unidade **nao** tem essa protecao: continuam sendo sobrescritas pelo legado.
