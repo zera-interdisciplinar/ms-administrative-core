@@ -127,6 +127,33 @@ registro**, e quem editou por ultimo vence:
   partir do legado.
 - Organizacao e unidade **nao** tem essa protecao: continuam sendo sobrescritas pelo legado.
 
+## Escrita no legado (gestor)
+
+O sync tambem **escreve** no legado, sob a mesma flag (`legacy-sync.enabled`): nao existe flag separada.
+Onde ele ja preserva uma edicao local por ser mais nova que o `gestor.atualizado_em`, ele devolve essa
+edicao ao legado. Sem isso o legado seguiria com o valor antigo e voltaria a ganhar assim que alguem o
+editasse la (e uma edicao do campo y no legado desfazia o campo x editado aqui).
+
+- **Colunas:** `nome`, `email`, `senha` e `telefone` de `gestor`, mais `atualizado_em`. Nada mais.
+- **So o que difere:** uma coluna so e escrita se o valor local for diferente do que o legado tem
+  (e-mail comparado sem maiuscula/espacos, telefone so pelos digitos). Ativar, desativar ou trocar a
+  foto empurra o `updated_at` local mas nao muda nenhuma dessas colunas, entao nao escreve.
+- **`atualizado_em`:** passa a ser o `updated_at` local (o maior entre usuario e telefone, quando os dois
+  mudaram). Na rodada seguinte o empate cai no legado, com valores ja iguais, e a escrita nao se repete.
+- **Escrita condicional:** `UPDATE ... WHERE codigo = ? AND atualizado_em = <valor lido na rodada>`. Se o
+  legado foi editado entre a leitura e a escrita, nenhuma linha muda, a rodada loga o aviso e na seguinte
+  o legado vence.
+- **Falha nao derruba a rodada:** o valor local ja esta salvo e a escrita e refeita na rodada seguinte.
+  O log traz so a classe da excecao e o `SQLState` (a mensagem de violacao de unicidade traz o e-mail).
+- **Telefone:** o legado guarda `varchar(11)`, e aqui o numero ja e salvo so com digitos.
+- **Nao escreve:** gestor criado so aqui (nao existe no legado), exclusao (telefone apagado, gestor
+  removido), organizacao e unidade.
+- **Permissao:** o usuario do legado precisa de `UPDATE (nome, email, senha, telefone, atualizado_em)` em
+  `gestor`, alem do `SELECT` nas cinco tabelas. O pool nao e mais `readOnly`: o `GRANT` e a garantia.
+- **Um legado, dois ambientes:** com um unico banco legado para QA e producao, **so um deles deve ter o
+  sync ligado**. Os dois ligados escrevem na mesma fonte, e uma edicao de teste feita em QA chegaria a
+  producao.
+
 ## O que se espera do banco legado
 
 Contrato que o legado precisa cumprir para o sync funcionar como esperado. O que não for cumprido não derruba a rodada: a linha é ignorada e o log mostra o tipo e o código do registro.
