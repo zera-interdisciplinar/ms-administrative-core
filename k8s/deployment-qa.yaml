@@ -32,6 +32,16 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
+        # A subida leva ~2 min com o limite de 0,5 CPU (medido: 133s em 2026-10-16). Sem este
+        # startupProbe a liveness comecava aos 90s e matava o pod aos ~130s, poucos segundos antes
+        # de o Tomcat abrir a porta: reinicio em loop, 0/1 Ready, sem erro algum no log da aplicacao.
+        # Ate ele passar, liveness e readiness ficam desligadas; teto de 10s x 30 = 300s.
+        startupProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          periodSeconds: 10
+          failureThreshold: 30
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
@@ -114,3 +124,43 @@ spec:
               name: fcm-credentials
               key: credentials.json
               optional: true
+        # Recuperacao de senha (Resend). optional: true pelo mesmo motivo do Google Places: sem o
+        # secret o pod sobe normal, so a chamada ao Resend falha (logada, nunca derruba o fluxo).
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resend
+              key: api-key
+              optional: true
+        - name: RESEND_FROM_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: resend
+              key: from-email
+              optional: true
+        # Sync periodico com o banco legado (LegacySyncConfig). Diferente dos secrets de integracao
+        # acima, SEM optional: com LEGACY_SYNC_ENABLED=true e URL vazia o bean do pool falha
+        # ("jdbcUrl is required") e a aplicacao nao sobe. Faltando o secret, o pod para em
+        # CreateContainerConfigError, que aponta o secret certo, em vez de um crash loop obscuro.
+        - name: LEGACY_SYNC_ENABLED
+          value: "true"
+        # Explicito de proposito (igual ao padrao do codigo): encurta a janela em que a edicao feita
+        # nos dois sistemas e reconciliada. O custo e proporcional ao volume de dados; a duracao de
+        # cada rodada sai no log.
+        - name: LEGACY_SYNC_INTERVAL
+          value: "PT1M"
+        - name: LEGACY_DB_URL
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: url
+        - name: LEGACY_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: user
+        - name: LEGACY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: legacy-db
+              key: password

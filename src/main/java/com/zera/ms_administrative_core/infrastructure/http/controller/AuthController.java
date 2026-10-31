@@ -10,7 +10,11 @@ import com.zera.ms_administrative_core.core.usecase.auth.IssueServiceToken;
 import com.zera.ms_administrative_core.core.usecase.auth.Login;
 import com.zera.ms_administrative_core.core.usecase.auth.Logout;
 import com.zera.ms_administrative_core.core.usecase.auth.RefreshSession;
+import com.zera.ms_administrative_core.core.usecase.auth.passwordReset.ConfirmPasswordReset;
+import com.zera.ms_administrative_core.core.usecase.auth.passwordReset.RequestPasswordReset;
+import com.zera.ms_administrative_core.infrastructure.http.request.ConfirmPasswordResetRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.LoginRequest;
+import com.zera.ms_administrative_core.infrastructure.http.request.RequestPasswordResetRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.ServiceTokenRequest;
 import com.zera.ms_administrative_core.infrastructure.http.request.RefreshTokenRequest;
 import com.zera.ms_administrative_core.infrastructure.http.response.ServiceTokenResponse;
@@ -27,13 +31,18 @@ public class AuthController {
     private final Logout logout;
 
     private final IssueServiceToken issueServiceToken;
+    private final RequestPasswordReset requestPasswordReset;
+    private final ConfirmPasswordReset confirmPasswordReset;
 
     public AuthController(Login login, RefreshSession refreshSession, Logout logout,
-            IssueServiceToken issueServiceToken) {
+            IssueServiceToken issueServiceToken, RequestPasswordReset requestPasswordReset,
+            ConfirmPasswordReset confirmPasswordReset) {
         this.issueServiceToken = issueServiceToken;
         this.login = login;
         this.refreshSession = refreshSession;
         this.logout = logout;
+        this.requestPasswordReset = requestPasswordReset;
+        this.confirmPasswordReset = confirmPasswordReset;
     }
 
     @PostMapping("/login")
@@ -61,6 +70,22 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody @Valid RefreshTokenRequest request) {
         logout.execute(request.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Sempre 202, exista ou nao o e-mail: revelar isso permitiria enumerar contas. O efeito real
+     * (gerar token e enviar e-mail) e condicional, dentro do caso de uso.
+     */
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Void> requestPasswordReset(@RequestBody @Valid RequestPasswordResetRequest request) {
+        requestPasswordReset.execute(request.email());
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Void> confirmPasswordReset(@RequestBody @Valid ConfirmPasswordResetRequest request) {
+        confirmPasswordReset.execute(request.token(), request.newPassword());
         return ResponseEntity.noContent().build();
     }
 }
