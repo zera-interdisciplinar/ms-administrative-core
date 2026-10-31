@@ -130,6 +130,7 @@ Secrets em produção/QA está em [`k8s/README.md`](k8s/README.md).
 |---|---|
 | `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Conexão com o PostgreSQL |
 | `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY` | Par RSA para assinar/validar os access tokens — ver seção acima |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Envio do e-mail de recuperação de senha (`POST /auth/password-reset/request`) via [Resend](https://resend.com) — sem fallback, faz parte do fluxo |
 
 ### Integrações e recursos opcionais (desligados por padrão)
 
@@ -141,6 +142,7 @@ Secrets em produção/QA está em [`k8s/README.md`](k8s/README.md).
 | `MAINTENANCE_ENABLED=true` | Agenda as procedures de manutenção (revogação de tokens vencidos e consolidação de DAU). Desligado por padrão porque, com mais de uma réplica, todas rodariam a mesma procedure no mesmo minuto — as procedures são idempotentes, então o resultado segue correto, mas o trabalho é duplicado. Alternativa: agendador externo chamando `POST /maintenance/*` |
 | `CLOSE_STALE_ALERTS_ENABLED=true` | Inclui o fechamento automático de alertas antigos no agendador. Separado do anterior de propósito: `alert.status` é observado pelo ms-inventory, e fechar alerta sozinho é decisão de produto |
 | `BOOTSTRAP_ADMIN_EMAIL`/`PASSWORD`/`ORG_CNPJ` (+ opcionais `_NAME`, `_ORG_NAME`, `_ORG_EMAIL`, `_ORG_PLAN`, `_UNIT_NAME`) | Cria a árvore organização → unidade → MANAGER inicial no boot, idempotente por e-mail — útil para o primeiro deploy de um ambiente sem acesso direto ao banco |
+| `PASSWORD_RESET_DEEP_LINK_BASE` | Deep link que vai no e-mail de recuperação (padrão `zera://reset-password`, não precisa ser definida). A tela de redefinição é só no app mobile, não há frontend web — por isso é um esquema customizado, não uma URL http, sem fallback de página |
 
 ## API
 
@@ -155,7 +157,7 @@ token de serviço com o `scope` correspondente, não um papel de usuário.
 
 | Recurso | Endpoints | Quem chama |
 |---|---|---|
-| Autenticação | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/service-token` | Público (login/refresh/logout); service-token exige credencial de cliente de serviço |
+| Autenticação | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/service-token`, `POST /auth/password-reset/request`, `POST /auth/password-reset/confirm` | Público (login/refresh/logout/password-reset); service-token exige credencial de cliente de serviço |
 | Convites | `POST /invitations`, `POST /invitations/redeem` | Gerar: gestor. Resgatar: público (é o próprio cadastro) |
 | Organizações | `GET /organization`, `GET /organization/{id}`, `POST /organization`, `PATCH /organization/{id}/{rename,email,plan,activate,deactivate,suspend}` | Ler: qualquer autenticado. Escrever: gestor |
 | Unidades | `POST /unit`, `GET /unit`, `GET /unit/{id}`, `PATCH /unit/{id}/rename`, `DELETE /unit/{id}` | Ler: qualquer autenticado. Escrever: gestor |
@@ -169,7 +171,8 @@ token de serviço com o `scope` correspondente, não um papel de usuário.
 | Governança | `GET /governance/data-catalog`, `GET /governance/data-catalog/{tabela}/columns`, `GET /governance/data-catalog/drift` | Gestor. Catálogo de dados e divergência entre catálogo e schema real |
 
 Público, sem autenticação: `/actuator/health`, `/index.html`, `/api-docs`,
-`/.well-known/jwks.json`, `/auth/login`, `/auth/refresh`, `/auth/logout`, `/invitations/redeem`.
+`/.well-known/jwks.json`, `/auth/login`, `/auth/refresh`, `/auth/logout`,
+`/auth/password-reset/request`, `/auth/password-reset/confirm`, `/invitations/redeem`.
 
 ## Analítico, auditoria e governança
 
