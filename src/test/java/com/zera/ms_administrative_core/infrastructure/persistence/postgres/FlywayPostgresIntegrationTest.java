@@ -1,11 +1,16 @@
 package com.zera.ms_administrative_core.infrastructure.persistence.postgres;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationState;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 
 /**
  * Roda todas as migrations Flyway contra um Postgres real (Testcontainers). O H2 dos testes
@@ -26,17 +31,22 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
     void allMigrationsApplyCleanlyOnRealPostgres() {
         var applied = flyway.info().applied();
 
-        assertThat(applied).hasSizeGreaterThanOrEqualTo(24);
+        assertThat(applied).hasSizeGreaterThanOrEqualTo(25);
         assertThat(applied).allMatch(m -> m.getState() == MigrationState.SUCCESS);
     }
 
     @Test
     void postgresSpecificObjectsExist() {
-        // indice parcial da V5 (dedup de alerta OPEN) — H2 nao suporta indice com WHERE
+        // indice parcial da V5, refeito na V25 com user_id (dedup de alerta OPEN) — H2 nao suporta
+        // indice com WHERE
         Integer alertIdx = jdbc.queryForObject(
-                "SELECT count(*) FROM pg_indexes WHERE indexname = 'ux_alert_open_rule_event'",
+                "SELECT count(*) FROM pg_indexes WHERE indexname = 'ux_alert_open_rule_event_user'",
                 Integer.class);
         assertThat(alertIdx).isEqualTo(1);
+        Integer oldAlertIdx = jdbc.queryForObject(
+                "SELECT count(*) FROM pg_indexes WHERE indexname = 'ux_alert_open_rule_event'",
+                Integer.class);
+        assertThat(oldAlertIdx).isZero();
 
         // indice parcial da V6 (convite PENDING unico por codigo)
         Integer inviteIdx = jdbc.queryForObject(
@@ -49,6 +59,36 @@ class FlywayPostgresIntegrationTest extends AbstractPostgresIntegrationTest {
                 "SELECT count(*) FROM information_schema.tables WHERE table_name = 'refresh_token'",
                 Integer.class);
         assertThat(refreshTable).isEqualTo(1);
+    }
+
+    /**
+     * O mesmo evento gera um alerta por gestor da unidade; o indice so barra a duplicata para o
+     * MESMO usuario. Sem user_id no indice, o segundo gestor nunca recebia nada.
+     */
+    @Test
+    void sameRuleAndEventMayAlertDifferentUsersButNotTheSameOneTwice() {
+        Fixture f = novaHierarquia();
+        UUID unitId = f.unidadeId();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UUID managerA = f.gestorId();
+        UUID managerB = UUID.randomUUID();
+        inserirUsuario(managerB, unitId, null, "MANAGER", "ACTIVE");
+
+        inserirAlertaDeRegra(unitId, managerA, ruleId, eventId);
+        inserirAlertaDeRegra(unitId, managerB, ruleId, eventId);
+
+        assertThatThrownBy(() -> inserirAlertaDeRegra(unitId, managerA, ruleId, eventId))
+                .isInstanceOf(DuplicateKeyException.class);
+    }
+
+    private void inserirAlertaDeRegra(UUID unitId, UUID userId, UUID ruleId, UUID eventId) {
+        LocalDateTime agora = LocalDateTime.of(2026, 1, 1, 8, 0);
+        jdbc.update("""
+                INSERT INTO alert (id, status, unit_id, user_id, description, severity, kind,
+                                   rule_id, event_id, occurred_at, created_at, updated_at)
+                VALUES (?, 'OPEN', ?, ?, 'alerta de teste', 'LOW', 'TEST_KIND', ?, ?, ?, ?, ?)
+                """, UUID.randomUUID(), unitId, userId, ruleId, eventId, agora, agora, agora);
     }
 
     /**
