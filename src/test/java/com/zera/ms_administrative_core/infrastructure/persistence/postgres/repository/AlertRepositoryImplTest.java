@@ -68,20 +68,21 @@ class AlertRepositoryImplTest {
     }
 
     @Test
-    @DisplayName("Deve retornar o alerta OPEN existente para o par ruleId/eventId informado")
+    @DisplayName("Deve retornar o alerta OPEN existente para o trio ruleId/eventId/userId informado")
     void shouldFindOpenAlertByRuleIdAndEventId() {
         UUID ruleId = UUID.randomUUID();
         UUID eventId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
         LocalDateTime now = LocalDateTime.of(2024, 1, 1, 8, 0);
 
-        Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", UUID.randomUUID(), ruleId, eventId,
+        Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", userId, ruleId, eventId,
                 now, now, now, UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
         AlertJpa jpaAlert = mapper.toJpa(alert);
 
-        when(jpa.findByRuleIdAndEventIdAndStatus(eq(ruleId), eq(eventId), eq(AlertStatus.OPEN)))
-                .thenReturn(Optional.of(jpaAlert));
+        when(jpa.findByRuleIdAndEventIdAndUserIdAndStatus(eq(ruleId), eq(eventId), eq(userId),
+                eq(AlertStatus.OPEN))).thenReturn(Optional.of(jpaAlert));
 
-        Optional<Alert> result = repository.findOpenByRuleIdAndEventId(ruleId, eventId);
+        Optional<Alert> result = repository.findOpenByRuleIdAndEventIdAndUserId(ruleId, eventId, userId);
 
         assertTrue(result.isPresent());
         assertEquals(ruleId, result.get().getRuleId());

@@ -12,7 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AlertJpaRepository extends JpaRepository<AlertJpa, UUID> {
-    Optional<AlertJpa> findByRuleIdAndEventIdAndStatus(UUID ruleId, UUID eventId, AlertStatus status);
+    Optional<AlertJpa> findByRuleIdAndEventIdAndUserIdAndStatus(UUID ruleId, UUID eventId, UUID userId,
+            AlertStatus status);
 
     @Query("""
     SELECT a FROM AlertJpa a

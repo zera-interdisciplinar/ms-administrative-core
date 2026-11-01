@@ -43,7 +43,7 @@ public class NotifyUserImpl implements NotifyUser {
                 .orElseThrow(() -> new UserNotFoundException(command.userId()));
 
         if (command.ruleId() != null && command.eventId() != null) {
-            Optional<Alert> existing = alertRepository.findOpenByRuleIdAndEventId(command.ruleId(), command.eventId());
+            Optional<Alert> existing = alertRepository.findOpenByRuleIdAndEventIdAndUserId(command.ruleId(), command.eventId(), command.userId());
             if (existing.isPresent()) {
                 touchExisting(existing.get(), command);
                 return;
@@ -61,7 +61,7 @@ public class NotifyUserImpl implements NotifyUser {
             alertRepository.save(alert);
         } catch (DataIntegrityViolationException raceLost) {
             // outra chamada concorrente criou o alerta primeiro; trata como duplicata
-            alertRepository.findOpenByRuleIdAndEventId(command.ruleId(), command.eventId())
+            alertRepository.findOpenByRuleIdAndEventIdAndUserId(command.ruleId(), command.eventId(), command.userId())
                     .ifPresent(winner -> touchExisting(winner, command));
             return;
         }
