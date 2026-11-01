@@ -128,6 +128,41 @@ class NotifyUserImplTest {
         assertEquals(otherUserId, captor.getValue().getUserId());
     }
 
+    /**
+     * Duas chamadas concorrentes para o mesmo usuario passam juntas pela checagem e uma perde no
+     * indice unico: a perdedora deve tratar o alerta da vencedora como duplicata, nao falhar.
+     */
+    @Test
+    @DisplayName("Deve tratar como duplicata o alerta criado por chamada concorrente para o mesmo usuario")
+    void shouldTreatConcurrentInsertForTheSameUserAsDuplicate() {
+        UUID userId = UUID.randomUUID();
+        UUID ruleId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        User user = UserFactory.create(Role.MANAGER, userId, "Alice", new Email("alice@example.com"),
+                new HashedPassword("hash"), Status.ACTIVE, UUID.randomUUID());
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        Alert winner = new Alert(AlertKind.STORAGE, Severity.LOW, "item quebrando", userId, ruleId, eventId,
+                UUID.randomUUID(), AlertStatus.OPEN, UUID.randomUUID());
+        when(alertRepository.findOpenByRuleIdAndEventIdAndUserId(ruleId, eventId, userId))
+                .thenReturn(Optional.empty(), Optional.of(winner));
+        when(alertRepository.save(any()))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("ux_alert_open_rule_event_user"))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        NotifyUserCommand command = new NotifyUserCommand(
+                eventId, ruleId, userId, UUID.randomUUID(),
+                "item quebrando", Severity.LOW, AlertKind.STORAGE, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+
+        useCase.execute(command);
+
+        // 1a chamada: insert que perdeu a corrida; 2a: refresh do alerta da vencedora
+        ArgumentCaptor<Alert> captor = ArgumentCaptor.forClass(Alert.class);
+        verify(alertRepository, org.mockito.Mockito.times(2)).save(captor.capture());
+        assertEquals(winner.getId(), captor.getAllValues().get(1).getId());
+    }
+
     @Test
     @DisplayName("Deve atualizar o alerta OPEN existente em vez de criar um duplicado quando ruleId/eventId já foram alertados")
     void shouldRefreshExistingAlertInsteadOfDuplicating() {
