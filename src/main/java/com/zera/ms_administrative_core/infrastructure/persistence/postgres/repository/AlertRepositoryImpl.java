@@ -31,6 +31,11 @@ public class AlertRepositoryImpl implements AlertRepository {
     }
 
     @Override
+    public Optional<Alert> findByIdAndUserId(UUID id, UUID userId) {
+        return jpa.findByIdAndUserId(id, userId).map(mapper::toDomain);
+    }
+
+    @Override
     public Optional<Alert> findOpenByRuleIdAndEventIdAndUserId(UUID ruleId, UUID eventId, UUID userId) {
         return jpa.findByRuleIdAndEventIdAndUserIdAndStatus(ruleId, eventId, userId, AlertStatus.OPEN).map(mapper::toDomain);
     }

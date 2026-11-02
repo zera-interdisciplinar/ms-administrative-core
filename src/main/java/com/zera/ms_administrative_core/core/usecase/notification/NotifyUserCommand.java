@@ -17,5 +17,11 @@ public record NotifyUserCommand(
     Severity severity,
     AlertKind kind,
     AlertStatus status,
-    LocalDateTime occurredAt
-) {}
+    LocalDateTime occurredAt,
+    String deepLink
+) {
+    public NotifyUserCommand(UUID eventId, UUID ruleId, UUID userId, UUID unitId, String description,
+                             Severity severity, AlertKind kind, AlertStatus status, LocalDateTime occurredAt) {
+        this(eventId, ruleId, userId, unitId, description, severity, kind, status, occurredAt, null);
+    }
+}

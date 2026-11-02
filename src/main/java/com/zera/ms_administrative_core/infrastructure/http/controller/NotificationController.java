@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
+import com.zera.ms_administrative_core.core.usecase.notification.closeAlert.CloseAlertForUser;
 import com.zera.ms_administrative_core.core.usecase.notification.enqueueAlert.EnqueueAlertNotification;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.AlertOutput;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.FindAlertsForUser;
@@ -27,11 +30,14 @@ import jakarta.validation.Valid;
 public class NotificationController {
     private final EnqueueAlertNotification enqueueAlertNotification;
     private final FindAlertsForUser findAlertsForUser;
+    private final CloseAlertForUser closeAlertForUser;
 
     public NotificationController(EnqueueAlertNotification enqueueAlertNotification,
-                                   FindAlertsForUser findAlertsForUser) {
+                                   FindAlertsForUser findAlertsForUser,
+                                   CloseAlertForUser closeAlertForUser) {
         this.enqueueAlertNotification = enqueueAlertNotification;
         this.findAlertsForUser = findAlertsForUser;
+        this.closeAlertForUser = closeAlertForUser;
     }
 
     /**
@@ -62,5 +68,16 @@ public class NotificationController {
                                                          @RequestParam(defaultValue = "20") int size) {
         UUID userId = UUID.fromString(principal.getName());
         return ResponseEntity.ok(findAlertsForUser.execute(userId, status, page, size));
+    }
+
+    /**
+     * Marca o alerta como CLOSED a pedido do dono. O job de X dias continua existindo; isto e o
+     * caminho do app. Sem corpo: so existe fechar, nao reabrir.
+     */
+    @PatchMapping("/alerts/{alertId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AlertOutput> closeAlert(Principal principal, @PathVariable UUID alertId) {
+        UUID userId = UUID.fromString(principal.getName());
+        return ResponseEntity.ok(closeAlertForUser.execute(userId, alertId));
     }
 }

@@ -30,10 +30,17 @@ public record AlertNotificationRequest(
         @NotNull Severity severity,
         @NotNull AlertKind kind,
         @NotNull AlertStatus status,
-        @PastOrPresent LocalDateTime occurredAt) {
+        @PastOrPresent LocalDateTime occurredAt,
+        @Size(max = 200) String deepLink) {
+
+    public AlertNotificationRequest(UUID eventId, UUID ruleId, UUID userId, UUID unitId, String description,
+                                    Severity severity, AlertKind kind, AlertStatus status,
+                                    LocalDateTime occurredAt) {
+        this(eventId, ruleId, userId, unitId, description, severity, kind, status, occurredAt, null);
+    }
 
     public NotifyUserCommand toCommand() {
         return new NotifyUserCommand(eventId, ruleId, userId, unitId, description, severity, kind, status,
-                occurredAt);
+                occurredAt, deepLink);
     }
 }

@@ -73,7 +73,7 @@ public class NotifyUserImpl implements NotifyUser {
                 command.description(),
                 command.status());
 
-        sendPush(alert);
+        sendPush(alert, command.deepLink());
     }
 
     private void touchExisting(Alert existing, NotifyUserCommand command) {
@@ -91,7 +91,7 @@ public class NotifyUserImpl implements NotifyUser {
         // um "touch" sem mudanca de severidade nao tem conteudo novo pro usuario -- pushar aqui
         // seria so repetir a mesma notificacao de novo.
         if (escalated) {
-            sendPush(existing);
+            sendPush(existing, command.deepLink());
         }
     }
 
@@ -99,7 +99,7 @@ public class NotifyUserImpl implements NotifyUser {
      * Best-effort e nao bloqueante: a persistencia do alerta (acima) ja aconteceu, entao qualquer
      * falha aqui so e logada -- o alerta continua valido e visivel via GET /notifications/alerts.
      */
-    private void sendPush(Alert alert) {
+    private void sendPush(Alert alert, String deepLink) {
         try {
             List<String> tokens = deviceTokenRepository.findByUserId(alert.getUserId()).stream()
                     .map(DeviceToken::getToken)
@@ -108,13 +108,18 @@ public class NotifyUserImpl implements NotifyUser {
                 return;
             }
 
+            Map<String, String> data = new java.util.HashMap<>();
+            data.put("alertId", alert.getId().toString());
+            data.put("kind", alert.getKind().name());
+            data.put("severity", alert.getSeverity().name());
+            if (deepLink != null && !deepLink.isBlank()) {
+                data.put("deepLink", deepLink);
+            }
+
             PushMessage message = new PushMessage(
                     alert.getKind().displayTitle(),
                     alert.getDescription(),
-                    Map.of(
-                            "alertId", alert.getId().toString(),
-                            "kind", alert.getKind().name(),
-                            "severity", alert.getSeverity().name()));
+                    data);
 
             pushNotificationGateway.sendToTokens(tokens, message);
         } catch (RuntimeException e) {
