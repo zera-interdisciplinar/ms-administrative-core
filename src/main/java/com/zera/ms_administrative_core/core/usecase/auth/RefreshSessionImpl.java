@@ -56,7 +56,7 @@ public class RefreshSessionImpl implements RefreshSession {
         refreshTokenRepository.save(current);
 
         return sessionTokenFactory.issueFor(
-                new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role()),
+                new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role(), user.getName()),
                 AccessOrigin.REFRESH);
     }
 }

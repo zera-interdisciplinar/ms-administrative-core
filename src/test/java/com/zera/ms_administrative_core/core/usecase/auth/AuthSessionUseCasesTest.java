@@ -98,6 +98,31 @@ class AuthSessionUseCasesTest {
     }
 
     @Test
+    void refreshKeepsUserNameInTheIssuedAccessToken() {
+        // sem o nome no refresh, o claim sumiria do token na primeira renovacao (15 min apos o login)
+        List<AuthenticatedUser> issuedFor = new ArrayList<>();
+        AccessTokenIssuer capturing = new AccessTokenIssuer() {
+            @Override
+            public String issue(AuthenticatedUser user) {
+                issuedFor.add(user);
+                return "access";
+            }
+
+            @Override
+            public java.time.Duration timeToLive() {
+                return java.time.Duration.ofMinutes(15);
+            }
+        };
+        RefreshSessionImpl refresh = new RefreshSessionImpl(refreshTokens, refreshTokenGenerator, users,
+                new SessionTokenFactory(capturing, refreshTokenGenerator, refreshTokens, originsPublished::add));
+        String firstRefresh = login.execute("alice@empresa.com", "secret").refreshToken();
+
+        refresh.execute(firstRefresh);
+
+        assertThat(issuedFor).singleElement().extracting(AuthenticatedUser::name).isEqualTo("Alice");
+    }
+
+    @Test
     void refreshRejectsUnknownToken() {
         assertThatThrownBy(() -> refreshSession.execute("raw-does-not-exist"))
                 .isInstanceOf(InvalidRefreshTokenException.class);
