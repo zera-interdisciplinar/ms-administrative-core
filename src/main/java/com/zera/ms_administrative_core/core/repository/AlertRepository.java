@@ -9,7 +9,7 @@ import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 
 public interface AlertRepository {
     Alert save(Alert alert);
-    Optional<Alert> findOpenByRuleIdAndEventId(UUID ruleId, UUID eventId);
+    Optional<Alert> findOpenByRuleIdAndEventIdAndUserId(UUID ruleId, UUID eventId, UUID userId);
     /** {@code status} nulo nao restringe; mais recente primeiro. */
     List<Alert> findByUserId(UUID userId, AlertStatus status, int page, int size);
 }
