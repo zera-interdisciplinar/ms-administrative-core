@@ -166,7 +166,8 @@ class NotificationControllerTest {
 
         mockMvc.perform(get("/api/v1/notifications/alerts").principal(principal))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].alertId").value(output.alertId().toString()));
+                .andExpect(jsonPath("$[0].alertId").value(output.alertId().toString()))
+                .andExpect(jsonPath("$[0].id").doesNotExist());
 
         verify(findAlertsForUser).execute(userId, null, 0, 20);
     }

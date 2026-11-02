@@ -59,6 +59,7 @@ public class NotificationController {
     /**
      * O alerta ja nasce vinculado ao destinatario (userId); cada usuario ve so os proprios, entao
      * o filtro vem do token (sub), nunca de um parametro que o cliente poderia trocar.
+     * Cada item traz {@code alertId} para o app chamar o PATCH de fechar.
      */
     @GetMapping("/alerts")
     @PreAuthorize("isAuthenticated()")
