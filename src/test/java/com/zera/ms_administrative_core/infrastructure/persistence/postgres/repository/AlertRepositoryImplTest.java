@@ -107,4 +107,21 @@ class AlertRepositoryImplTest {
         assertEquals(1, result.size());
         assertEquals(userId, result.get(0).getUserId());
     }
+
+    @Test
+    @DisplayName("Deve buscar o alerta pelo id e pelo dono")
+    void shouldFindAlertByIdAndUserId() {
+        UUID userId = UUID.randomUUID();
+        UUID alertId = UUID.randomUUID();
+        LocalDateTime now = LocalDateTime.of(2024, 1, 1, 8, 0);
+        Alert alert = new Alert(AlertKind.STORAGE, Severity.HIGH, "desc", userId, UUID.randomUUID(),
+                UUID.randomUUID(), now, now, now, UUID.randomUUID(), AlertStatus.OPEN, alertId);
+        when(jpa.findByIdAndUserId(alertId, userId)).thenReturn(Optional.of(mapper.toJpa(alert)));
+
+        Optional<Alert> result = repository.findByIdAndUserId(alertId, userId);
+
+        assertTrue(result.isPresent());
+        assertEquals(alertId, result.get().getId());
+        assertEquals(userId, result.get().getUserId());
+    }
 }

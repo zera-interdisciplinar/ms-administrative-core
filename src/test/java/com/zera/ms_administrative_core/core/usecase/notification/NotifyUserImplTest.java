@@ -282,10 +282,11 @@ class NotifyUserImplTest {
                         LocalDateTime.now(), LocalDateTime.now());
         when(deviceTokenRepository.findByUserId(userId)).thenReturn(java.util.List.of(deviceToken));
 
+        UUID itemId = UUID.randomUUID();
         NotifyUserCommand command = new NotifyUserCommand(
                 UUID.randomUUID(), UUID.randomUUID(), userId, UUID.randomUUID(),
-                "storage almost full", Severity.HIGH, AlertKind.STORAGE, AlertStatus.OPEN,
-                LocalDateTime.of(2024, 1, 1, 8, 0));
+                "Garantia vencendo: Notebook", Severity.HIGH, AlertKind.WARRANTY_EXPIRATION, AlertStatus.OPEN,
+                LocalDateTime.of(2024, 1, 1, 8, 0), "zera://item?id=" + itemId);
 
         useCase.execute(command);
 
@@ -294,7 +295,9 @@ class NotifyUserImplTest {
                         com.zera.ms_administrative_core.core.domain.valueobject.PushMessage.class);
         verify(pushNotificationGateway).sendToTokens(
                 org.mockito.ArgumentMatchers.eq(java.util.List.of("token-abc")), captor.capture());
-        assertEquals("storage almost full", captor.getValue().body());
+        assertEquals("Garantia vencendo: Notebook", captor.getValue().body());
+        assertEquals("Garantia perto de vencer", captor.getValue().title());
+        assertEquals("zera://item?id=" + itemId, captor.getValue().data().get("deepLink"));
     }
 
     @Test

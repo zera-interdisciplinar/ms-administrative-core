@@ -17,6 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 import com.zera.ms_administrative_core.core.domain.entity.AlertKind;
 import com.zera.ms_administrative_core.core.domain.entity.Severity;
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
+import com.zera.ms_administrative_core.core.usecase.notification.closeAlert.CloseAlertForUser;
 import com.zera.ms_administrative_core.core.usecase.notification.enqueueAlert.EnqueueAlertNotification;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.AlertOutput;
 import com.zera.ms_administrative_core.core.usecase.notification.findAlerts.FindAlertsForUser;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,6 +47,9 @@ class NotificationControllerTest {
 
     @MockitoBean
     private FindAlertsForUser findAlertsForUser;
+
+    @MockitoBean
+    private CloseAlertForUser closeAlertForUser;
 
     @Test
     @DisplayName("POST /api/v1/notifications/alerts - deve aceitar o alerta e chamar o use case")
@@ -161,7 +166,8 @@ class NotificationControllerTest {
 
         mockMvc.perform(get("/api/v1/notifications/alerts").principal(principal))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].alertId").value(output.alertId().toString()));
+                .andExpect(jsonPath("$[0].alertId").value(output.alertId().toString()))
+                .andExpect(jsonPath("$[0].id").doesNotExist());
 
         verify(findAlertsForUser).execute(userId, null, 0, 20);
     }
@@ -183,5 +189,24 @@ class NotificationControllerTest {
                 .andExpect(status().isOk());
 
         verify(findAlertsForUser).execute(userId, AlertStatus.CLOSED, 1, 5);
+    }
+
+    @Test
+    @DisplayName("PATCH /api/v1/notifications/alerts/{id} - deve fechar o alerta do usuario do token")
+    void shouldCloseAlertForAuthenticatedUser() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID alertId = UUID.randomUUID();
+        AlertOutput output = new AlertOutput(alertId, AlertKind.STORAGE, Severity.HIGH,
+                AlertStatus.CLOSED, "estoque cheio", UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                LocalDateTime.of(2024, 1, 1, 8, 0), LocalDateTime.of(2024, 1, 1, 8, 0),
+                LocalDateTime.of(2024, 1, 1, 8, 0));
+        when(closeAlertForUser.execute(userId, alertId)).thenReturn(output);
+
+        mockMvc.perform(patch("/api/v1/notifications/alerts/" + alertId).principal(userId::toString))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.alertId").value(alertId.toString()))
+                .andExpect(jsonPath("$.status").value("CLOSED"));
+
+        verify(closeAlertForUser).execute(userId, alertId);
     }
 }

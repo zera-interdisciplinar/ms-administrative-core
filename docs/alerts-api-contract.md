@@ -2,7 +2,7 @@
 
 Documentação de contrato das rotas do `ms-administrative-core` relacionadas a **alertas**: ingestão serviço-a-serviço (ms-inventory, IA core) e emissão do token necessário para chamá-las.
 
-**Escopo HTTP hoje:** este microserviço expõe **apenas escrita** de alerta (`POST /api/v1/notifications/alerts`). Não há `GET`, `PATCH` nem `DELETE` de alertas na API — os registros ficam na tabela `alert` do PostgreSQL, mas leitura/listagem para o app mobile ainda não passa por rotas deste serviço.
+**Escopo HTTP hoje:** ingestão serviço-a-serviço (`POST /api/v1/notifications/alerts`), listagem do usuário autenticado (`GET /api/v1/notifications/alerts`) e fechamento pelo dono (`PATCH /api/v1/notifications/alerts/{alertId}`).
 
 ---
 
@@ -150,6 +150,36 @@ Corpo vazio. O alerta foi aceito para persistência (criação nova ou atualiza�
 
 ---
 
+## 3. `GET /api/v1/notifications/alerts` — listar os alertas do usuário
+
+JWT de usuário (`isAuthenticated()`). O `sub` filtra; não há `userId` na query. Query opcional: `status`, `page` (0), `size` (20).
+
+Cada item traz **`alertId`** (UUID do registro) — é o path do `PATCH`. Não confundir com `eventId` (item/unidade no inventory).
+
+```json
+[
+  {
+    "alertId": "11111111-1111-1111-1111-111111111111",
+    "kind": "WARRANTY_EXPIRATION",
+    "severity": "MEDIUM",
+    "status": "OPEN",
+    "description": "Garantia vencendo: Notebook",
+    "unitId": "aa11bb22-0000-0000-0000-000000000009",
+    "ruleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "eventId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+    "occurredAt": "2026-09-20T03:15:00",
+    "createdAt": "2026-09-20T03:15:01",
+    "updatedAt": "2026-09-20T03:15:01"
+  }
+]
+```
+
+## 4. `PATCH /api/v1/notifications/alerts/{alertId}` — fechar
+
+JWT do dono, sem corpo. `200` com o alerta `CLOSED` (idempotente). `404` se o id não existir ou não for do `sub`.
+
+---
+
 ## Deduplicação (`eventId` + `ruleId`)
 
 - **Com deduplicação:** enviar **os dois** `eventId` e `ruleId` preenchidos. Se já existir alerta **`OPEN`** com o mesmo par, o backend **não cria outro registro** — atualiza o existente:
@@ -243,5 +273,6 @@ Contrato completo de usuários: [`team-management-api-contract.md`](team-managem
 | Registrar alerta ou notificação para um usuário | `POST /notifications/alerts` com escopo `notifications:write` |
 | Evitar spam da mesma regra no mesmo evento | Repetir `POST` com o **mesmo** `ruleId` + `eventId` enquanto o alerta estiver `OPEN` |
 | Notificação única (aprovação/reprovação de item) | `POST /notifications/alerts` **sem** `ruleId`/`eventId` (ou só um deles null) |
-| Listar alertas do usuário no app | **Não disponível** neste serviço na API atual — aguardar rota de leitura ou outro BFF |
+| Listar alertas do usuário no app | `GET /notifications/alerts` com JWT do usuário — cada item traz `alertId` |
+| Fechar um alerta no app | `PATCH /notifications/alerts/{alertId}` com o `alertId` da listagem |
 | Achar `userId` do gestor da unidade antes de alertar | `GET /users?role=MANAGER&unitId=` (contrato em team-management) |

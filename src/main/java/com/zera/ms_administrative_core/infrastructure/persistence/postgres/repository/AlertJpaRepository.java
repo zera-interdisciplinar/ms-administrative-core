@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AlertJpaRepository extends JpaRepository<AlertJpa, UUID> {
+    Optional<AlertJpa> findByIdAndUserId(UUID id, UUID userId);
+
     Optional<AlertJpa> findByRuleIdAndEventIdAndUserIdAndStatus(UUID ruleId, UUID eventId, UUID userId,
             AlertStatus status);
 
