@@ -3,13 +3,15 @@ package com.zera.ms_administrative_core.core.usecase.notification.findAlerts;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zera.ms_administrative_core.core.domain.entity.Alert;
 import com.zera.ms_administrative_core.core.domain.entity.AlertKind;
 import com.zera.ms_administrative_core.core.domain.entity.Severity;
 import com.zera.ms_administrative_core.core.domain.valueobject.AlertStatus;
 
 public record AlertOutput(
-        UUID alertId,
+        /** Chave do PATCH /notifications/alerts/{alertId}; nao e o eventId nem o item. */
+        @JsonProperty("alertId") UUID alertId,
         AlertKind kind,
         Severity severity,
         AlertStatus status,
