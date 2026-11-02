@@ -46,6 +46,17 @@ class GlobalExceptionHandlerTest {
         assertEquals(ex.getMessage(), result.getDetail());
     }
 
+    @Test
+    @DisplayName("Should return 404 when AlertNotFoundException is thrown")
+    void shouldReturn404OnAlertNotFound() {
+        AlertNotFoundException ex = new AlertNotFoundException(UUID.randomUUID());
+
+        ProblemDetail result = handler.handleAlertNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND.value(), result.getStatus());
+        assertEquals(ex.getMessage(), result.getDetail());
+    }
+
     // --- InvalidCnpjException ---
 
     @Test

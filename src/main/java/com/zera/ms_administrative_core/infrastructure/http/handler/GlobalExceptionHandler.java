@@ -1,5 +1,6 @@
 package com.zera.ms_administrative_core.infrastructure.http.handler;
 
+import com.zera.ms_administrative_core.core.domain.exception.AlertNotFoundException;
 import com.zera.ms_administrative_core.core.domain.exception.CnpjAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.EmailAlreadyInUseException;
 import com.zera.ms_administrative_core.core.domain.exception.InvalidCepException;
@@ -74,6 +75,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RecyclingNotFoundException.class)
     public ProblemDetail handleRecyclingNotFound(RecyclingNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(AlertNotFoundException.class)
+    public ProblemDetail handleAlertNotFound(AlertNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
