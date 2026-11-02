@@ -127,6 +127,16 @@ spec:
               name: google-places
               key: api-key
               optional: true
+        # Push notification de alerta (FCM). optional: true pelo mesmo motivo do Google Places:
+        # sem o secret o pod sobe normal, so com NoopPushNotificationGateway (ver FcmConfig).
+        - name: FCM_ENABLED
+          value: "true"
+        - name: FCM_CREDENTIALS_JSON
+          valueFrom:
+            secretKeyRef:
+              name: fcm-credentials
+              key: credentials.json
+              optional: true
         # Recuperacao de senha (Resend). optional: true pelo mesmo motivo do Google Places: sem o
         # secret o pod sobe normal, so a chamada ao Resend falha (logada, nunca derruba o fluxo).
         - name: RESEND_API_KEY
