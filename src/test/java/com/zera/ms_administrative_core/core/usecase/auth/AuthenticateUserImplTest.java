@@ -45,6 +45,7 @@ class AuthenticateUserImplTest {
         assertThat(result.userId()).isEqualTo(m.getUserId());
         assertThat(result.email()).isEqualTo("alice@empresa.com");
         assertThat(result.role()).isEqualTo(Role.MANAGER);
+        assertThat(result.name()).isEqualTo("Alice");
     }
 
     @Test
