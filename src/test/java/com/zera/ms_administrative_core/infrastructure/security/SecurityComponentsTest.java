@@ -98,15 +98,31 @@ class SecurityComponentsTest {
         JwtAccessTokenIssuer issuer = new JwtAccessTokenIssuer(encoder, props, keys);
         UUID userId = UUID.randomUUID();
 
-        String token = issuer.issue(new AuthenticatedUser(userId, "alice@empresa.com", Role.MANAGER));
+        String token = issuer.issue(new AuthenticatedUser(userId, "alice@empresa.com", Role.MANAGER, "Alice Souza"));
         Jwt decoded = decoder.decode(token);
 
         assertThat(decoded.getSubject()).isEqualTo(userId.toString());
         assertThat(decoded.getClaimAsString("role")).isEqualTo("MANAGER");
         assertThat(decoded.getClaimAsString("email")).isEqualTo("alice@empresa.com");
+        assertThat(decoded.getClaimAsString("name")).isEqualTo("Alice Souza");
         assertThat(decoded.getClaimAsString("iss")).isEqualTo(ISSUER);
         assertThat(decoded.getExpiresAt()).isNotNull();
         assertThat(issuer.timeToLive()).isEqualTo(Duration.ofMinutes(15));
+    }
+
+    @Test
+    void accessTokenOmitsNameClaimWhenUserHasNoName() {
+        JwtProperties props = propertiesWithPem();
+        RsaKeyProvider keys = new RsaKeyProvider(props);
+        RSAKey jwk = new RSAKey.Builder(keys.publicKey())
+                .privateKey(keys.privateKey()).keyID(keys.keyId()).build();
+        JwtEncoder encoder = new NimbusJwtEncoder(
+                new ImmutableJWKSet<SecurityContext>(new JWKSet(jwk)));
+
+        String token = new JwtAccessTokenIssuer(encoder, props, keys)
+                .issue(new AuthenticatedUser(UUID.randomUUID(), "x@y.com", Role.EMPLOYEE, null));
+
+        assertThat(buildDecoder(keys).decode(token).hasClaim("name")).isFalse();
     }
 
     @Test
@@ -119,7 +135,7 @@ class SecurityComponentsTest {
         JwtEncoder encoder = new NimbusJwtEncoder(
                 new ImmutableJWKSet<SecurityContext>(new JWKSet(jwk)));
         String foreignToken = new JwtAccessTokenIssuer(encoder, props, keys)
-                .issue(new AuthenticatedUser(UUID.randomUUID(), "x@y.com", Role.EMPLOYEE));
+                .issue(new AuthenticatedUser(UUID.randomUUID(), "x@y.com", Role.EMPLOYEE, null));
 
         JwtDecoder strictDecoder = buildDecoder(keys);
 
