@@ -41,6 +41,6 @@ public class AuthenticateUserImpl implements AuthenticateUser {
             throw new InvalidCredentialsException();
         }
 
-        return new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role());
+        return new AuthenticatedUser(user.getUserId(), user.getEmail().value(), user.role(), user.getName());
     }
 }
