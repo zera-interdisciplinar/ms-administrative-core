@@ -68,7 +68,8 @@ class DauTriggerIntegrationTest extends AbstractPostgresIntegrationTest {
     void shouldNotDoubleCountSameUserSameDay() {
         Fixture f = novaHierarquia();
         LocalDate hoje = LocalDate.now();
-        LocalDateTime agora = LocalDateTime.now().withNano(0);
+        // meio-dia: com now() o plusMinutes cruzava a meia-noite e o rollup de hoje contava so 2
+        LocalDateTime agora = hoje.atTime(12, 0);
         Map<String, Object> antes = rollup(hoje);
 
         emitirSessao(f.gestorId(), agora);
